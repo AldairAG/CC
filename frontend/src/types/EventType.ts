@@ -1,52 +1,52 @@
 export type EventType = {
-    dateEvent: ""
-    dateEventLocal: null
-    idAPIfootball: ""
-    idAwayTeam: ""
-    idEvent: ""
-    idHomeTeam: ""
-    idLeague: ""
-    idVenue: ""
-    intAwayScore: null
-    intHomeScore: null
-    intRound: ""
-    intScore: null
-    intScoreVotes: null
-    intSpectators: null
-    strAwayTeam: ""
-    strAwayTeamBadge: ""
-    strBanner: ""
-    strCity: null
-    strCountry: ""
-    strDescriptionEN: null
-    strEvent: ""
-    strEventAlternate: ""
-    strFanart: null
-    strFilename: ""
-    strGroup: null
-    strHomeTeam: ""
-    strHomeTeamBadge: ""
-    strLeague: ""
-    strLeagueBadge: ""
-    strLocked: ""
-    strMap: null
-    strOfficial: ""
-    strPoster: ""
-    strPostponed: ""
-    strResult: null
-    strSeason: ""
-    strSport: ""
-    strSquare: ""
-    strStatus: ""
-    strThumb: ""
-    strTime: ""
-    strTimeLocal: null
-    strTimestamp: ""
-    strTweet1: null
-    strTweet2: null
-    strTweet3: null
-    strVenue: ""
-    strVideo: null
+    dateEvent: string
+    dateEventLocal: string | null
+    idAPIfootball: string
+    idAwayTeam: string
+    idEvent: string
+    idHomeTeam: string
+    idLeague: string
+    idVenue: string
+    intAwayScore: number | null
+    intHomeScore: number | null
+    intRound: string
+    intScore: number | null
+    intScoreVotes: number | null
+    intSpectators: number | null
+    strAwayTeam: string
+    strAwayTeamBadge: string
+    strBanner: string
+    strCity: string | null
+    strCountry: string
+    strDescriptionEN: string | null
+    strEvent: string
+    strEventAlternate: string
+    strFanart: string | null
+    strFilename: string
+    strGroup: string | null
+    strHomeTeam: string
+    strHomeTeamBadge: string
+    strLeague: string
+    strLeagueBadge: string
+    strLocked: string
+    strMap: string | null
+    strOfficial: string
+    strPoster: string
+    strPostponed: string
+    strResult: string | null
+    strSeason: string
+    strSport: string
+    strSquare: string
+    strStatus: string
+    strThumb: string
+    strTime: string
+    strTimeLocal: string | null
+    strTimestamp: string
+    strTweet1: string | null
+    strTweet2: string | null
+    strTweet3: string | null
+    strVenue: string
+    strVideo: string | null
 }
 
 export type EventResponseApi = {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { LoginRequest, LoginResponse } from "../types/LoginTypes";
-import type { NuevoUsuarioRequestType, UserType } from "../types/UserTypes";
+import type { LoginRequest, LoginResponse } from "../../types/LoginTypes";
+import type { NuevoUsuarioRequestType, UserType } from "../../types/UserTypes";
 import { apiClient } from "./ApiCliente";
 
 const BASE_URL = '/usuarios';

@@ -4,7 +4,8 @@ import { useHistory } from 'react-router-dom';
 import {
   userSelector,
   setUser,
-  clearUser
+  clearUser,
+  getRoleFromToken
 } from '../store/slices/userSlice';
 import type { NuevoUsuarioRequestType, UserType } from '../types/UserTypes';
 import type { LoginRequest } from '../types/LoginTypes';
@@ -68,10 +69,12 @@ export const useUser = () => {
       if (response.token) {
         // Primero guarda el usuario y token en el estado global
         setUserData(response.usuario, response.token);
-        
-        if (hasRole("CLIENTE")) {
-          navigateTo(ADMIN_ROUTES.ADMIN_LAYOUT);
-        } else if (hasRole("ADMIN")) {
+
+        const rol=getRoleFromToken(response.token)
+
+        if (rol.includes("CLIENTE")) {
+          navigateTo(USER_ROUTES.HOME);
+        } else if (rol.includes("ADMIN")) {
           //navigateTo(USER_ROUTES.HOME);
           navigateTo(ADMIN_ROUTES.ADMIN_LAYOUT);
         }
@@ -122,6 +125,8 @@ export const useUser = () => {
   const createUser = async (userData: NuevoUsuarioRequestType): Promise<UserType | null> => {
     try {
       const newUser = await UserService.crearUsuario(userData);
+      login(newUser.email,userData.password)
+      
       return newUser;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear usuario';

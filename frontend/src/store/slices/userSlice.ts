@@ -24,7 +24,7 @@ interface Role {
  * @param token - Token JWT a decodificar
  * @returns Array de roles del usuario
  */
-const getRoleFromToken = (token: string): string[] => {
+export const getRoleFromToken = (token: string): string[] => {
   try {
     // Decodificar el token (simple split por '.' y decodificación base64)
     const payload = JSON.parse(atob(token.split('.')[1]));

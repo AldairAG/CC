@@ -1,183 +1,209 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createSelector, type PayloadAction } from "@reduxjs/toolkit";
 import type { QuinielaType } from "../../types/QuinielaType";
 
+/**
+ * Interface que define la estructura del estado de quinielas
+ */
 interface QuinielaState {
-    quiniela: QuinielaType | null;
-    quinielas: QuinielaType[];
-    quinielasFiltradas?: QuinielaType[];
+  quinielas: QuinielaType[];
+  quinielaActual: QuinielaType | null;
+  quinielasFiltradas: QuinielaType[];
 }
 
-interface DateRangeFilter {
-    startDate: string;
-    endDate: string;
-}
-
-interface PriceRangeFilter {
-    min: number;
-    max: number;
-}
-
+/**
+ * Estado inicial para el slice de quinielas
+ */
 const initialState: QuinielaState = {
-    quiniela: null,
-    quinielas: [],
-    quinielasFiltradas: []
+  quinielas: [],
+  quinielaActual: null,
+  quinielasFiltradas: [],
 };
 
+/**
+ * @file quinielaSlice.ts
+ * @description Este archivo define el `quinielaSlice` para gestionar el estado relacionado con las quinielas en la aplicación.
+ * Utiliza Redux Toolkit's `createSlice` para manejar la información de quinielas.
+ */
 const quinielaSlice = createSlice({
-    name: "quiniela",
-    initialState,
-    reducers: {
-        setQuiniela: (state, action) => {
-            state.quiniela = action.payload;
-        },
-        setQuinielas: (state, action) => {
-            state.quinielas = action.payload;
-        },
-        setQuinielasFiltradas: (state, action) => {
-            state.quinielasFiltradas = action.payload;
-        },
-        clearQuiniela: (state) => {
-            state.quiniela = null;
-        },
-        filtrarQuinielasPorNombre: (state, action: PayloadAction<string>) => {
-            const criterio = action.payload.toLowerCase();
-            if (criterio === '') {
-                state.quinielasFiltradas = state.quinielas;
-            } else {
-                state.quinielasFiltradas = state.quinielas.filter(
-                    quiniela => quiniela.nombreQuiniela.toLowerCase().includes(criterio)
-                );
-            }
-        },
-        filtrarQuinielasPorFecha: (state, action: PayloadAction<DateRangeFilter>) => {
-            const { startDate, endDate } = action.payload;
-            state.quinielasFiltradas = state.quinielas.filter(quiniela => {
-                const fechaInicio = new Date(quiniela.fechaInicio);
-                return fechaInicio >= new Date(startDate) && 
-                       fechaInicio <= new Date(endDate);
-            });
-        },
-        filtrarQuinielasPorPrecio: (state, action: PayloadAction<PriceRangeFilter>) => {
-            const { min, max } = action.payload;
-            state.quinielasFiltradas = state.quinielas.filter(quiniela => 
-                quiniela.precioParticipacion >= min && 
-                quiniela.precioParticipacion <= max
-            );
-        },
-        filtrarQuinielasPorEstado: (state, action: PayloadAction<string>) => {
-            const estado = action.payload.toLowerCase();
-            if (estado === '') {
-                state.quinielasFiltradas = state.quinielas;
-            } else {
-                state.quinielasFiltradas = state.quinielas.filter(
-                    quiniela => quiniela.estado.toLowerCase() === estado
-                );
-            }
-        },
-        filtrarQuinielasPorTipoPremio: (state, action: PayloadAction<string>) => {
-            const tipoPremio = action.payload.toLowerCase();
-            if (tipoPremio === '') {
-                state.quinielasFiltradas = state.quinielas;
-            } else {
-                state.quinielasFiltradas = state.quinielas.filter(
-                    quiniela => quiniela.tipoPremio.toLowerCase() === tipoPremio
-                );
-            }
-        },
-        filtrarQuinielasPorParticipantes: (state, action: PayloadAction<number>) => {
-            const minParticipantes = action.payload;
-            state.quinielasFiltradas = state.quinielas.filter(
-                quiniela => quiniela.numeroParticipantes >= minParticipantes
-            );
-        },
-        filtrarQuinielasPorPremioAcumulado: (state, action: PayloadAction<PriceRangeFilter>) => {
-            const { min, max } = action.payload;
-            state.quinielasFiltradas = state.quinielas.filter(
-                quiniela => quiniela.premioAcumulado >= min && 
-                           quiniela.premioAcumulado <= max
-            );
-        },
-        filtrarQuinielasPorTipoApuesta: (state, action: PayloadAction<string>) => {
-            const tipoApuesta = action.payload.toLowerCase();
-            if (tipoApuesta === '') {
-                state.quinielasFiltradas = state.quinielas;
-            } else {
-                state.quinielasFiltradas = state.quinielas.filter(
-                    quiniela => quiniela.tiposApuestas.some(
-                        tipo => tipo.toLowerCase().includes(tipoApuesta)
-                    )
-                );
-            }
-        },
-        aplicarFiltrosMultiples: (state, action: PayloadAction<{
-            nombre?: string;
-            fechas?: DateRangeFilter;
-            precio?: PriceRangeFilter;
-            estado?: string;
-            tipoPremio?: string;
-            minParticipantes?: number;
-            premioAcumulado?: PriceRangeFilter;
-            tipoApuesta?: string;
-        }>) => {
-            let quinielasFiltradas = [...state.quinielas];
-            const filtros = action.payload;
+  name: "quiniela",
+  initialState,
+  reducers: {
+    // Acciones para manejar las quinielas
+    setQuinielas: (state, action: PayloadAction<QuinielaType[]>) => {
+      state.quinielas = action.payload;
+      state.quinielasFiltradas = action.payload;
+    },
 
-            if (filtros.nombre) {
-                quinielasFiltradas = quinielasFiltradas.filter(
-                    quiniela => quiniela.nombreQuiniela.toLowerCase().includes(filtros.nombre!.toLowerCase())
-                );
-            }
+    setQuinielaActual: (state, action: PayloadAction<QuinielaType | null>) => {
+      state.quinielaActual = action.payload;
+    },
 
-            if (filtros.fechas) {
-                quinielasFiltradas = quinielasFiltradas.filter(quiniela => {
-                    const fechaInicio = new Date(quiniela.fechaInicio);
-                    return fechaInicio >= new Date(filtros.fechas!.startDate) && 
-                           fechaInicio <= new Date(filtros.fechas!.endDate);
-                });
-            }
+    addQuiniela: (state, action: PayloadAction<QuinielaType>) => {
+      state.quinielas.push(action.payload);
+      state.quinielasFiltradas = state.quinielas;
+    },
 
-            if (filtros.precio) {
-                quinielasFiltradas = quinielasFiltradas.filter(
-                    quiniela => quiniela.precioParticipacion >= filtros.precio!.min && 
-                               quiniela.precioParticipacion <= filtros.precio!.max
-                );
-            }
+    updateQuiniela: (state, action: PayloadAction<QuinielaType>) => {
+      const index = state.quinielas.findIndex(q => q.idQuiniela === action.payload.idQuiniela);
+      if (index !== -1) {
+        state.quinielas[index] = action.payload;
+      }
+      if (state.quinielaActual?.idQuiniela === action.payload.idQuiniela) {
+        state.quinielaActual = action.payload;
+      }
+      // Actualizar también en la lista filtrada
+      const indexFiltrado = state.quinielasFiltradas.findIndex(q => q.idQuiniela === action.payload.idQuiniela);
+      if (indexFiltrado !== -1) {
+        state.quinielasFiltradas[indexFiltrado] = action.payload;
+      }
+    },
 
-            if (filtros.estado) {
-                quinielasFiltradas = quinielasFiltradas.filter(
-                    quiniela => quiniela.estado.toLowerCase() === filtros.estado!.toLowerCase()
-                );
-            }
+    removeQuiniela: (state, action: PayloadAction<number>) => {
+      state.quinielas = state.quinielas.filter(q => q.idQuiniela !== action.payload);
+      state.quinielasFiltradas = state.quinielasFiltradas.filter(q => q.idQuiniela !== action.payload);
+      if (state.quinielaActual?.idQuiniela === action.payload) {
+        state.quinielaActual = null;
+      }
+    },
 
-            state.quinielasFiltradas = quinielasFiltradas;
-        },
-        limpiarFiltros: (state) => {
-            state.quinielasFiltradas = state.quinielas;
-        }
-    }
+    setQuinielasFiltradas: (state, action: PayloadAction<QuinielaType[]>) => {
+      state.quinielasFiltradas = action.payload;
+    },
+
+    filtrarQuinielasPorNombre: (state, action: PayloadAction<string>) => {
+      const criterio = action.payload.toLowerCase();
+      if (criterio === "") {
+        state.quinielasFiltradas = state.quinielas;
+      } else {
+        state.quinielasFiltradas = state.quinielas.filter(
+          q => q.nombreQuiniela.toLowerCase().includes(criterio)
+        );
+      }
+    },
+
+    filtrarQuinielasPorEstado: (state, action: PayloadAction<string>) => {
+      const estado = action.payload.toLowerCase();
+      if (estado === "") {
+        state.quinielasFiltradas = state.quinielas;
+      } else {
+        state.quinielasFiltradas = state.quinielas.filter(
+          q => q.estado.toLowerCase() === estado
+        );
+      }
+    },
+
+    filtrarQuinielasPorTipoPremio: (state, action: PayloadAction<string>) => {
+      const tipoPremio = action.payload.toLowerCase();
+      if (tipoPremio === "") {
+        state.quinielasFiltradas = state.quinielas;
+      } else {
+        state.quinielasFiltradas = state.quinielas.filter(
+          q => q.tipoPremio.toLowerCase() === tipoPremio
+        );
+      }
+    },
+
+    filtrarQuinielasPorParticipantes: (state, action: PayloadAction<number>) => {
+      const minParticipantes = action.payload;
+      state.quinielasFiltradas = state.quinielas.filter(
+        q => q.numeroParticipantes >= minParticipantes
+      );
+    },
+
+    filtrarQuinielasPorPremioAcumulado: (state, action: PayloadAction<{ min: number; max: number }>) => {
+      const { min, max } = action.payload;
+      state.quinielasFiltradas = state.quinielas.filter(
+        q => q.premioAcumulado >= min && q.premioAcumulado <= max
+      );
+    },
+
+    filtrarQuinielasPorTipoApuesta: (state, action: PayloadAction<string>) => {
+      const tipoApuesta = action.payload.toLowerCase();
+      if (tipoApuesta === "") {
+        state.quinielasFiltradas = state.quinielas;
+      } else {
+        state.quinielasFiltradas = state.quinielas.filter(
+          q => q.tiposApuestas.some(tipo => tipo.toLowerCase().includes(tipoApuesta))
+        );
+      }
+    },
+
+    clearQuinielas: (state) => {
+      state.quinielas = [];
+      state.quinielasFiltradas = [];
+      state.quinielaActual = null;
+    },
+  }
 });
 
 export const {
-    setQuiniela,
-    setQuinielas,
-    setQuinielasFiltradas,
-    clearQuiniela,
-    filtrarQuinielasPorNombre,
-    filtrarQuinielasPorFecha,
-    filtrarQuinielasPorPrecio,
-    filtrarQuinielasPorEstado,
-    filtrarQuinielasPorTipoPremio,
-    filtrarQuinielasPorParticipantes,
-    filtrarQuinielasPorPremioAcumulado,
-    filtrarQuinielasPorTipoApuesta,
-    aplicarFiltrosMultiples,
-    limpiarFiltros
+  setQuinielas,
+  setQuinielaActual,
+  addQuiniela,
+  updateQuiniela,
+  removeQuiniela,
+  setQuinielasFiltradas,
+  filtrarQuinielasPorNombre,
+  filtrarQuinielasPorEstado,
+  filtrarQuinielasPorTipoPremio,
+  filtrarQuinielasPorParticipantes,
+  filtrarQuinielasPorPremioAcumulado,
+  filtrarQuinielasPorTipoApuesta,
+  clearQuinielas
 } = quinielaSlice.actions;
 
-export const quinielaSelector = {
-    quiniela: (state: { quiniela: QuinielaState }) => state.quiniela.quiniela,
-    quinielas: (state: { quiniela: QuinielaState }) => state.quiniela.quinielas,
-    quinielasFiltradas: (state: { quiniela: QuinielaState }) => state.quiniela.quinielasFiltradas
-};
+/**
+ * Selector para obtener todas las quinielas
+ */
+const selectAllQuinielas = (state: { quiniela: QuinielaState }) => state.quiniela.quinielas;
 
+/**
+ * Selector para obtener las quinielas filtradas
+ */
+const selectQuinielasFiltradas = (state: { quiniela: QuinielaState }) => state.quiniela.quinielasFiltradas;
+
+/**
+ * Selector para obtener una quiniela por ID
+ */
+const selectQuinielaById = createSelector(
+  [
+    selectAllQuinielas,
+    (_: { quiniela: QuinielaState }, idQuiniela: number) => idQuiniela
+  ],
+  (quinielas, idQuiniela) => quinielas.find(q => q.idQuiniela === idQuiniela) || null
+);
+
+/**
+ * Selector para obtener quinielas por tipo de premio
+ */
+const selectQuinielasByTipoPremio = createSelector(
+  [
+    selectAllQuinielas,
+    (_: { quiniela: QuinielaState }, tipoPremio: string) => tipoPremio
+  ],
+  (quinielas, tipoPremio) => quinielas.filter(q => q.tipoPremio.toLowerCase() === tipoPremio.toLowerCase())
+);
+
+/**
+ * Selector para obtener quinielas con premio acumulado bajo un umbral
+ */
+const selectQuinielasBajoPremio = createSelector(
+  [
+    selectAllQuinielas,
+    (_: { quiniela: QuinielaState }, maxPremio: number) => maxPremio
+  ],
+  (quinielas, maxPremio) => quinielas.filter(q => q.premioAcumulado <= maxPremio)
+);
+
+/**
+ * Objeto que contiene selectores para acceder al estado de quinielas
+ */
+export const quinielaSelector = {
+  quinielas: selectAllQuinielas,
+  quinielasFiltradas: selectQuinielasFiltradas,
+  quinielaActual: (state: { quiniela: QuinielaState }) => state.quiniela.quinielaActual,
+  quinielaById: selectQuinielaById,
+  quinielasByTipoPremio: selectQuinielasByTipoPremio,
+  quinielasBajoPremio: selectQuinielasBajoPremio
+};
 export default quinielaSlice.reducer;

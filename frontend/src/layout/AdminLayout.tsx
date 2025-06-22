@@ -61,8 +61,9 @@ const AdminLayout = () => {
             <section className="flex justify-center">
                 <Switch>
                     <Route path={ADMIN_ROUTES.ADMIN_HOME} component={CreateQuiniela} />
-                    {/*<Route path={ADMIN_ROUTES.ADMIN_QUINIELA} component={Dashboard} />
                     <Route path={ADMIN_ROUTES.ADMIN_QUINIELAS} component={Quinielas} />
+                    <Route path={ADMIN_ROUTES.ADMIN_CREATE_QUINIELA} component={CreateQuiniela} />
+                    {/*<Route path={ADMIN_ROUTES.ADMIN_QUINIELA} component={Dashboard} />
                     <Route path={ADMIN_ROUTES.ADMIN_USER} component={Dashboard} />
                     <Route path={ADMIN_ROUTES.ADMIN_USERS} component={Usuarios} />
                     <Route path={ADMIN_ROUTES.ADMIN_CREATE_QUINIELA} component={CreateQuiniela} /> */}

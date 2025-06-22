@@ -31,7 +31,7 @@ const formulario: FormField[] = [
 const validationSchema = Yup.object({
     username: Yup.string()
         .required("Campo requerido")
-        .min(3, "El usuario debe tener al menos 3 caracteres"),
+        .min(2, "El usuario debe tener al menos 3 caracteres"),
     nombres: Yup.string()
         .required("Campo requerido")
         .matches(/^[a-zA-Z\s]+$/, "Solo se permiten letras"),
@@ -39,7 +39,7 @@ const validationSchema = Yup.object({
         .required("Campo requerido")
         .matches(/^[a-zA-Z\s]+$/, "Solo se permiten letras"),
     password: Yup.string()
-        /*         .min(8, "La contraseña debe tener al menos 8 caracteres")
+        /* .min(8, "La contraseña debe tener al menos 8 caracteres")
                 .matches(
                     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
                     "Debe contener al menos una mayúscula, una minúscula y un número"
@@ -115,10 +115,11 @@ const RegisterForm = () => {
                         <div className="flex gap-2">
                             <select
                                 className="input flex-1"
+                                value={values.fechaNacimiento ? parseInt(values.fechaNacimiento.split('-')[2] || '0') : ''}
                                 onChange={(e) => {
-                                    const currentDate = values.fechaNacimiento || `${new Date().getFullYear()}-01-01`;
-                                    const [year, month] = currentDate.split('-');
-                                    const newDate = `${year}-${month || '01'}-${e.target.value.padStart(2, '0')}`;
+                                    const day = e.target.value.padStart(2, '0');
+                                    const currentDate = values.fechaNacimiento ? values.fechaNacimiento.split('-') : [`${new Date().getFullYear()}`, '01', '01'];
+                                    const newDate = `${currentDate[0]}-${currentDate[1]}-${day}`;
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
@@ -129,10 +130,11 @@ const RegisterForm = () => {
                             </select>
                             <select
                                 className="input flex-1"
+                                value={values.fechaNacimiento ? parseInt(values.fechaNacimiento.split('-')[1] || '0') : ''}
                                 onChange={(e) => {
-                                    const currentDate = values.fechaNacimiento || `${new Date().getFullYear()}-01-01`;
-                                    const [year] = currentDate.split('-');
-                                    const newDate = `${year}-${e.target.value.padStart(2, '0')}-01`;
+                                    const month = e.target.value.padStart(2, '0');
+                                    const currentDate = values.fechaNacimiento ? values.fechaNacimiento.split('-') : [`${new Date().getFullYear()}`, '01', '01'];
+                                    const newDate = `${currentDate[0]}-${month}-${currentDate[2]}`;
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
@@ -143,8 +145,11 @@ const RegisterForm = () => {
                             </select>
                             <select
                                 className="input flex-1"
+                                value={values.fechaNacimiento ? values.fechaNacimiento.split('-')[0] : ''}
                                 onChange={(e) => {
-                                    const newDate = `${e.target.value}`;
+                                    const year = e.target.value;
+                                    const currentDate = values.fechaNacimiento ? values.fechaNacimiento.split('-') : [year, '01', '01'];
+                                    const newDate = `${year}-${currentDate[1]}-${currentDate[2]}`;
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
