@@ -49,6 +49,24 @@ export type EventType = {
     strVideo: string | null
 }
 
+export type Evento = {
+    id?: number;
+    equipoLocal: string;
+    equipoVisitante: string;
+    fechaPartido: string;
+    estadoEvento: string;
+    eventoExternoId?: string;
+    deporte: string;
+    liga?: string;
+    estadio?: string;
+    pais?: string;
+    cuotaLocal?: number;
+    cuotaEmpate?: number;
+    cuotaVisitante?: number;
+    fechaCreacion?: string;
+    fechaActualizacion?: string;
+};
+
 export type EventResponseApi = {
     idEvento: number;
     equipoLocal: string | null;

@@ -4,3 +4,88 @@ body {
   margin: 0;
 }
 
+/* Animaciones para notificaciones */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right 0.3s ease-in;
+}
+
+/* Línea de separación para apuestas */
+.divider {
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Estilos para cuotas de apuesta */
+.cuota-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.cuota-local {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.cuota-empate {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.cuota-visitante {
+  background-color: #fecaca;
+  color: #991b1b;
+}
+
+/* Botón flotante del carrito */
+.carrito-flotante {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease-in-out;
+}
+
+.carrito-flotante:hover {
+  transform: scale(1.05);
+}
+
+/* Efecto de pulso para notificaciones importantes */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s infinite;
+}
+

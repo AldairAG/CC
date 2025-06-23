@@ -7,13 +7,13 @@ import { combineReducers } from 'redux';
 import deportesReducer from './slices/deportesSlice'; // Importa el slice de deportes
 import userSlice from './slices/userSlice'; // Importa el slice de auth con datos de ususario
 import quinielaReducer from './slices/quinielaSlice'; // Importa el slice con datos de quiniela
-//import carritoReducer from './slices/carritoSlice'; // Importa el slice con datos de carrito
+import carritoApuestasReducer from './slices/carritoApuestasSlice'; // Importa el slice del carrito de apuestas
 
 // Configuración de Redux-Persist
 const persistConfig = {
   key: 'root', // Clave bajo la cual se guardará el estado
   storage, // Usar sessionStorage como almacenamiento compatible
-  whitelist: ['deportes', 'user','quiniela','carrito'], // Solo persistir los slices 'deportes' y 'auth' (opcional)
+  whitelist: ['deportes', 'user','quiniela','carritoApuestas'], // Solo persistir los slices 'deportes' y 'auth' (opcional)
 };
 
 // Combina todos los reducers
@@ -21,7 +21,7 @@ const rootReducer = combineReducers({
   deportes: deportesReducer,
   user: userSlice,
   quiniela: quinielaReducer,
-  //carrito: carritoReducer,
+  carritoApuestas: carritoApuestasReducer,
 });
 
 // Aplica persistencia al reducer combinado

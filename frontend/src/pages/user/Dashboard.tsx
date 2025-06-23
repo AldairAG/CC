@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useDeportes } from '../../hooks/useDeportes';
+import { useCarritoApuestas } from '../../hooks/useCarritoApuestas';
 import type { EventType } from '../../types/EventType';
 import CasinoBanner from '../../components/banner/CasinoBanner';
 import DashboardStats from '../../components/stats/DashboardStats';
 import DashboardTabs from '../../components/navigation/DashboardTabs';
 import EventsSection from '../../components/sections/EventsSection';
 import SportsFilter from '../../components/filters/SportsFilter';
+import ModalApuesta from '../../components/modals/ModalApuesta';
+import CarritoApuestas from '../../components/carrito/CarritoApuestas';
+import BotonCarrito from '../../components/carrito/BotonCarrito';
+import NotificacionesContainer from '../../components/notificaciones/NotificacionesContainer';
 
 const Dashboard = () => {  
   const {
@@ -24,8 +29,11 @@ const Dashboard = () => {
     getSportMatches
   } = useDeportes();
 
+  const { hayApuestas } = useCarritoApuestas();
+
   const [activeTab, setActiveTab] = useState('popular');
-  // Cargar datos iniciales
+  const [modalApuestaOpen, setModalApuestaOpen] = useState(false);
+  const [eventoSeleccionado, setEventoSeleccionado] = useState<EventType | null>(null);  // Cargar datos iniciales
   useEffect(() => {
     const loadInitialData = async () => {
       await Promise.all([
@@ -71,12 +79,16 @@ const Dashboard = () => {
       count: 0
     }
   ];
-
   // Función para manejar clicks en apostar
   const handleBetClick = (event: EventType) => {
-    console.log('Apostar en:', event.strEvent);
-    // Aquí puedes implementar la lógica para redirigir a la página de apuestas
-    // o abrir un modal de apuesta
+    setEventoSeleccionado(event);
+    setModalApuestaOpen(true);
+  };
+
+  // Función para cerrar el modal de apuesta
+  const cerrarModalApuesta = () => {
+    setModalApuestaOpen(false);
+    setEventoSeleccionado(null);
   };
   // Función para obtener los eventos según la pestaña activa
   const getCurrentEvents = () => {
@@ -190,9 +202,7 @@ const Dashboard = () => {
           onBetClick={handleBetClick}
           showLive={activeTab === 'live'}
           isLoading={isLoading}
-        />
-
-        {/* Footer Promocional */}
+        />        {/* Footer Promocional */}
         <div className="mt-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white text-center">
           <h3 className="text-2xl font-bold mb-4">🎰 ¡Obtén tu Bono de Bienvenida!</h3>
           <p className="text-lg mb-6">
@@ -208,6 +218,20 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Apuesta */}
+      <ModalApuesta
+        isOpen={modalApuestaOpen}
+        onClose={cerrarModalApuesta}
+        evento={eventoSeleccionado}
+      />
+
+      {/* Carrito de Apuestas */}
+      <CarritoApuestas />      {/* Botón Flotante del Carrito */}
+      {hayApuestas && <BotonCarrito />}
+
+      {/* Contenedor de Notificaciones */}
+      <NotificacionesContainer position="top-right" />
     </div>
   );
 };

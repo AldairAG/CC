@@ -67,6 +67,7 @@ export const useUser = () => {
       const credentials: LoginRequest = { email, password };
       const response = await UserService.login(credentials);
       if (response.token) {
+
         // Primero guarda el usuario y token en el estado global
         setUserData(response.usuario, response.token);
 
@@ -143,7 +144,7 @@ export const useUser = () => {
       const updatedUser = await UserService.actualizarUsuario(id, userData);
 
       // Si se actualiza el usuario actual, actualizar también en el estado
-      if (user && user.idUser === id) {
+      if (user && user.idUsuario === id) {
         // Usar setUserData en lugar de dispatch directo
         setUserData(updatedUser, token);
       }
@@ -160,7 +161,7 @@ export const useUser = () => {
     try { 
       await UserService.desactivarUsuario(id);
       // Si se elimina el usuario actual, limpiar el estado
-      if (user && user.idUser === id) {
+      if (user && user.idUsuario === id) {
         logout();
       }
       return true;

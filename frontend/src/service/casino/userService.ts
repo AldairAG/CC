@@ -75,6 +75,7 @@ export const UserService = {
 
             // En el caso actual, el backend no devuelve un token, solo el usuario
             // Si se implementa JWT en el futuro, el token vendría en la respuesta
+
             return {
                 usuario: response.data.usuario,
                 token: response.data.token, // O response.headers['authorization'] si implementas JWT

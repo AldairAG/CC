@@ -53,6 +53,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- WebClient for HTTP calls -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!-- DevTools para desarrollo -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

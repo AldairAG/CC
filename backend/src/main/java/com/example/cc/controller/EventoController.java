@@ -5,15 +5,23 @@ import com.example.cc.service.evento.IEventoService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/cc/eventos")
 @CrossOrigin(origins = "*")
+@Slf4j
 public class EventoController {
 
     @Autowired
@@ -74,5 +82,54 @@ public class EventoController {
     @GetMapping("/quiniela/{quinielaId}")
     public ResponseEntity<List<Evento>> getEventosByQuiniela(@PathVariable Long quinielaId) {
         return ResponseEntity.ok(eventoService.findByQuinielaId(quinielaId));
+    }
+
+    // Nuevos endpoints para integración con TheSportsDB
+
+    @GetMapping("/buscar")
+    public ResponseEntity<?> buscarOCrearEvento(
+            @RequestParam String equipoLocal,
+            @RequestParam String equipoVisitante) {
+
+        try {
+            log.info("Buscando evento: {} vs {}", equipoLocal, equipoVisitante);
+
+            Optional<Evento> evento = eventoService.buscarOCrearEvento(equipoLocal, equipoVisitante);
+
+            if (evento.isPresent()) {
+                return ResponseEntity.ok(evento.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("mensaje", "Evento no encontrado en ninguna fuente"));
+            }
+
+        } catch (Exception e) {
+            log.error("Error al buscar o crear evento", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error interno del servidor"));
+        }
+    }
+
+    @PostMapping("/sincronizar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> sincronizarEventosPorFecha(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+
+        try {
+            log.info("Sincronizando eventos para la fecha: {}", fecha);
+
+            List<Evento> eventosNuevos = eventoService.sincronizarEventosPorFecha(fecha);
+
+            return ResponseEntity.ok(Map.of(
+                    "mensaje", "Sincronización completada",
+                    "eventosNuevos", eventosNuevos.size(),
+                    "eventos", eventosNuevos
+            ));
+
+        } catch (Exception e) {
+            log.error("Error al sincronizar eventos", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al sincronizar eventos: " + e.getMessage()));
+        }
     }
 }

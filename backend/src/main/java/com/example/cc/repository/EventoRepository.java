@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventoRepository extends JpaRepository<Evento, Long> {
@@ -13,4 +14,8 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     List<Evento> findByEquipoLocal(String equipo);
     List<Evento> findByEquipoVisitante(String equipo);
     List<Evento> findByQuinielasIdQuiniela(Long quinielaId);
+    
+    // Métodos adicionales para TheSportsDB integration
+    List<Evento> findByEquipoLocalAndEquipoVisitante(String equipoLocal, String equipoVisitante);
+    Optional<Evento> findByIdExterno(String idExterno);
 }
