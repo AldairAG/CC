@@ -62,10 +62,6 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
         if (request.getNombre() != null) perfil.setNombre(request.getNombre());
         if (request.getApellido() != null) perfil.setApellido(request.getApellido());
         if (request.getTelefono() != null) perfil.setTelefono(request.getTelefono());
-        if (request.getDireccion() != null) perfil.setDireccion(request.getDireccion());
-        if (request.getCiudad() != null) perfil.setCiudad(request.getCiudad());
-        if (request.getCodigoPostal() != null) perfil.setCodigoPostal(request.getCodigoPostal());
-        if (request.getPais() != null) perfil.setPais(request.getPais());
 
         if (request.getFechaNacimiento() != null) {
             try {

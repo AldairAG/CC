@@ -1,6 +1,7 @@
 import { Route, Switch, useHistory } from "react-router-dom";
 import { USER_ROUTES } from "../constants/ROUTERS";
 import EventoDetails from "../pages/user/EventoDetails";
+import UserProfile from "../pages/user/UserProfile";
 import QuinielaList from "../pages/user/QuinielaList";
 import QuinielaArmar from "../pages/user/QuinielaArmar";
 import Dashboard from "../pages/user/Dashboard";
@@ -36,8 +37,7 @@ const UserLayout = () => {
 
             <div className="flex justify-center">
                 <Switch>
-                    {/* <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
-                    <Route path={USER_ROUTES.QUINIELAS_LIST} component={Quinielas} />*/}
+                    <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
                     <Route path={USER_ROUTES.QUINIELA} component={QuinielaArmar} /> 
                     <Route path={USER_ROUTES.HOME} component={Dashboard} /> 
                     <Route path={USER_ROUTES.QUINIELAS_LIST} component={QuinielaList} />

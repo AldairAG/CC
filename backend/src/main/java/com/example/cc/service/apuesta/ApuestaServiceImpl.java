@@ -11,9 +11,12 @@ import com.example.cc.entities.enums.TipoApuesta;
 import com.example.cc.repository.ApuestaRepository;
 import com.example.cc.repository.UsuarioRepository;
 import com.example.cc.repository.EventoRepository;
-import com.example.cc.service.evento.IEventoService;
+import com.example.cc.service.thesportsdb.ITheSportsDbService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +39,9 @@ import java.util.stream.Collectors;
 public class ApuestaServiceImpl implements ApuestaService {    private final ApuestaRepository apuestaRepository;
     private final UsuarioRepository usuarioRepository;
     private final EventoRepository eventoRepository;
-    private final IEventoService eventoService;
+    
+    @Autowired
+    private ITheSportsDbService apiBaseDatos;
     
     // Constantes para validaciones
     private static final BigDecimal APUESTA_MINIMA = new BigDecimal("1.00");
@@ -379,30 +384,44 @@ public class ApuestaServiceImpl implements ApuestaService {    private final Apu
                 return eventoExistente.get();
             }
         }
-        
-        // Estrategia 2: Buscar por ID externo (TheSportsDB)
+          // Estrategia 2: Buscar por ID externo (TheSportsDB)
         if (request.getIdEventoExterno() != null && !request.getIdEventoExterno().trim().isEmpty()) {
             log.info("Buscando evento por ID externo: {}", request.getIdEventoExterno());
-            Optional<Evento> eventoPorIdExterno = eventoService.buscarOCrearEventoPorIdExterno(request.getIdEventoExterno());
+            Optional<com.example.cc.dto.response.TheSportsDbEventResponse> eventoPorIdExterno = apiBaseDatos.buscarEventoPorId(request.getIdEventoExterno());
             if (eventoPorIdExterno.isPresent()) {
-                log.info("Evento encontrado/creado por ID externo: {}", request.getIdEventoExterno());
-                return eventoPorIdExterno.get();
+                log.info("Evento encontrado por ID externo: {}", request.getIdEventoExterno());
+                // Convertir TheSportsDbEventResponse a Evento y guardarlo
+                Evento eventoConvertido = convertirTheSportsDbEventoAEvento(eventoPorIdExterno.get());
+                return eventoRepository.save(eventoConvertido);
             }
         }
-        
-        // Estrategia 3: Buscar por equipos
+          // Estrategia 3: Buscar por equipos en la base de datos local
         if (request.getEquipoLocal() != null && request.getEquipoVisitante() != null &&
             !request.getEquipoLocal().trim().isEmpty() && !request.getEquipoVisitante().trim().isEmpty()) {
             
-            log.info("Buscando evento por equipos: {} vs {}", request.getEquipoLocal(), request.getEquipoVisitante());
-            Optional<Evento> eventoPorEquipos = eventoService.buscarOCrearEvento(
+            log.info("Buscando evento por equipos en BD local: {} vs {}", request.getEquipoLocal(), request.getEquipoVisitante());
+            List<Evento> eventosExistentes = eventoRepository.findByEquipoLocalAndEquipoVisitante(
                 request.getEquipoLocal().trim(), 
                 request.getEquipoVisitante().trim()
             );
-            if (eventoPorEquipos.isPresent()) {
-                log.info("Evento encontrado/creado por equipos: {} vs {}", 
+            
+            if (!eventosExistentes.isEmpty()) {
+                log.info("Evento encontrado en BD local: {} vs {}", 
                         request.getEquipoLocal(), request.getEquipoVisitante());
-                return eventoPorEquipos.get();
+                return eventosExistentes.get(0); // Retornar el primer evento encontrado
+            }
+            
+            // Si no se encuentra en BD local, buscar en TheSportsDB
+            log.info("Buscando evento en TheSportsDB por equipos: {} vs {}", request.getEquipoLocal(), request.getEquipoVisitante());
+            List<com.example.cc.dto.response.TheSportsDbEventResponse> eventosTheSportsDb = 
+                apiBaseDatos.buscarEventosPorEquipos(request.getEquipoLocal().trim(), request.getEquipoVisitante().trim());
+            
+            if (!eventosTheSportsDb.isEmpty()) {
+                log.info("Evento encontrado en TheSportsDB: {} vs {}", 
+                        request.getEquipoLocal(), request.getEquipoVisitante());
+                // Convertir y guardar el primer evento
+                Evento eventoConvertido = convertirTheSportsDbEventoAEvento(eventosTheSportsDb.get(0));
+                return eventoRepository.save(eventoConvertido);
             }
         }
         
@@ -428,8 +447,7 @@ public class ApuestaServiceImpl implements ApuestaService {    private final Apu
         evento.setEquipoVisitante(request.getEquipoVisitante().trim());
         evento.setNombreEvento(request.getEquipoLocal() + " vs " + request.getEquipoVisitante());
         evento.setEstado("PROGRAMADO");
-        
-        // Establecer fecha del evento
+          // Establecer fecha del evento
         if (request.getFechaEvento() != null && !request.getFechaEvento().trim().isEmpty()) {
             try {
                 java.time.LocalDate fechaEvento = java.time.LocalDate.parse(request.getFechaEvento());
@@ -443,16 +461,90 @@ public class ApuestaServiceImpl implements ApuestaService {    private final Apu
             evento.setFechaPartido(java.sql.Date.valueOf(java.time.LocalDate.now().plusDays(1)));
         }
         
-        // Establecer ID externo si se proporciona
-        if (request.getIdEventoExterno() != null && !request.getIdEventoExterno().trim().isEmpty()) {
-            evento.setIdExterno(request.getIdEventoExterno());
-        }
-        
         // Guardar y retornar el evento
         Evento eventoGuardado = eventoRepository.save(evento);
         log.info("Evento básico creado con ID: {}", eventoGuardado.getIdEvento());
         
         return eventoGuardado;
+    }
+      /**
+     * Convierte un TheSportsDbEventResponse a una entidad Evento
+     */
+    private Evento convertirTheSportsDbEventoAEvento(com.example.cc.dto.response.TheSportsDbEventResponse theSportsDbEvent) {
+        Evento evento = new Evento();
+        
+        // Mapear campos básicos
+        evento.setEquipoLocal(theSportsDbEvent.getStrHomeTeam());
+        evento.setEquipoVisitante(theSportsDbEvent.getStrAwayTeam());
+        evento.setNombreEvento(theSportsDbEvent.getStrEvent());
+        
+        // Convertir fecha
+        if (theSportsDbEvent.getDateEvent() != null) {
+            try {
+                java.time.LocalDate fechaEvento = java.time.LocalDate.parse(theSportsDbEvent.getDateEvent());
+                evento.setFechaPartido(java.sql.Date.valueOf(fechaEvento));
+            } catch (Exception e) {
+                log.warn("Error al parsear fecha del evento desde TheSportsDB: {}. Usando fecha actual + 1 día", theSportsDbEvent.getDateEvent());
+                evento.setFechaPartido(java.sql.Date.valueOf(java.time.LocalDate.now().plusDays(1)));
+            }
+        } else {
+            // Fecha por defecto: mañana
+            evento.setFechaPartido(java.sql.Date.valueOf(java.time.LocalDate.now().plusDays(1)));
+        }
+        
+        // Mapear información adicional si está disponible
+        if (theSportsDbEvent.getStrLeague() != null) {
+            evento.setLiga(theSportsDbEvent.getStrLeague());
+        }
+        
+        if (theSportsDbEvent.getStrSport() != null) {
+            evento.setDeporte(theSportsDbEvent.getStrSport());
+        }
+        
+        if (theSportsDbEvent.getStrVenue() != null) {
+            evento.setEstadio(theSportsDbEvent.getStrVenue());
+        }
+        
+        // Mapear resultados si están disponibles
+        if (theSportsDbEvent.getIntHomeScore() != null && !theSportsDbEvent.getIntHomeScore().trim().isEmpty()) {
+            try {
+                evento.setResultadoLocal(Integer.parseInt(theSportsDbEvent.getIntHomeScore()));
+            } catch (NumberFormatException e) {
+                log.warn("Error al parsear resultado local: {}", theSportsDbEvent.getIntHomeScore());
+            }
+        }
+        
+        if (theSportsDbEvent.getIntAwayScore() != null && !theSportsDbEvent.getIntAwayScore().trim().isEmpty()) {
+            try {
+                evento.setResultadoVisitante(Integer.parseInt(theSportsDbEvent.getIntAwayScore()));
+            } catch (NumberFormatException e) {
+                log.warn("Error al parsear resultado visitante: {}", theSportsDbEvent.getIntAwayScore());
+            }
+        }
+        
+        // Mapear estado del evento
+        if (theSportsDbEvent.getStrStatus() != null) {
+            switch (theSportsDbEvent.getStrStatus().toLowerCase()) {
+                case "not started":
+                    evento.setEstado("PROGRAMADO");
+                    break;
+                case "match finished":
+                    evento.setEstado("FINALIZADO");
+                    break;
+                case "in progress":
+                    evento.setEstado("EN_CURSO");
+                    break;
+                default:
+                    evento.setEstado("PROGRAMADO");
+            }
+        } else {
+            evento.setEstado("PROGRAMADO");
+        }
+        
+        log.info("Evento convertido desde TheSportsDB: {} vs {} - {}", 
+                evento.getEquipoLocal(), evento.getEquipoVisitante(), evento.getFechaPartido());
+        
+        return evento;
     }
     
     private void validarCreacionApuesta(Usuario usuario, Evento evento, CrearApuestaRequest request) {

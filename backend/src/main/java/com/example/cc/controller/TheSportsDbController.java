@@ -1,7 +1,9 @@
 package com.example.cc.controller;
 
-import com.example.cc.entities.Evento;
-import com.example.cc.service.thesportsdb.TheSportsDbService;
+import com.example.cc.dto.response.TheSportsDbEventResponse;
+import com.example.cc.dto.response.TheSportsDbTeamResponse;
+import com.example.cc.dto.response.TheSportsDbLeagueResponse;
+import com.example.cc.service.thesportsdb.ITheSportsDbService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -10,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -19,132 +20,183 @@ import java.util.Optional;
 @Slf4j
 @CrossOrigin(origins = "*")
 public class TheSportsDbController {
-
-    private final TheSportsDbService theSportsDbService;
-
-    /**
-     * Busca un evento por equipos en TheSportsDB
-     * GET /api/thesportsdb/eventos/buscar-por-equipos?equipoLocal=Real Madrid&equipoVisitante=Barcelona
-     */
-    @GetMapping("/eventos/buscar-por-equipos")
-    public ResponseEntity<?> buscarEventoPorEquipos(
+    
+    private final ITheSportsDbService theSportsDbService;
+    
+    // ===== ENDPOINTS DE EVENTOS =====
+    
+    @GetMapping("/evento/{idEvento}")
+    public ResponseEntity<TheSportsDbEventResponse> buscarEventoPorId(@PathVariable String idEvento) {
+        log.info("Buscando evento por ID: {}", idEvento);
+        
+        Optional<TheSportsDbEventResponse> evento = theSportsDbService.buscarEventoPorId(idEvento);
+        
+        if (evento.isPresent()) {
+            return ResponseEntity.ok(evento.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/eventos/equipos")
+    public ResponseEntity<List<TheSportsDbEventResponse>> buscarEventosPorEquipos(
             @RequestParam String equipoLocal,
             @RequestParam String equipoVisitante) {
         
-        log.info("Buscando evento por equipos - Local: {}, Visitante: {}", equipoLocal, equipoVisitante);
+        log.info("Buscando eventos entre {} y {}", equipoLocal, equipoVisitante);
         
-        try {
-            Optional<Evento> evento = theSportsDbService.buscarEventoPorEquipos(equipoLocal, equipoVisitante);
-            
-            if (evento.isPresent()) {
-                return ResponseEntity.ok(evento.get());
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-            
-        } catch (Exception e) {
-            log.error("Error al buscar evento por equipos: {}", e.getMessage());
-            return ResponseEntity.internalServerError()
-                    .body("Error al buscar evento: " + e.getMessage());
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.buscarEventosPorEquipos(equipoLocal, equipoVisitante);
+        return ResponseEntity.ok(eventos);
+    }
+    
+    @GetMapping("/eventos/fecha/{fecha}")
+    public ResponseEntity<List<TheSportsDbEventResponse>> buscarEventosPorFecha(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+        
+        log.info("Buscando eventos para la fecha: {}", fecha);
+        
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.buscarEventosPorFecha(fecha);
+        return ResponseEntity.ok(eventos);
+    }
+    
+    @GetMapping("/eventos/liga/{idLiga}")
+    public ResponseEntity<List<TheSportsDbEventResponse>> buscarEventosPorLiga(@PathVariable String idLiga) {
+        log.info("Buscando eventos de la liga: {}", idLiga);
+        
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.buscarEventosPorLiga(idLiga);
+        return ResponseEntity.ok(eventos);
+    }
+    
+    @GetMapping("/eventos/equipo/{nombreEquipo}")
+    public ResponseEntity<List<TheSportsDbEventResponse>> buscarEventosPorEquipo(@PathVariable String nombreEquipo) {
+        log.info("Buscando eventos del equipo: {}", nombreEquipo);
+        
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.buscarEventosPorEquipo(nombreEquipo);
+        return ResponseEntity.ok(eventos);
+    }
+    
+    @GetMapping("/eventos/envivo")
+    public ResponseEntity<List<TheSportsDbEventResponse>> obtenerEventosEnVivo() {
+        log.info("Obteniendo eventos en vivo");
+        
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.obtenerEventosEnVivo();
+        return ResponseEntity.ok(eventos);
+    }
+    
+    @GetMapping("/eventos/proximos/{idLiga}")
+    public ResponseEntity<List<TheSportsDbEventResponse>> obtenerProximosEventos(@PathVariable String idLiga) {
+        log.info("Obteniendo próximos eventos de la liga: {}", idLiga);
+        
+        List<TheSportsDbEventResponse> eventos = theSportsDbService.obtenerProximosEventos(idLiga);
+        return ResponseEntity.ok(eventos);
+    }
+    
+    // ===== ENDPOINTS DE EQUIPOS =====
+    
+    @GetMapping("/equipo/nombre/{nombreEquipo}")
+    public ResponseEntity<TheSportsDbTeamResponse> buscarEquipoPorNombre(@PathVariable String nombreEquipo) {
+        log.info("Buscando equipo por nombre: {}", nombreEquipo);
+        
+        Optional<TheSportsDbTeamResponse> equipo = theSportsDbService.buscarEquipoPorNombre(nombreEquipo);
+        
+        if (equipo.isPresent()) {
+            return ResponseEntity.ok(equipo.get());
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
-
-    /**
-     * Busca eventos por fecha en TheSportsDB
-     * GET /api/thesportsdb/eventos/buscar-por-fecha?fecha=2025-06-23
-     */
-    @GetMapping("/eventos/buscar-por-fecha")
-    public ResponseEntity<?> buscarEventosPorFecha(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
+    
+    @GetMapping("/equipos/liga/{idLiga}")
+    public ResponseEntity<List<TheSportsDbTeamResponse>> buscarEquiposPorLiga(@PathVariable String idLiga) {
+        log.info("Buscando equipos de la liga: {}", idLiga);
         
-        log.info("Buscando eventos por fecha: {}", fecha);
+        List<TheSportsDbTeamResponse> equipos = theSportsDbService.buscarEquiposPorLiga(idLiga);
+        return ResponseEntity.ok(equipos);
+    }
+    
+    @GetMapping("/equipo/id/{idEquipo}")
+    public ResponseEntity<TheSportsDbTeamResponse> buscarEquipoPorId(@PathVariable String idEquipo) {
+        log.info("Buscando equipo por ID: {}", idEquipo);
         
-        try {
-            List<Evento> eventos = theSportsDbService.buscarEventosPorFecha(fecha);
-            return ResponseEntity.ok(eventos);
-            
-        } catch (Exception e) {
-            log.error("Error al buscar eventos por fecha: {}", e.getMessage());
-            return ResponseEntity.internalServerError()
-                    .body("Error al buscar eventos: " + e.getMessage());
+        Optional<TheSportsDbTeamResponse> equipo = theSportsDbService.buscarEquipoPorId(idEquipo);
+        
+        if (equipo.isPresent()) {
+            return ResponseEntity.ok(equipo.get());
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
-
-    /**
-     * Busca un evento por ID externo en TheSportsDB
-     * GET /api/thesportsdb/eventos/buscar-por-id/123456
-     */
-    @GetMapping("/eventos/buscar-por-id/{idEventoExterno}")
-    public ResponseEntity<?> buscarEventoPorIdExterno(@PathVariable String idEventoExterno) {
+    
+    // ===== ENDPOINTS DE LIGAS =====
+    
+    @GetMapping("/ligas")
+    public ResponseEntity<List<TheSportsDbLeagueResponse>> obtenerTodasLasLigas() {
+        log.info("Obteniendo todas las ligas");
         
-        log.info("Buscando evento por ID externo: {}", idEventoExterno);
+        List<TheSportsDbLeagueResponse> ligas = theSportsDbService.obtenerTodasLasLigas();
+        return ResponseEntity.ok(ligas);
+    }
+    
+    @GetMapping("/ligas/deporte/{deporte}")
+    public ResponseEntity<List<TheSportsDbLeagueResponse>> buscarLigasPorDeporte(@PathVariable String deporte) {
+        log.info("Buscando ligas por deporte: {}", deporte);
         
-        try {
-            Optional<Evento> evento = theSportsDbService.buscarEventoPorIdExterno(idEventoExterno);
-            
-            if (evento.isPresent()) {
-                return ResponseEntity.ok(evento.get());
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-            
-        } catch (Exception e) {
-            log.error("Error al buscar evento por ID externo: {}", e.getMessage());
-            return ResponseEntity.internalServerError()
-                    .body("Error al buscar evento: " + e.getMessage());
+        List<TheSportsDbLeagueResponse> ligas = theSportsDbService.buscarLigasPorDeporte(deporte);
+        return ResponseEntity.ok(ligas);
+    }
+    
+    @GetMapping("/liga/nombre/{nombreLiga}")
+    public ResponseEntity<TheSportsDbLeagueResponse> buscarLigaPorNombre(@PathVariable String nombreLiga) {
+        log.info("Buscando liga por nombre: {}", nombreLiga);
+        
+        Optional<TheSportsDbLeagueResponse> liga = theSportsDbService.buscarLigaPorNombre(nombreLiga);
+        
+        if (liga.isPresent()) {
+            return ResponseEntity.ok(liga.get());
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
-
-    /**
-     * Endpoint para probar la conectividad con TheSportsDB
-     * GET /api/thesportsdb/test
-     */
-    @GetMapping("/test")
-    public ResponseEntity<?> testConectividad() {
-        log.info("Probando conectividad con TheSportsDB");
+    
+    @GetMapping("/ligas/pais/{pais}")
+    public ResponseEntity<List<TheSportsDbLeagueResponse>> buscarLigasPorPais(@PathVariable String pais) {
+        log.info("Buscando ligas por país: {}", pais);
         
-        try {
-            // Buscar eventos de hoy como prueba
-            List<Evento> eventos = theSportsDbService.buscarEventosPorFecha(LocalDate.now());
-            
-            return ResponseEntity.ok().body(Map.of(
-                "status", "OK",
-                "message", "Conectividad exitosa con TheSportsDB",
-                "eventosEncontrados", eventos.size(),
-                "fecha", LocalDate.now(),
-                "timestamp", System.currentTimeMillis()
-            ));
-            
-        } catch (Exception e) {
-            log.error("Error al probar conectividad: {}", e.getMessage());
-            return ResponseEntity.internalServerError()
-                    .body(Map.of(
-                        "status", "ERROR",
-                        "message", "Error de conectividad: " + e.getMessage(),
-                        "timestamp", System.currentTimeMillis()
-                    ));
-        }
+        List<TheSportsDbLeagueResponse> ligas = theSportsDbService.buscarLigasPorPais(pais);
+        return ResponseEntity.ok(ligas);
     }
-
-    /**
-     * Endpoint para obtener información sobre la API
-     * GET /api/thesportsdb/info
-     */
-    @GetMapping("/info")
-    public ResponseEntity<?> obtenerInformacion() {
-        return ResponseEntity.ok().body(Map.of(
-            "apiName", "TheSportsDB Integration",
-            "version", "1.0",
-            "endpoints", List.of(
-                "GET /api/thesportsdb/eventos/buscar-por-equipos?equipoLocal={local}&equipoVisitante={visitante}",
-                "GET /api/thesportsdb/eventos/buscar-por-fecha?fecha={yyyy-MM-dd}",
-                "GET /api/thesportsdb/eventos/buscar-por-id/{idEventoExterno}",
-                "GET /api/thesportsdb/test",
-                "GET /api/thesportsdb/info"
-            ),
-            "description", "API para acceder a los servicios de TheSportsDB",
-            "baseUrl", "https://www.thesportsdb.com/api/v1/json/",
-            "timestamp", System.currentTimeMillis()
-        ));
+    
+    // ===== ENDPOINTS DE UTILIDAD =====
+    
+    @GetMapping("/conectividad")
+    public ResponseEntity<Boolean> verificarConectividad() {
+        log.info("Verificando conectividad con TheSportsDB");
+        
+        boolean conectado = theSportsDbService.verificarConectividad();
+        return ResponseEntity.ok(conectado);
+    }
+    
+    @GetMapping("/estado")
+    public ResponseEntity<String> obtenerEstadoApi() {
+        log.info("Obteniendo estado de la API");
+        
+        String estado = theSportsDbService.obtenerEstadoApi();
+        return ResponseEntity.ok(estado);
+    }
+    
+    @PostMapping("/cache/limpiar")
+    public ResponseEntity<String> limpiarCache() {
+        log.info("Limpiando caché de TheSportsDB");
+        
+        theSportsDbService.limpiarCache();
+        return ResponseEntity.ok("Caché limpiado exitosamente");
+    }
+    
+    @GetMapping("/estadisticas")
+    public ResponseEntity<String> obtenerEstadisticasUso() {
+        log.info("Obteniendo estadísticas de uso");
+        
+        String estadisticas = theSportsDbService.obtenerEstadisticasUso();
+        return ResponseEntity.ok(estadisticas);
     }
 }

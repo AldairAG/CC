@@ -31,7 +31,6 @@ public class Evento {
     private Integer resultadoLocal;
     private Integer resultadoVisitante;
     private String estado; // PROGRAMADO, EN_CURSO, FINALIZADO, CANCELADO
-    private String idExterno; // ID del evento en TheSportsDB
 
     @ManyToMany(mappedBy = "eventos")
     @JsonIgnore

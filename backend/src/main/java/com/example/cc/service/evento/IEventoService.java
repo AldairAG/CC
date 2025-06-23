@@ -14,9 +14,4 @@ public interface IEventoService {
     List<Evento> findByEquipoLocal(String equipo);
     List<Evento> findByEquipoVisitante(String equipo);
     List<Evento> findByQuinielaId(Long quinielaId);
-    
-    // Métodos para integración con TheSportsDB
-    Optional<Evento> buscarOCrearEvento(String equipoLocal, String equipoVisitante);
-    List<Evento> sincronizarEventosPorFecha(java.time.LocalDate fecha);
-    Optional<Evento> buscarOCrearEventoPorIdExterno(String idEventoExterno);
 }
