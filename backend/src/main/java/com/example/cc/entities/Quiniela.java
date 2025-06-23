@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.ElementCollection;
@@ -42,7 +41,6 @@ public class Quiniela {
     private List<String> tiposApuestas;
 
     @ManyToMany
-    @JsonManagedReference
     @JoinTable(name = "quiniela_evento", // Nombre de la tabla intermedia
             joinColumns = @JoinColumn(name = "id_quiniela"), // Columna que referencia a Quiniela
             inverseJoinColumns = @JoinColumn(name = "id_evento") // Columna que referencia a Evento

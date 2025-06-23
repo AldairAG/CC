@@ -1,3 +1,5 @@
+import type { EventResponseApi } from "./EventType";
+
 export interface QuinielaType {
     idQuiniela: number;
     nombreQuiniela: string;
@@ -13,5 +15,5 @@ export interface QuinielaType {
     allowTripleBets: boolean;
     tipoPremio: string;
     tiposApuestas: string[];
-    eventos: string[];
+    eventos: EventResponseApi[];
 }

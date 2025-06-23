@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CardHeader, CardDescription, Card, CardHead, CardContent } from "../../components/cards/Card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../../components/navigation/Tabs";
-import { ArrowUpOnSquareIcon, MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ArrowUpOnSquareIcon } from "@heroicons/react/24/outline";
 import { useDeportes } from "../../hooks/useDeportes";
 import Loader from "../../components/ui/Loader";
 import { type FormikProps, useFormik } from "formik";
@@ -14,6 +14,7 @@ import InputTemplate from "../../components/ui/Input";
 import { useHistory } from "react-router-dom";
 import * as Yup from 'yup';
 import { toast } from "react-toastify";
+import type { EventResponseApi } from "../../types/EventType";
 
 
 const leagues = [
@@ -147,7 +148,7 @@ interface QuinielaFormValues {
     allowTripleBets: boolean,
     tiposApuesta: string[],
     reparticionPremio: string,
-    partidosSeleccionados: string[],
+    partidosSeleccionados: EventResponseApi[],
 };
 
 type GeneralTabProps = {
@@ -165,41 +166,39 @@ const QuinielaSchema = Yup.object().shape({
             Yup.ref('startDate'),
             'La fecha fin debe ser posterior a la fecha de inicio'
         ),
-    description: Yup.string().required('La descripción es obligatoria').min(10, 'Mínimo 10 caracteres'),
     tiposApuesta: Yup.array().min(1, 'Selecciona al menos un tipo de apuesta'),
     partidosSeleccionados: Yup.array().min(1, 'Selecciona al menos un partido'),
 });
 
 const CreateQuiniela = () => {
-    const { eventos } = useDeportes();
     const { crearQuiniela } = useQuiniela();
     const navigate = useHistory();
-    
+
     const [visible, setVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
 
     const formik = useFormik<QuinielaFormValues>({
-            initialValues: {
-                quinielaName: "",
-                costo: 0,
-                startDate: new Date().toISOString().split("T")[0],
-                endDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split("T")[0],
-                description: "",
-                banner: null,
-                urlBanner: "",
-                columns: 1,
-                allowDoubleBets: false,
-                allowTripleBets: false,
-                tiposApuesta: [APUESTAS_TIPO_QUINIELA.RESULTADO_GENERAL],
-                reparticionPremio: REPARTICION_PREMIOS.DISTRIBUCION_PROPORCIONAL,
-                partidosSeleccionados: [],
-            },
+        initialValues: {
+            quinielaName: "",
+            costo: 0,
+            startDate: new Date().toISOString().split("T")[0],
+            endDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split("T")[0],
+            description: "",
+            banner: null,
+            urlBanner: "",
+            columns: 1,
+            allowDoubleBets: false,
+            allowTripleBets: false,
+            tiposApuesta: [APUESTAS_TIPO_QUINIELA.RESULTADO_GENERAL],
+            reparticionPremio: REPARTICION_PREMIOS.DISTRIBUCION_PROPORCIONAL,
+            partidosSeleccionados: [],
+        },
         validationSchema: QuinielaSchema,
         onSubmit: async (values) => {
             try {
                 setIsSubmitting(true);
-                
+
                 // Subir imagen banner a servidor si existe
                 let urlBanner = "";
                 if (values.banner) {
@@ -207,7 +206,6 @@ const CreateQuiniela = () => {
                     // Por ahora usamos una URL temporal
                     urlBanner = values.urlBanner;
                 }
-                
                 // Crear quiniela
                 const nuevaQuiniela = await crearQuiniela({
                     nombreQuiniela: values.quinielaName,
@@ -225,7 +223,7 @@ const CreateQuiniela = () => {
                     estado: "PENDIENTE", // Estado inicial
                     urlBanner: urlBanner
                 });
-                
+
                 toast.success(`Quiniela "${values.quinielaName}" creada con éxito`);
                 navigate(`/admin/quinielas/${nuevaQuiniela.idQuiniela}`);
             } catch (error) {
@@ -253,12 +251,11 @@ const CreateQuiniela = () => {
                     endDate: true,
                     description: true,
                     tiposApuesta: true,
-                    partidosSeleccionados: true
                 });
-                
+
                 // Mostrar mensaje de error
                 toast.error("Por favor completa todos los campos requeridos.");
-                
+
                 // Navegar a la pestaña que tiene errores
                 if (errors.quinielaName || errors.costo || errors.startDate || errors.endDate || errors.description) {
                     setActiveTab("general");
@@ -295,13 +292,13 @@ const CreateQuiniela = () => {
                         </div>
 
                         <div className="flex gap-2 justify-end">
-                            <button 
+                            <button
                                 type="button"
                                 className="px-4 py-2 border rounded-md"
                                 onClick={() => setVisible(false)}>
                                 Cancelar
                             </button>
-                            <button 
+                            <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-blue-300">
@@ -316,7 +313,7 @@ const CreateQuiniela = () => {
                         <CardHeader>Crear Nueva Quiniela</CardHeader>
                         <CardDescription>Configura los detalles y partidos para una nueva quiniela.</CardDescription>
                     </div>
-                    <button 
+                    <button
                         type="button"
                         onClick={handleOpenConfirmation}
                         className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
@@ -325,7 +322,7 @@ const CreateQuiniela = () => {
                     </button>
                 </CardHead>
 
-                <Tabs defaultValue={"general"} className="w-full mt-4">
+                <Tabs activeTab={activeTab} setActiveTab={setActiveTab} defaultValue={"general"} className="w-full mt-4">
                     <TabsList className="w-full justify-between border-2 rounded-md border-gray-200 p-1 mb-4 flex">
                         <TabsTrigger
                             className="w-full flex-1/4"
@@ -371,9 +368,6 @@ const CreateQuiniela = () => {
     );
 };
 
-// Components GeneralTab, QuinielaModalidadTab, ReparticionPremioTab, SeleccionarPartidosTab... 
-// (Puedes mantener los que ya tienes, solo asegúrate de que muestren errores de validación)
-
 const GeneralTab = ({ formik }: GeneralTabProps) => {
     // Mostrar el contenido de tu GeneralTab existente, pero agregando mensajes de error
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -412,6 +406,11 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         onBlur={formik.handleBlur}
                         value={formik.values.quinielaName}
                     />
+                    {formik.touched.quinielaName && formik.errors.quinielaName && (
+                        <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.quinielaName}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col">
@@ -426,6 +425,11 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         onBlur={formik.handleBlur}
                         value={formik.values.costo}
                     />
+                    {formik.touched.costo && formik.errors.costo && (
+                        <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.costo}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col">
@@ -437,8 +441,13 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         name="startDate"
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        value={formik.values.startDate} // Formatear la fecha a YYYY-MM-DD
+                        value={formik.values.startDate}
                     />
+                    {formik.touched.startDate && formik.errors.startDate && (
+                        <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.startDate}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col">
@@ -450,8 +459,13 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         name="endDate"
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        value={formik.values.endDate} // Formatear la fecha a YYYY-MM-DD
+                        value={formik.values.endDate}
                     />
+                    {formik.touched.endDate && formik.errors.endDate && (
+                        <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.endDate}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col col-span-2">
@@ -465,6 +479,11 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                     />
+                    {formik.touched.description && formik.errors.description && (
+                        <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.description}
+                        </div>
+                    )}
                 </div>
 
                 <InputTemplate
@@ -479,6 +498,7 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                 />
 
                 <button
+                    type="button"
                     onClick={handleClick}
                     className="col-span-2 h-90 border-2 border-dashed border-gray-300 rounded-md 
                     flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 
@@ -492,7 +512,6 @@ const GeneralTab = ({ formik }: GeneralTabProps) => {
                         } : {}
                     }
                 >
-
                     <div className="flex flex-col items-center justify-center gap-2">
                         <ArrowUpOnSquareIcon className="h-6 w-6 text-gray-500" />
                         Haz clic para subir una imagen
@@ -644,7 +663,7 @@ const SeleccionarPartidosTab = ({ formik }: GeneralTabProps) => {
         setLoading(true);
         await findEventosLigasFamosas(selectedLeagueId);
         console.log(eventos);
-        
+
         setLoading(false);
     };
 
@@ -653,12 +672,45 @@ const SeleccionarPartidosTab = ({ formik }: GeneralTabProps) => {
     };
 
     const handleEventChange = (eventId: string) => {
-        console.log(eventId);
-        const partidosSeleccionados = formik.values.partidosSeleccionados.includes(eventId)
-            ? formik.values.partidosSeleccionados.filter((id) => id !== eventId)
-            : [...formik.values.partidosSeleccionados, eventId];
+        const event = eventos.find(e => e.idEvent === eventId);
+        if (!event) return;
+
+        // Convert to EventResponseApi format
+        const eventResponse: EventResponseApi = {
+            idEvento: Number(eventId),
+            equipoLocal: event.strHomeTeam,
+            equipoVisitante: event.strAwayTeam,
+            fechaPartido: event.dateEvent,
+        };
+
+        const isSelected = formik.values.partidosSeleccionados.some(e => e.idEvento === Number(eventId));
+        const partidosSeleccionados = isSelected
+            ? formik.values.partidosSeleccionados.filter(e => e.idEvento !== Number(eventId))
+            : [...formik.values.partidosSeleccionados, eventResponse];
 
         formik.setFieldValue("partidosSeleccionados", partidosSeleccionados);
+
+        // Update end date based on selected matches
+        if (partidosSeleccionados.length > 0) {
+            // Find all selected events
+            const selectedEvents = eventos.filter(evento => {
+                return partidosSeleccionados.some(eventId => eventId.idEvento === Number(evento.idEvent));
+            });
+
+            // Find the latest event date
+            const latestEventDate = selectedEvents.reduce((latest, evento) => {
+                const eventDate = new Date(evento.dateEvent);
+                return eventDate > latest ? eventDate : latest;
+            }, new Date(0));
+
+            // Set end date to one day after the latest event
+            const endDate = new Date(latestEventDate);
+            endDate.setDate(endDate.getDate() + 1);
+
+            // Format the date as YYYY-MM-DD for the form
+            const formattedEndDate = endDate.toISOString().split("T")[0];
+            formik.setFieldValue("endDate", formattedEndDate);
+        }
     };
 
 
@@ -695,7 +747,30 @@ const SeleccionarPartidosTab = ({ formik }: GeneralTabProps) => {
                             <p>No hay partidos disponibles</p>
                         ) : (
                             eventos.map((item) => (
-                                <label>{item.strEvent}</label>
+                                <div
+                                    key={item.idEvent}
+                                    onClick={() => handleEventChange(item.idEvent)}
+                                    className={twMerge(
+                                        "flex justify-between items-center p-3 border rounded-md mb-2 cursor-pointer hover:bg-gray-100",
+                                        formik.values.partidosSeleccionados.some(evento => evento.idEvento === Number(item.idEvent))
+                                            ? "border-blue-500 bg-blue-50"
+                                            : "border-gray-300"
+                                    )}
+                                >
+                                    <div className="flex flex-col">
+                                        <span className="font-medium">{item.strEvent}</span>
+                                        <span className="text-sm text-gray-500">
+                                            {new Date(item.dateEvent).toLocaleDateString()} • {item.strTime || 'Hora por confirmar'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        {formik.values.partidosSeleccionados.some(evento => evento.idEvento === Number(item.idEvent)) ? (
+                                            <span className="text-blue-600 text-sm font-medium">Seleccionado</span>
+                                        ) : (
+                                            <span className="text-gray-400 text-sm">Agregar a quiniela</span>
+                                        )}
+                                    </div>
+                                </div>
                             ))
                         )}
                     </div>

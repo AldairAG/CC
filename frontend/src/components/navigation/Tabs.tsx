@@ -2,6 +2,8 @@ import React, { cloneElement, isValidElement, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface TabsProps {
+    activeTab?: string;
+    setActiveTab?: React.Dispatch<React.SetStateAction<string>>;
     defaultValue: string;
     children: React.ReactNode;
     className?: string;
@@ -31,8 +33,12 @@ interface TabsContentProps {
     className?: string;
 }
 
-const Tabs: React.FC<TabsProps> = ({ defaultValue, children, className }) => {
-    const [activeTab, setActiveTab] = useState<string>(defaultValue);
+const Tabs: React.FC<TabsProps> = ({ defaultValue, children, className, activeTab: externalActiveTab, setActiveTab: externalSetActiveTab }) => {
+    const [internalActiveTab, internalSetActiveTab] = useState<string>(defaultValue);
+    
+    // Use external activeTab and setter if provided, otherwise use internal state
+    const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
+    const setActiveTab = externalSetActiveTab !== undefined ? externalSetActiveTab : internalSetActiveTab;
 
     const childrenWithProps = React.Children.map(children, (child) => {
         if (isValidElement(child) && child.type === TabsList) {

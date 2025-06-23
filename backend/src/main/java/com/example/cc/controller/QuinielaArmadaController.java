@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/cc/quinielas-armadas")
-@CrossOrigin(origins = "*")
 public class QuinielaArmadaController {
 
     @Autowired

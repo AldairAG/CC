@@ -3,7 +3,7 @@ package com.example.cc.entities;
 import java.sql.Date;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -20,8 +20,8 @@ public class Evento {
     private String equipoVisitante;
     private Date fechaPartido;
 
-    @JsonBackReference
     @ManyToMany(mappedBy = "eventos")
+    @JsonIgnore
     private List<Quiniela> quinielas;
 }
 

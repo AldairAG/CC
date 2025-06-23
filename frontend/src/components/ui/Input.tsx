@@ -1,4 +1,3 @@
-import { Field, ErrorMessage } from "formik";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -40,7 +39,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  * ```
  */
 const InputTemplate = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ id, label, classNameDiv, classNameInput, name, classNameError, ...props }, ref) => {
+  ({ id, label, classNameDiv, classNameInput, name, ...props }, ref) => {
     return (
       <div className={twMerge("", classNameDiv)}>
         {label && <label htmlFor={id}>{label}</label>}
