@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { theSportsDbAPI } from '../service/api/theSportsDbAPI';
+import { partidoService } from '../service/api/partidoService';
 import type { Evento } from '../types/EventType';
 
 interface TestResult {
@@ -28,7 +28,7 @@ export const useTheSportsDb = () => {
     setError(null);
     
     try {
-      const evento = await theSportsDbAPI.buscarEventoPorEquipos(equipoLocal, equipoVisitante);
+      const evento = await partidoService.buscarEventoPorEquipos(equipoLocal, equipoVisitante);
       return evento;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';

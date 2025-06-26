@@ -4,14 +4,12 @@ import com.example.cc.dto.request.CrearApuestaRequest;
 import com.example.cc.dto.response.ApuestaResponse;
 import com.example.cc.dto.response.CuotaEventoResponse;
 import com.example.cc.dto.response.EstadisticasApuestaResponse;
-import com.example.cc.dto.response.CuotaEventoResponse;
 import com.example.cc.entities.enums.EstadoApuesta;
 import com.example.cc.entities.enums.TipoApuesta;
 import com.example.cc.service.apuesta.ApuestaService;
 import com.example.cc.service.usuario.IUsuarioService;
 import com.example.cc.entities.Usuario;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,12 +47,12 @@ public class ApuestaController {
         if (principal == null) {
             throw new IllegalArgumentException("Usuario no autenticado");
         }
-        
+
         String email = principal.getName();
         if (email == null || email.trim().isEmpty()) {
             throw new IllegalArgumentException("Email de usuario inválido");
         }
-          return usuarioService.findByEmail(email)
+        return usuarioService.findByEmail(email)
                 .map(Usuario::getIdUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado: " + email));
     }
@@ -67,15 +65,16 @@ public class ApuestaController {
             @ApiResponse(responseCode = "401", description = "No autorizado")
     })
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")    public ResponseEntity<?> crearApuesta(
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> crearApuesta(
             @Valid @RequestBody CrearApuestaRequest request) {
         try {
             log.info("Procesando solicitud de apuesta: {}", request.getCuotaApuesta());
 
             ApuestaResponse apuesta = apuestaService.crearApuesta(request, request.getIdUsuario());
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(apuesta);
-            
+
         } catch (RuntimeException e) {
             log.error("Error al crear apuesta: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -88,7 +87,8 @@ public class ApuestaController {
 
     @Operation(summary = "Obtener apuestas del usuario autenticado")
     @GetMapping("/mis-apuestas")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")    public ResponseEntity<?> obtenerMisApuestas(Principal principal) {
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> obtenerMisApuestas(Principal principal) {
         try {
             Long idUsuario = obtenerIdUsuario(principal);
             List<ApuestaResponse> apuestas = apuestaService.obtenerApuestasPorUsuario(idUsuario);
@@ -107,7 +107,7 @@ public class ApuestaController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Principal principal) {
-          try {
+        try {
             Long idUsuario = obtenerIdUsuario(principal);
             Pageable pageable = PageRequest.of(page, size);
             Page<ApuestaResponse> apuestas = apuestaService.obtenerApuestasPorUsuarioPaginado(idUsuario, pageable);
@@ -125,10 +125,10 @@ public class ApuestaController {
     public ResponseEntity<?> obtenerApuestaPorId(
             @PathVariable Long idApuesta,
             Principal principal) {
-          try {
+        try {
             Long idUsuario = obtenerIdUsuario(principal);
             Optional<ApuestaResponse> apuesta = apuestaService.obtenerApuestaPorId(idApuesta, idUsuario);
-            
+
             if (apuesta.isPresent()) {
                 return ResponseEntity.ok(apuesta.get());
             } else {
@@ -148,10 +148,10 @@ public class ApuestaController {
             @PathVariable Long idApuesta,
             @RequestParam(required = false, defaultValue = "Cancelada por el usuario") String motivo,
             Principal principal) {
-          try {
+        try {
             Long idUsuario = obtenerIdUsuario(principal);
             boolean cancelada = apuestaService.cancelarApuesta(idApuesta, idUsuario, motivo);
-            
+
             if (cancelada) {
                 return ResponseEntity.ok(Map.of("mensaje", "Apuesta cancelada exitosamente"));
             } else {
@@ -168,7 +168,8 @@ public class ApuestaController {
 
     @Operation(summary = "Obtener estadísticas de apuestas del usuario")
     @GetMapping("/estadisticas")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")    public ResponseEntity<?> obtenerEstadisticas(Principal principal) {
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> obtenerEstadisticas(Principal principal) {
         try {
             Long idUsuario = obtenerIdUsuario(principal);
             EstadisticasApuestaResponse estadisticas = apuestaService.obtenerEstadisticasUsuario(idUsuario);
@@ -185,14 +186,13 @@ public class ApuestaController {
     public ResponseEntity<?> calcularGanancia(
             @RequestParam BigDecimal monto,
             @RequestParam BigDecimal cuota) {
-        
+
         try {
             BigDecimal ganancia = apuestaService.calcularGananciaPotencial(monto, cuota);
             return ResponseEntity.ok(Map.of(
                     "monto", monto,
                     "cuota", cuota,
-                    "gananciaPotencial", ganancia
-            ));
+                    "gananciaPotencial", ganancia));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Parámetros inválidos"));
         }
@@ -238,7 +238,7 @@ public class ApuestaController {
     public ResponseEntity<?> reembolsarApuesta(
             @PathVariable Long idApuesta,
             @RequestParam String motivo) {
-        
+
         try {
             ApuestaResponse apuesta = apuestaService.reembolsarApuesta(idApuesta, motivo);
             return ResponseEntity.ok(apuesta);
@@ -284,7 +284,7 @@ public class ApuestaController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> obtenerTopGanancias(
             @RequestParam(defaultValue = "10") int limite) {
-        
+
         try {
             List<ApuestaResponse> topGanancias = apuestaService.obtenerTopGanancias(limite);
             return ResponseEntity.ok(topGanancias);
@@ -319,24 +319,23 @@ public class ApuestaController {
             @RequestParam BigDecimal monto,
             @RequestParam TipoApuesta tipoApuesta,
             Principal principal) {
-          try {
+        try {
             Long idUsuario = obtenerIdUsuario(principal);
-            
+
             boolean saldoSuficiente = apuestaService.validarSaldoSuficiente(idUsuario, monto);
             boolean dentroLimite = apuestaService.validarLimiteApuesta(idUsuario, monto);
             boolean eventoAbierto = apuestaService.validarEventoAbierto(idEvento);
             boolean noEsDuplicada = apuestaService.validarApuestaDuplicada(idUsuario, idEvento, tipoApuesta);
-            
+
             boolean puedeApostar = saldoSuficiente && dentroLimite && eventoAbierto && noEsDuplicada;
-            
+
             return ResponseEntity.ok(Map.of(
                     "puedeApostar", puedeApostar,
                     "saldoSuficiente", saldoSuficiente,
                     "dentroLimite", dentroLimite,
                     "eventoAbierto", eventoAbierto,
-                    "noEsDuplicada", noEsDuplicada
-            ));
-            
+                    "noEsDuplicada", noEsDuplicada));
+
         } catch (Exception e) {
             log.error("Error al validar apuesta", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -351,44 +350,43 @@ public class ApuestaController {
             // Por ahora devolvemos cuotas ficticias
             // En un sistema real, estas cuotas vendrían de un proveedor de datos deportivos
             List<CuotaEventoResponse> cuotas = List.of(
-                CuotaEventoResponse.builder()
-                    .idEvento(idEvento)
-                    .tipoApuesta(TipoApuesta.GANADOR_PARTIDO)
-                    .descripcionApuesta("Ganador del Partido")
-                    .cuota(new BigDecimal("2.50"))
-                    .activa(true)
-                    .limiteMaximo(new BigDecimal("5000.00"))
-                    .detalle("Equipo Local")
-                    .build(),
-                CuotaEventoResponse.builder()
-                    .idEvento(idEvento)
-                    .tipoApuesta(TipoApuesta.GANADOR_PARTIDO)
-                    .descripcionApuesta("Ganador del Partido")
-                    .cuota(new BigDecimal("1.85"))
-                    .activa(true)
-                    .limiteMaximo(new BigDecimal("5000.00"))
-                    .detalle("Equipo Visitante")
-                    .build(),
-                CuotaEventoResponse.builder()
-                    .idEvento(idEvento)
-                    .tipoApuesta(TipoApuesta.TOTAL_GOLES)
-                    .descripcionApuesta("Total de Goles")
-                    .cuota(new BigDecimal("1.90"))
-                    .activa(true)
-                    .limiteMaximo(new BigDecimal("3000.00"))
-                    .detalle("Más de 2.5 goles")
-                    .build(),
-                CuotaEventoResponse.builder()
-                    .idEvento(idEvento)
-                    .tipoApuesta(TipoApuesta.TOTAL_GOLES)
-                    .descripcionApuesta("Total de Goles")
-                    .cuota(new BigDecimal("1.95"))
-                    .activa(true)
-                    .limiteMaximo(new BigDecimal("3000.00"))
-                    .detalle("Menos de 2.5 goles")
-                    .build()
-            );
-            
+                    CuotaEventoResponse.builder()
+                            .idEvento(idEvento)
+                            .tipoApuesta(TipoApuesta.GANADOR_PARTIDO)
+                            .descripcionApuesta("Ganador del Partido")
+                            .cuota(new BigDecimal("2.50"))
+                            .activa(true)
+                            .limiteMaximo(new BigDecimal("5000.00"))
+                            .detalle("Equipo Local")
+                            .build(),
+                    CuotaEventoResponse.builder()
+                            .idEvento(idEvento)
+                            .tipoApuesta(TipoApuesta.GANADOR_PARTIDO)
+                            .descripcionApuesta("Ganador del Partido")
+                            .cuota(new BigDecimal("1.85"))
+                            .activa(true)
+                            .limiteMaximo(new BigDecimal("5000.00"))
+                            .detalle("Equipo Visitante")
+                            .build(),
+                    CuotaEventoResponse.builder()
+                            .idEvento(idEvento)
+                            .tipoApuesta(TipoApuesta.TOTAL_GOLES)
+                            .descripcionApuesta("Total de Goles")
+                            .cuota(new BigDecimal("1.90"))
+                            .activa(true)
+                            .limiteMaximo(new BigDecimal("3000.00"))
+                            .detalle("Más de 2.5 goles")
+                            .build(),
+                    CuotaEventoResponse.builder()
+                            .idEvento(idEvento)
+                            .tipoApuesta(TipoApuesta.TOTAL_GOLES)
+                            .descripcionApuesta("Total de Goles")
+                            .cuota(new BigDecimal("1.95"))
+                            .activa(true)
+                            .limiteMaximo(new BigDecimal("3000.00"))
+                            .detalle("Menos de 2.5 goles")
+                            .build());
+
             return ResponseEntity.ok(cuotas);
         } catch (Exception e) {
             log.error("Error al obtener cuotas del evento", e);

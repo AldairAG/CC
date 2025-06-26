@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-    clearEvento, 
-    clearEventos, 
+import {
+    clearEvento,
+    clearEventos,
     deportesSelector,
     setLoading,
     setError,
@@ -35,7 +35,8 @@ import { partidoService } from '../service/api/partidoService';
  * console.log(eventos);
  */
 export const useDeportes = () => {
-    const dispatch = useDispatch();    const ligas = useSelector(deportesSelector.ligas);
+    const dispatch = useDispatch();
+    const ligas = useSelector(deportesSelector.ligas);
     const deportes = useSelector(deportesSelector.deportes);
     const eventos = useSelector(deportesSelector.eventos);
     const evento = useSelector(deportesSelector.evento);
@@ -45,10 +46,7 @@ export const useDeportes = () => {
     const selectedSport = useSelector(deportesSelector.selectedSport);
     const sportMatches = useSelector(deportesSelector.sportMatches);
     const isLoading = useSelector(deportesSelector.isLoading);
-    const error = useSelector(deportesSelector.error);
-    
-
-    const setEventos = (data: EventType[]) => {        
+    const error = useSelector(deportesSelector.error); const setEventos = (data: EventType[]) => {
         dispatch({ type: 'deportes/setEventos', payload: data });
     };
 
@@ -56,23 +54,24 @@ export const useDeportes = () => {
         dispatch({ type: 'deportes/setEvento', payload: data });
     };
 
-    const findEventosLigasFamosas = async (idLiga:string) => {
+    const findEventosLigasFamosas = async (idLiga: string) => {
         try {
             const result = await partidoService.fetchLigasFamosas(idLiga)
             setEventos(result.events || []);
         } catch (error) {
             console.log('Error fetching eventos:', error);
         }
-    }
-
-    const getEventosByIds = async (ids: string[]) => {        try {
+    }; const getEventosByIds = async (ids: string[]) => {
+        try {
             clearEventos();
             const result = await partidoService.getEventsByIdsService(ids);
             setEventos(result);
         } catch (error) {
             console.log('Error fetching eventos:', error);
         }
-    };    const getEventosById = async (id: string) => {
+    };
+
+    const getEventosById = async (id: string) => {
         try {
             clearEvento();
             const result = await partidoService.getEventByIdService(id);
@@ -80,7 +79,9 @@ export const useDeportes = () => {
         } catch (error) {
             console.log('Error fetching eventos:', error);
         }
-    };    const getPopularLeagues = async () => {
+    };
+
+    const getPopularLeagues = async () => {
         try {
             dispatch(setLoading(true));
             dispatch(clearError());
@@ -92,7 +93,9 @@ export const useDeportes = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };    const getTodayMatches = async () => {
+    };
+
+    const getTodayMatches = async () => {
         try {
             dispatch(setLoading(true));
             dispatch(clearError());
@@ -104,7 +107,9 @@ export const useDeportes = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };    const getLiveMatches = async () => {
+    };
+
+    const getLiveMatches = async () => {
         try {
             dispatch(setLoading(true));
             dispatch(clearError());
@@ -116,7 +121,9 @@ export const useDeportes = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };    const getAvailableSports = async () => {
+    };
+
+    const getAvailableSports = async () => {
         try {
             dispatch(setLoading(true));
             dispatch(clearError());
@@ -150,16 +157,16 @@ export const useDeportes = () => {
             dispatch(setLoading(true));
             dispatch(clearError());
             dispatch(setSelectedSport(sportName));
-            
+
             // Obtenemos las ligas del deporte
             const leagues = await partidoService.getLeaguesBySport(sportName);
-              // Obtenemos los eventos de las primeras ligas (limitamos para no sobrecargar)
+            // Obtenemos los eventos de las primeras ligas (limitamos para no sobrecargar)
             const leagueIds = leagues.slice(0, 5).map((league: { idLeague: string }) => league.idLeague);
             const matchPromises = leagueIds.map((id: string) => partidoService.getEventsByLeague(id));
-            
+
             const matchResults = await Promise.all(matchPromises);
             const allMatches = matchResults.flat();
-            
+
             // Filtramos eventos futuros y ordenamos por fecha
             const futureMatches = allMatches.filter((match: EventType) => {
                 const matchDate = new Date(match.dateEvent + ' ' + match.strTime);
@@ -177,7 +184,33 @@ export const useDeportes = () => {
         } finally {
             dispatch(setLoading(false));
         }
-    };    return {
+    };
+
+    const loadDashboardData = async (defaultSport: string = 'Soccer') => {
+        try {
+            dispatch(setLoading(true));
+            dispatch(clearError());
+
+            // Ejecutamos todas las llamadas en paralelo para mejorar el rendimiento
+            await Promise.all([
+                getPopularLeagues(),
+                getTodayMatches(),
+                getLiveMatches(),
+                getAvailableSports()
+            ]);
+
+            // Cargamos los partidos del deporte por defecto (normalmente fútbol)
+            await getSportMatches(defaultSport);
+
+        } catch (error) {
+            console.log('Error loading dashboard data:', error);
+            dispatch(setError('Error al cargar los datos del dashboard'));
+        } finally {
+            dispatch(setLoading(false));
+        }
+    };
+
+    return {
         eventos,
         ligas,
         deportes,
@@ -198,5 +231,6 @@ export const useDeportes = () => {
         getAvailableSports,
         getLeaguesBySport,
         getSportMatches,
+        loadDashboardData,
     }
 }

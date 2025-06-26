@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // sportsService.js
 import apiClient from './apiClient';
 import type { EventType } from '../../types/EventType';
+import { cacheService } from '../cache/cacheService';
+import { apiCacheService } from '../cache/apiCacheService';
 
 // Método existente
 const getNext7DaysMatches = async () => {
@@ -118,12 +121,10 @@ const getLiveMatches = async () => {
     }
 };
 
-// NUEVOS MÉTODOS SOLICITADOS
-
 // 1. Lista todos los deportes
 const getAllSports = async () => {
     try {
-        const response = await apiClient.get('/all_sports.php');
+        const response = await apiClient.get('/all_sports.php');        
         return response.data?.sports || [];
     } catch (error) {
         console.error('Error fetching all sports:', error);
@@ -172,8 +173,10 @@ const searchTeamsByName = async (teamName: string) => {
 // 4. Obtener ligas por deporte
 const getLeaguesBySport = async (sportName: string) => {
     try {
-        const response = await apiClient.get(`/search_all_leagues.php?s=${encodeURIComponent(sportName)}`);
-        return response.data?.countrys || [];
+        const response = await apiClient.get(`/search_all_leagues.php?s=${sportName}`);
+        console.log(`Fetching leagues for sport: ${sportName}`, response.data);
+        
+        return response.data?.countries || [];
     } catch (error) {
         console.error('Error fetching leagues by sport:', error);
         return [];
@@ -287,6 +290,165 @@ const getEventsByTeam = async (teamId: string, season?: string) => {
     }
 };
 
+// CACHE MANAGEMENT METHODS
+
+/**
+ * Invalidar cache para un endpoint específico
+ */
+const invalidateCache = (endpoint: string): number => {
+    return apiCacheService.invalidateEndpoint(endpoint);
+};
+
+/**
+ * Limpiar todo el cache de la API
+ */
+const clearAllCache = (): number => {
+    return apiCacheService.clearApiCache();
+};
+
+/**
+ * Obtener estadísticas del cache
+ */
+const getCacheStats = () => {
+    return apiCacheService.getApiCacheStats();
+};
+
+/**
+ * Métodos con cache manual para operaciones específicas
+ */
+
+// Método con cache manual para deportes populares
+const getPopularLeaguesWithCache = async (forceRefresh = false) => {
+    const cacheKey = 'popular_leagues';
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getPopularLeagues();
+        // Cachear por 1 hora
+        cacheService.set(cacheKey, data, { ttl: 3600 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching popular leagues with cache:', error);
+        throw error;
+    }
+};
+
+// Método con cache manual para deportes
+const getAllSportsWithCache = async (forceRefresh = false) => {
+    const cacheKey = 'all_sports';
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getAllSports();
+        // Cachear por 24 horas (deportes no cambian frecuentemente)
+        cacheService.set(cacheKey, data, { ttl: 86400 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching sports with cache:', error);
+        throw error;
+    }
+};
+
+// Método con cache manual para partidos en vivo
+const getLiveMatchesWithCache = async (forceRefresh = false) => {
+    const cacheKey = 'live_matches';
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getLiveMatches();
+        // Cachear por solo 30 segundos (datos en vivo)
+        cacheService.set(cacheKey, data, { ttl: 30 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching live matches with cache:', error);
+        throw error;
+    }
+};
+
+// Método con cache manual para partidos de hoy
+const getTodayMatchesWithCache = async (forceRefresh = false) => {
+    const cacheKey = `today_matches_${new Date().toISOString().split('T')[0]}`;
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getTodayMatches();
+        // Cachear por 10 minutos
+        cacheService.set(cacheKey, data, { ttl: 600 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching today matches with cache:', error);
+        throw error;
+    }
+};
+
+// Método con cache manual para equipos por deporte
+const getTeamsBySportWithCache = async (sportName: string, forceRefresh = false) => {
+    const cacheKey = `teams_by_sport_${sportName.toLowerCase()}`;
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getTeamsBySport(sportName);
+        // Cachear por 2 horas
+        cacheService.set(cacheKey, data, { ttl: 7200 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching teams by sport with cache:', error);
+        throw error;
+    }
+};
+
+// Método con cache manual para ligas por deporte
+const getLeaguesBySportWithCache = async (sportName: string, forceRefresh = false) => {
+    const cacheKey = `leagues_by_sport_${sportName.toLowerCase()}`;
+    
+    if (!forceRefresh) {
+        const cached = cacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+    }
+    
+    try {
+        const data = await getLeaguesBySport(sportName);
+        // Cachear por 4 horas
+        cacheService.set(cacheKey, data, { ttl: 14400 });
+        return data;
+    } catch (error) {
+        console.error('Error fetching leagues by sport with cache:', error);
+        throw error;
+    }
+};
+
 export const partidoService = {
     // Métodos existentes
     getNext7DaysMatches,
@@ -307,4 +469,17 @@ export const partidoService = {
     getNextWeekMatches,
     getEventsByLeague,
     getEventsByTeam,
+
+    // Métodos de gestión de caché
+    invalidateCache,
+    clearAllCache,
+    getCacheStats,
+
+    // Métodos con caché manual
+    getPopularLeaguesWithCache,
+    getAllSportsWithCache,
+    getLiveMatchesWithCache,
+    getTodayMatchesWithCache,
+    getTeamsBySportWithCache,
+    getLeaguesBySportWithCache,
 };

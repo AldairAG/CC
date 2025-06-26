@@ -11,6 +11,9 @@ import ModalApuesta from '../../components/modals/ModalApuesta';
 import CarritoApuestas from '../../components/carrito/CarritoApuestas';
 import BotonCarrito from '../../components/carrito/BotonCarrito';
 import NotificacionesContainer from '../../components/notificaciones/NotificacionesContainer';
+import { CryptoQuickAccess } from '../../components/crypto/CryptoQuickAccess';
+import { QuinielasQuickAccess } from '../../components/quinielas/QuinielasQuickAccess';
+import CacheIndicator from '../../components/cache/CacheIndicator';
 
 const Dashboard = () => {  
   const {
@@ -22,11 +25,8 @@ const Dashboard = () => {
     sportMatches,
     isLoading,
     error,
-    getPopularLeagues,
-    getTodayMatches,
-    getLiveMatches,
-    getAvailableSports,
-    getSportMatches
+    loadDashboardData,
+    getSportMatches,
   } = useDeportes();
 
   const { hayApuestas } = useCarritoApuestas();
@@ -35,17 +35,9 @@ const Dashboard = () => {
   const [modalApuestaOpen, setModalApuestaOpen] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState<EventType | null>(null);  // Cargar datos iniciales
   useEffect(() => {
-    const loadInitialData = async () => {
-      await Promise.all([
-        getPopularLeagues(),
-        getTodayMatches(),
-        getLiveMatches(),
-        getAvailableSports()
-      ]);
-    };
-
-    loadInitialData();
+    loadDashboardData();
   }, []);
+
   // Configuración de tabs
   const tabs = [
     {
@@ -79,6 +71,7 @@ const Dashboard = () => {
       count: 0
     }
   ];
+
   // Función para manejar clicks en apostar
   const handleBetClick = (event: EventType) => {
     setEventoSeleccionado(event);
@@ -90,6 +83,7 @@ const Dashboard = () => {
     setModalApuestaOpen(false);
     setEventoSeleccionado(null);
   };
+
   // Función para obtener los eventos según la pestaña activa
   const getCurrentEvents = () => {
     switch (activeTab) {
@@ -107,6 +101,7 @@ const Dashboard = () => {
         return [];
     }
   };
+
   // Función para obtener el título de la sección
   const getSectionTitle = () => {
     switch (activeTab) {
@@ -150,13 +145,15 @@ const Dashboard = () => {
       setActiveTab('popular');
     } else {
       // Cargar partidos del deporte seleccionado
+      
       await getSportMatches(sportName);
       setActiveTab('sports');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+      
       <div className="container mx-auto px-4 py-6">
         {/* Banner Principal */}
         <CasinoBanner />
@@ -168,6 +165,12 @@ const Dashboard = () => {
           upcomingMatches={0} // Implementar lógica para próximos partidos
           popularLeagues={5} // Número fijo de ligas populares
         />
+
+        {/* Quick Access Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <CryptoQuickAccess />
+          <QuinielasQuickAccess />
+        </div>
 
         {/* Mensaje de Error */}
         {error && (
@@ -202,7 +205,9 @@ const Dashboard = () => {
           onBetClick={handleBetClick}
           showLive={activeTab === 'live'}
           isLoading={isLoading}
-        />        {/* Footer Promocional */}
+        />        
+        
+        {/* Footer Promocional */}
         <div className="mt-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white text-center">
           <h3 className="text-2xl font-bold mb-4">🎰 ¡Obtén tu Bono de Bienvenida!</h3>
           <p className="text-lg mb-6">
@@ -224,14 +229,18 @@ const Dashboard = () => {
         isOpen={modalApuestaOpen}
         onClose={cerrarModalApuesta}
         evento={eventoSeleccionado}
-      />
-
-      {/* Carrito de Apuestas */}
-      <CarritoApuestas />      {/* Botón Flotante del Carrito */}
+      />      {/* Carrito de Apuestas */}
+      <CarritoApuestas />      
+      
+      {/* Botón Flotante del Carrito */}
       {hayApuestas && <BotonCarrito />}
 
       {/* Contenedor de Notificaciones */}
       <NotificacionesContainer position="top-right" />
+
+      {/* Indicador de Cache Redis - Solo en DEV */}
+      {import.meta.env?.DEV && <CacheIndicator />}
+
     </div>
   );
 };

@@ -16,12 +16,33 @@ public class CorsConfig implements WebMvcConfigurer {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173","http://vps-4813471-x.dattaweb.com")); // Origen permitido
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // Métodos
-                                                                                                            // permitidos
-        configuration.setAllowedHeaders(Arrays.asList("*")); // Encabezados permitidos
-        configuration.setAllowCredentials(true); // Permitir credenciales
-        configuration.setMaxAge(3600L); // Tiempo de caché
+        
+        // Orígenes permitidos - Frontend de desarrollo y producción
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:5173", 
+            "http://localhost:3000",
+            "http://vps-4813471-x.dattaweb.com",
+            "https://24bet.com"
+        )); 
+        
+        // Métodos HTTP permitidos
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        )); 
+        
+        // Encabezados permitidos
+        configuration.setAllowedHeaders(Arrays.asList("*")); 
+        
+        // Permitir credenciales para JWT
+        configuration.setAllowCredentials(true); 
+        
+        // Tiempo de caché para pre-flight requests
+        configuration.setMaxAge(3600L); 
+        
+        // Headers expuestos para el frontend
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "X-Total-Count"
+        ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // Aplicar a todas las rutas

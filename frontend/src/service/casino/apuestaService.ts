@@ -65,6 +65,7 @@ class ApuestaService {
   // Crear nueva apuesta
   async crearApuesta(apuesta: CrearApuestaRequest): Promise<ApuestaResponse> {
     try {
+      console.log('Creando apuesta:', apuesta);
       
       const response = await apiClient.post('/apuestas',apuesta);
       return response.data;

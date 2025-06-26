@@ -45,5 +45,4 @@ public class CrearApuestaRequest {
     private String equipoLocal;
     private String equipoVisitante;
     private String fechaEvento; // formato YYYY-MM-DD
-    private String idEventoExterno; // ID del evento en TheSportsDB
 }

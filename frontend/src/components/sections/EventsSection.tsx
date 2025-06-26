@@ -19,7 +19,6 @@ const EventsSection = ({
   isLoading = false 
 }: EventsSectionProps) => {
 
-    console.log('Rendering EventsSection with events:', events);
     
   if (isLoading) {
     return (

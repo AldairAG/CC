@@ -1,7 +1,123 @@
 @import "tailwindcss";
 
+/* 24bet Global Styles */
+:root {
+  --color-primary: #ef4444;
+  --color-primary-dark: #dc2626;
+  --color-secondary: #ff5722;
+  --color-gold: #f59e0b;
+  --color-dark: #0f172a;
+  --color-dark-light: #1e293b;
+}
+
+/* Light mode variables */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+}
+
+/* Dark mode variables */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+}
+
 body {
   margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Default to dark theme for casino atmosphere */
+body:not(.light-mode) {
+  background-color: var(--color-dark);
+  color: #f8fafc;
+}
+
+/* 24bet Button Styles */
+.btn-primary {
+  background-color: #ef4444;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #dc2626;
+  box-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444, 0 0 20px #ef4444;
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  background-color: #ff5722;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: #ea580c;
+}
+
+.btn-gold {
+  background-color: #f59e0b;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-gold:hover {
+  background-color: #d97706;
+  box-shadow: 0 0 5px #f59e0b, 0 0 10px #f59e0b, 0 0 20px #f59e0b;
+  transform: scale(1.05);
+}
+
+/* 24bet Card Styles */
+.card-casino {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid #ef4444;
+  border-radius: 1rem;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.card-casino:hover {
+  border-color: #f87171;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+}
+
+/* 24bet Gradient Backgrounds */
+.bg-casino-gradient {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+.bg-red-gradient {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%);
 }
 
 /* Animaciones para notificaciones */

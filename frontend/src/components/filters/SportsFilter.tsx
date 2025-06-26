@@ -72,8 +72,8 @@ const SportsFilter: React.FC<SportsFilterProps> = ({
           onClick={() => onSportSelect('')}
           className={`
             rounded-xl p-4 text-center transition-all duration-300 transform hover:scale-105 border-2
-            ${selectedSport === null || selectedSport === '' 
-              ? 'border-blue-500 bg-blue-50 shadow-lg' 
+            ${selectedSport === null || selectedSport === ''
+              ? 'border-blue-500 bg-blue-50 shadow-lg'
               : 'border-gray-200 bg-white hover:bg-gray-50 shadow-sm'
             }
           `}
@@ -86,15 +86,15 @@ const SportsFilter: React.FC<SportsFilterProps> = ({
         {sports.map((sport) => {
           const style = getSportStyle(sport.strSport);
           const isSelected = selectedSport === sport.strSport;
-          
+
           return (
             <button
               key={sport.idSport}
               onClick={() => onSportSelect(sport.strSport)}
               className={`
                 rounded-xl p-4 text-center transition-all duration-300 transform hover:scale-105 border-2
-                ${isSelected 
-                  ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                ${isSelected
+                  ? 'border-blue-500 bg-blue-50 shadow-lg'
                   : `border-gray-200 ${style.bgColor} shadow-sm`
                 }
               `}

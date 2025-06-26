@@ -1,21 +1,32 @@
-import { RectangleGroupIcon } from "@heroicons/react/24/outline";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
-import { TrophyIcon } from "@heroicons/react/24/outline";
+import { 
+    UserGroupIcon,
+    TrophyIcon,
+    ChartBarIcon,
+    CurrencyDollarIcon,
+    BanknotesIcon,
+    CogIcon,
+    BellIcon,
+    CalendarDaysIcon
+} from "@heroicons/react/24/outline";
 import { ADMIN_ROUTES } from "../constants/ROUTERS";
 import { Link, Route, Switch } from "react-router-dom";
+
+// Importar componentes de administración existentes
 import Quinielas from "../pages/admin/Quinielas";
 import CreateQuiniela from "../pages/admin/CreateQuiniela";
-/* import BotonLogout from "../components/ui/BotonLogout";
-import Dashboard from "../pages/AdminPages/Dashboard";
-import Quinielas from "../pages/AdminPages/Quinielas";
-import Usuarios from "../pages/AdminPages/Usuarios";
-import CreateQuiniela from "../pages/AdminPages/CreateQuiniela"; */
+import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminUsers from "../pages/admin/AdminUsers";
+import AdminApuestas from "../pages/admin/AdminApuestas";
+import AdminEventos from "../pages/admin/AdminEventos";
+import AdminCrypto from "../pages/admin/AdminCrypto";
+import AdminNotificaciones from "../pages/admin/AdminNotificaciones";
+import AdminConfig from "../pages/admin/AdminConfig";
 
 const routes = [
     {
-        href: ADMIN_ROUTES.ADMIN_HOME,
-        label: "Home",
-        icon: RectangleGroupIcon,
+        href: ADMIN_ROUTES.ADMIN_DASHBOARD,
+        label: "Dashboard",
+        icon: ChartBarIcon,
     },
     {
         href: ADMIN_ROUTES.ADMIN_USERS,
@@ -26,54 +37,114 @@ const routes = [
         href: ADMIN_ROUTES.ADMIN_QUINIELAS,
         label: "Quinielas",
         icon: TrophyIcon,
+    },
+    {
+        href: ADMIN_ROUTES.ADMIN_APUESTAS,
+        label: "Apuestas",
+        icon: CurrencyDollarIcon,
+    },
+    {
+        href: ADMIN_ROUTES.ADMIN_EVENTOS,
+        label: "Eventos",
+        icon: CalendarDaysIcon,
+    },
+    {
+        href: ADMIN_ROUTES.ADMIN_CRYPTO,
+        label: "Crypto",
+        icon: BanknotesIcon,
+    },
+    {
+        href: ADMIN_ROUTES.ADMIN_NOTIFICACIONES,
+        label: "Notificaciones",
+        icon: BellIcon,
+    },
+    {
+        href: ADMIN_ROUTES.ADMIN_CONFIG,
+        label: "Configuración",
+        icon: CogIcon,
     }
 ]
 
 const AdminLayout = () => {
     return (
-        <body className="w-full">
-            <header className="sticky top-0 z-40 bg-background flex items-center justify-between 
-                px-4 py-2 shadow-md">
-                <h1 className="text-red-500 font-bold text-2xl">Admin panel</h1>
+        <div className="min-h-screen bg-gray-50">
+            <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        {/* Logo */}
+                        <div className="flex items-center">
+                            <h1 className="text-red-500 font-bold text-2xl">🎲 Admin Casino</h1>
+                        </div>
 
-                <ul className="flex gap-2">
-                    {routes.map((route) => (
-                        <li key={route.href}>
-                            <Link
-                                to={route.href}
-                                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium 
-                                    ${window.location.pathname === route.href ? "bg-gray-300 text-primary-foreground" : "hover:bg-muted"
-                                    }`}
-                            >
-                                <route.icon className="h-5 w-5" />
-                                {route.label}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                        {/* Navigation */}
+                        <nav className="hidden md:block">
+                            <ul className="flex space-x-1">
+                                {routes.map((route) => (
+                                    <li key={route.href}>
+                                        <Link
+                                            to={route.href}
+                                            className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors
+                                                ${window.location.pathname === route.href 
+                                                    ? "bg-blue-100 text-blue-700 border border-blue-200" 
+                                                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                                }`}
+                                        >
+                                            <route.icon className="h-4 w-4" />
+                                            {route.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
 
-                <div>
-                    {/* <BotonLogout /> */}
+                        {/* User Menu */}
+                        <div className="flex items-center space-x-4">
+                            <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md">
+                                <BellIcon className="h-5 w-5" />
+                            </button>
+                            <div className="text-sm text-gray-600">
+                                Admin User
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                {/* Mobile Navigation */}
+                <div className="md:hidden border-t border-gray-200">
+                    <div className="px-2 py-3 space-y-1">
+                        {routes.map((route) => (
+                            <Link
+                                key={route.href}
+                                to={route.href}
+                                className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium
+                                    ${window.location.pathname === route.href 
+                                        ? "bg-blue-100 text-blue-700" 
+                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                                    }`}
+                            >
+                                <route.icon className="h-4 w-4" />
+                                {route.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
             </header>
 
-            <section className="flex justify-center">
+            <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <Switch>
-                    <Route path={ADMIN_ROUTES.ADMIN_HOME} component={CreateQuiniela} />
+                    <Route exact path={ADMIN_ROUTES.ADMIN_LAYOUT} component={AdminDashboard} />
+                    <Route path={ADMIN_ROUTES.ADMIN_DASHBOARD} component={AdminDashboard} />
+                    <Route path={ADMIN_ROUTES.ADMIN_USERS} component={AdminUsers} />
                     <Route path={ADMIN_ROUTES.ADMIN_QUINIELAS} component={Quinielas} />
                     <Route path={ADMIN_ROUTES.ADMIN_CREATE_QUINIELA} component={CreateQuiniela} />
-                    {/*<Route path={ADMIN_ROUTES.ADMIN_QUINIELA} component={Dashboard} />
-                    <Route path={ADMIN_ROUTES.ADMIN_USER} component={Dashboard} />
-                    <Route path={ADMIN_ROUTES.ADMIN_USERS} component={Usuarios} />
-                    <Route path={ADMIN_ROUTES.ADMIN_CREATE_QUINIELA} component={CreateQuiniela} /> */}
+                    <Route path={ADMIN_ROUTES.ADMIN_APUESTAS} component={AdminApuestas} />
+                    <Route path={ADMIN_ROUTES.ADMIN_EVENTOS} component={AdminEventos} />
+                    <Route path={ADMIN_ROUTES.ADMIN_CRYPTO} component={AdminCrypto} />
+                    <Route path={ADMIN_ROUTES.ADMIN_NOTIFICACIONES} component={AdminNotificaciones} />
+                    <Route path={ADMIN_ROUTES.ADMIN_CONFIG} component={AdminConfig} />
                 </Switch>
-            </section>
-
-            {/*             <footer className="admin-footer">
-                <p>&copy; 2023 Admin Panel</p>
-            </footer> */}
-        </body>
+            </main>
+        </div>
     )
 }
 

@@ -16,6 +16,22 @@ import * as Yup from 'yup';
 import { toast } from "react-toastify";
 import type { EventResponseApi } from "../../types/EventType";
 
+type QuinielaFormValues = {
+    quinielaName: string,
+    costo: number,
+    startDate: string,
+    endDate: string,
+    description: string,
+    banner: File | null,
+    urlBanner: string,
+    columns: number,
+    allowDoubleBets: boolean,
+    allowTripleBets: boolean,
+    tiposApuesta: string[],
+    reparticionPremio: string,
+    partidosSeleccionados: EventResponseApi[],
+};
+
 
 const leagues = [
     { id: 4328, name: 'Premier League' },
@@ -135,22 +151,6 @@ const formasReparticionPremio = [
     }
 ];
 
-interface QuinielaFormValues {
-    quinielaName: string,
-    costo: number,
-    startDate: string,
-    endDate: string,
-    description: string,
-    banner: null | File,
-    urlBanner: string,
-    columns: number,
-    allowDoubleBets: boolean,
-    allowTripleBets: boolean,
-    tiposApuesta: string[],
-    reparticionPremio: string,
-    partidosSeleccionados: EventResponseApi[],
-};
-
 type GeneralTabProps = {
     formik: FormikProps<QuinielaFormValues>;
 };
@@ -204,28 +204,31 @@ const CreateQuiniela = () => {
                 if (values.banner) {
                     // Aquí iría la lógica para subir la imagen al servidor
                     // Por ahora usamos una URL temporal
-                    urlBanner = values.urlBanner;
+                    //urlBanner = values.urlBanner;
                 }
                 // Crear quiniela
                 const nuevaQuiniela = await crearQuiniela({
-                    nombreQuiniela: values.quinielaName,
-                    fechaInicio: values.startDate,
-                    fechaFin: values.endDate,
-                    precioParticipacion: values.costo,
-                    strDescripcion: values.description,
-                    allowDoubleBets: values.allowDoubleBets,
-                    allowTripleBets: values.allowTripleBets,
-                    tipoPremio: values.reparticionPremio,
-                    tiposApuestas: values.tiposApuesta,
-                    eventos: values.partidosSeleccionados,
-                    premioAcumulado: 0,
-                    numeroParticipantes: 0,
-                    estado: "PENDIENTE", // Estado inicial
-                    urlBanner: urlBanner
+                    nombre: values.quinielaName,
+                    descripcion: values.description,
+                    fechaInicio: values.startDate + "T00:00:00",
+                    fechaFin: values.endDate + "T23:59:59",
+                    precioEntrada: values.costo,
+                    tipoDistribucion: values.reparticionPremio,
+                    esPublica: true,
+                    esCrypto: false,
+                    eventos: values.partidosSeleccionados.map(partido => ({
+                        eventoId: partido.idEvento?.toString() || '',
+                        nombreEvento: `${partido.equipoLocal} vs ${partido.equipoVisitante}`,
+                        fechaEvento: partido.fechaPartido || '',
+                        equipoLocal: partido.equipoLocal || '',
+                        equipoVisitante: partido.equipoVisitante || '',
+                        puntosPorAcierto: 3,
+                        puntosPorResultadoExacto: 5
+                    }))
                 });
 
                 toast.success(`Quiniela "${values.quinielaName}" creada con éxito`);
-                navigate(`/admin/quinielas/${nuevaQuiniela.idQuiniela}`);
+                navigate(`/admin/quinielas/${nuevaQuiniela.id}`);
             } catch (error) {
                 console.error("Error al crear la quiniela:", error);
                 toast.error("Error al crear la quiniela. Inténtalo de nuevo.");
