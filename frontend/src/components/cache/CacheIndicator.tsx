@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { useCache } from '../../hooks/useCache';
-import CacheAdmin from '../admin/CacheAdmin';
+import CacheAdmin from '../../features/admin/CacheAdmin';
 
 const CacheIndicator: React.FC = () => {
   const { sizeInMB, isNearLimit, stats, recommendations } = useCache();

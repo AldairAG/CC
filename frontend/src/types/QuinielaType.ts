@@ -32,7 +32,7 @@ export interface QuinielaCreada {
     maxParticipantes?: number;
     participantesActuales: number;
     estado: 'ACTIVA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA';
-    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE';
+    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE' | 'ELIMINATION' | 'ACCUMULATIVE' | 'TEAMS';
     porcentajePremiosPrimero: number;
     porcentajePremiosSegundo: number;
     porcentajePremiosTercero: number;
@@ -102,13 +102,11 @@ export interface CrearQuinielaRequest {
     fechaFin: string|Date;
     precioEntrada: number;
     maxParticipantes?: number;
-    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE';
+    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE' | 'ELIMINATION' | 'ACCUMULATIVE' | 'TEAMS';
     porcentajePremiosPrimero?: number;
     porcentajePremiosSegundo?: number;
     porcentajePremiosTercero?: number;
     esPublica?: boolean;
-    esCrypto?: boolean;
-    cryptoTipo?: string;
     eventos: EventoQuinielaRequest[];
 }
 
@@ -152,14 +150,12 @@ export interface QuinielaResponse {
     maxParticipantes?: number;
     participantes: number;
     estado: 'ACTIVA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA';
-    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE';
+    tipoDistribucion: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE' | 'ELIMINATION' | 'ACCUMULATIVE' | 'TEAMS';
     porcentajePremiosPrimero: number;
     porcentajePremiosSegundo: number;
     porcentajePremiosTercero: number;
     esPublica: boolean;
     codigoInvitacion?: string;
-    esCrypto: boolean;
-    cryptoTipo?: string;
     premiosDistribuidos: boolean;
     eventos?: EventoQuiniela[];
 }

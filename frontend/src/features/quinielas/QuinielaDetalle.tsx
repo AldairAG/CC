@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { QuinielaCreada, ParticipacionQuiniela, PremioQuiniela } from '../../types/QuinielaType';
-import { quinielaCreadaService } from '../../service/api/quinielaCreadaService';
+import { QuinielaService } from '../../service/casino/quinielaService';
 import { HacerPrediccionesForm } from './HacerPrediccionesForm';
 
 interface Props {
@@ -19,7 +19,7 @@ export const QuinielaDetalle: React.FC<Props> = ({ quinielaId, onVolver }) => {
     const cargarQuiniela = useCallback(async () => {
         try {
             setLoading(true);
-            const quinielaDetalle = await quinielaCreadaService.obtenerQuiniela(quinielaId);
+            const quinielaDetalle = await QuinielaService.obtenerQuiniela(quinielaId);
             setQuiniela(quinielaDetalle);
         } catch (error) {
             console.error('Error cargando quiniela:', error);
@@ -38,7 +38,7 @@ export const QuinielaDetalle: React.FC<Props> = ({ quinielaId, onVolver }) => {
         if (confirm('¿Estás seguro de que quieres distribuir los premios? Esta acción no se puede deshacer.')) {
             try {
                 setLoading(true);
-                await quinielaCreadaService.distribuirPremios(quiniela.id);
+                await QuinielaService.distribuirPremios(quiniela.id);
                 await cargarQuiniela(); // Recargar para ver los cambios
             } catch (error) {
                 console.error('Error distribuyendo premios:', error);

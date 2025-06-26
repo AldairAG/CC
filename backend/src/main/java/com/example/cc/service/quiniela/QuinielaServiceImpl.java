@@ -162,8 +162,6 @@ public class QuinielaServiceImpl implements IQuinielaService {
         quiniela.setPorcentajePremiosSegundo(request.getPorcentajePremiosSegundo());
         quiniela.setPorcentajePremiosTercero(request.getPorcentajePremiosTercero());
         quiniela.setEsPublica(request.getEsPublica());
-        quiniela.setEsCrypto(request.getEsCrypto());
-        quiniela.setCryptoTipo(request.getCryptoTipo());
 
         // Generar código de invitación si es privada
         if (!request.getEsPublica()) {

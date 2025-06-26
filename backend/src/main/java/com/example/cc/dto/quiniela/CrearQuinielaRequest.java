@@ -24,13 +24,11 @@ public class CrearQuinielaRequest {
     private LocalDateTime fechaFin;
     private BigDecimal precioEntrada;
     private Integer maxParticipantes;
-    private String tipoDistribucion; // WINNER_TAKES_ALL, TOP_3, PERCENTAGE
+    private String tipoDistribucion; // WINNER_TAKES_ALL, TOP_3, PERCENTAGE, ELIMINATION, ACCUMULATIVE, TEAMS
     private Integer porcentajePremiosPrimero = 100;
     private Integer porcentajePremiosSegundo = 0;
     private Integer porcentajePremiosTercero = 0;
     private Boolean esPublica = true;
-    private Boolean esCrypto = false;
-    private String cryptoTipo;
     private List<EventoQuinielaRequest> eventos;
     
     @Data

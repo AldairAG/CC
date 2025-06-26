@@ -3,16 +3,16 @@ import { useDeportes } from '../../hooks/useDeportes';
 import { useCarritoApuestas } from '../../hooks/useCarritoApuestas';
 import type { EventType } from '../../types/EventType';
 import CasinoBanner from '../../components/banner/CasinoBanner';
-import DashboardStats from '../../components/stats/DashboardStats';
+import DashboardStats from '../../features/stats/DashboardStats';
 import DashboardTabs from '../../components/navigation/DashboardTabs';
 import EventsSection from '../../components/sections/EventsSection';
 import SportsFilter from '../../components/filters/SportsFilter';
 import ModalApuesta from '../../components/modals/ModalApuesta';
-import CarritoApuestas from '../../components/carrito/CarritoApuestas';
-import BotonCarrito from '../../components/carrito/BotonCarrito';
-import NotificacionesContainer from '../../components/notificaciones/NotificacionesContainer';
+import CarritoApuestas from '../../features/carrito/CarritoApuestas';
+import BotonCarrito from '../../features/carrito/BotonCarrito';
+import NotificacionesContainer from '../../features/notificaciones/NotificacionesContainer';
 import { CryptoQuickAccess } from '../../components/crypto/CryptoQuickAccess';
-import { QuinielasQuickAccess } from '../../components/quinielas/QuinielasQuickAccess';
+import { QuinielasQuickAccess } from '../../features/quinielas/QuinielasQuickAccess';
 import CacheIndicator from '../../components/cache/CacheIndicator';
 
 const Dashboard = () => {  

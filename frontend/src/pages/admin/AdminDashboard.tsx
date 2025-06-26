@@ -1,71 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
     ChartBarIcon,
     UserGroupIcon,
     TrophyIcon,
     CurrencyDollarIcon,
-    BanknotesIcon,
     ArrowUpIcon,
     ArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { useQuiniela } from '../../hooks/useQuiniela';
-import { useQuinielasCreadas } from '../../hooks/useQuinielasCreadas';
-import { useApuestas } from '../../hooks/useApuestas';
-import { useCrypto } from '../../hooks/useCrypto';
-import { useUser } from '../../hooks/useUser';
+import type { QuinielaResponse } from '../../types/QuinielaType';
 
 const AdminDashboard = () => {
-    const { quinielaList, obtenerQuinielasPublicas } = useQuiniela();
     const { 
         quinielasPublicas, 
-        misQuinielas, 
         cargarQuinielasPublicas, 
-        cargarMisQuinielas,
-        obtenerEstadisticasUsuario 
-    } = useQuinielasCreadas();
+        cargarMisQuinielas
+    } = useQuiniela();
     
     const [stats, setStats] = useState({
         totalQuinielas: 0,
         quinielasActivas: 0,
         totalUsuarios: 0,
         gananciasHoy: 0,
-        transaccionesCrypto: 0,
         crecimientoSemanal: 0
     });
 
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const cargarDatos = async () => {
-            try {
-                setLoading(true);
-                await Promise.all([
-                    obtenerQuinielasPublicas(),
-                    cargarQuinielasPublicas(),
-                    cargarMisQuinielas()
-                ]);
-                
-                // Calcular estadísticas
-                const quinielasActivas = quinielasPublicas.filter(q => q.estado === 'ACTIVA').length;
-                const statsUsuario = obtenerEstadisticasUsuario();
-                
-                setStats({
-                    totalQuinielas: quinielasPublicas.length,
-                    quinielasActivas,
-                    totalUsuarios: 150, // Placeholder - would come from user service
-                    gananciasHoy: 2450.50,
-                    transaccionesCrypto: 12,
-                    crecimientoSemanal: 15.3
-                });
-            } catch (error) {
-                console.error('Error cargando datos del dashboard:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const cargarDatos = useCallback(async () => {
+        try {
+            setLoading(true);
+            await Promise.all([
+                cargarQuinielasPublicas(),
+                cargarMisQuinielas()
+            ]);
+            
+            // Calcular estadísticas
+            const quinielasActivas = quinielasPublicas.filter((q: QuinielaResponse) => q.estado === 'ACTIVA').length;
+            
+            setStats({
+                totalQuinielas: quinielasPublicas.length,
+                quinielasActivas,
+                totalUsuarios: 150, // Placeholder - would come from user service
+                gananciasHoy: 2450.50,
+                crecimientoSemanal: 15.3
+            });
+        } catch (error) {
+            console.error('Error cargando datos del dashboard:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [cargarQuinielasPublicas, cargarMisQuinielas, quinielasPublicas]);
 
+    useEffect(() => {
         cargarDatos();
-    }, []);
+    }, [cargarDatos]);
 
     const statCards = [
         {
@@ -94,19 +83,11 @@ const AdminDashboard = () => {
         },
         {
             title: 'Ganancias Hoy',
-            value: `$${stats.gananciasHoy.toFixed(2)}`,
+            value: `€${stats.gananciasHoy.toFixed(2)}`,
             icon: CurrencyDollarIcon,
             color: 'bg-yellow-500',
             change: '-2%',
             changeType: 'negative'
-        },
-        {
-            title: 'Transacciones Crypto',
-            value: stats.transaccionesCrypto,
-            icon: BanknotesIcon,
-            color: 'bg-indigo-500',
-            change: '+45%',
-            changeType: 'positive'
         }
     ];
 
@@ -132,7 +113,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((stat, index) => (
                     <div key={index} className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
                         <div className="flex items-center justify-between">
@@ -171,7 +152,7 @@ const AdminDashboard = () => {
                                 <div>
                                     <h4 className="font-medium text-gray-900">{quiniela.nombre}</h4>
                                     <p className="text-sm text-gray-600">
-                                        {quiniela.participantesActuales} participantes
+                                        {quiniela.participantes} participantes
                                     </p>
                                 </div>
                                 <div className="text-right">
@@ -206,11 +187,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-gray-600">Revenue total</span>
-                            <span className="font-semibold text-green-600">$12,450.00</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-gray-600">Transacciones crypto</span>
-                            <span className="font-semibold text-blue-600">{stats.transaccionesCrypto}</span>
+                            <span className="font-semibold text-green-600">€12,450.00</span>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { 
     QuinielaCreada, 
     HacerPrediccionesRequest, 
     PrediccionEvento,
     EventoQuiniela 
 } from '../../types/QuinielaType';
-import { useQuinielasCreadas } from '../../hooks/useQuinielasCreadas';
+import { useQuiniela } from '../../hooks/useQuiniela';
 
 interface Props {
     quiniela: QuinielaCreada;
@@ -18,7 +18,7 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
     onPrediccionesGuardadas, 
     onCancelar 
 }) => {
-    const { hacerPredicciones, loading } = useQuinielasCreadas();
+    const { hacerPredicciones, loading } = useQuiniela();
     
     const [predicciones, setPredicciones] = useState<PrediccionEvento[]>([]);
     const [errors, setErrors] = useState<Record<number, string>>({});    useEffect(() => {
@@ -26,8 +26,8 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
         if (quiniela.eventos && quiniela.eventos.length > 0) {
             const prediccionesIniciales: PrediccionEvento[] = quiniela.eventos.map(evento => ({
                 eventoId: evento.id,
-                resultadoPredichoLocal: undefined,
-                resultadoPredichoVisitante: undefined,
+                resultadoPredichoLocal: 0,
+                resultadoPredichoVisitante: 0,
                 tipoPrediccion: 'RESULTADO_EXACTO'
             }));
             setPredicciones(prediccionesIniciales);
@@ -61,12 +61,12 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
             if (!evento) return;
 
             if (pred.tipoPrediccion === 'RESULTADO_EXACTO') {
-                if (pred.resultadoPredichoLocal === undefined || pred.resultadoPredichoLocal < 0) {
-                    nuevosErrores[pred.eventoId] = 'Resultado local requerido';
+                if (pred.resultadoPredichoLocal < 0) {
+                    nuevosErrores[pred.eventoId] = 'Resultado local debe ser mayor o igual a 0';
                     esValido = false;
                 }
-                if (pred.resultadoPredichoVisitante === undefined || pred.resultadoPredichoVisitante < 0) {
-                    nuevosErrores[pred.eventoId] = 'Resultado visitante requerido';
+                if (pred.resultadoPredichoVisitante < 0) {
+                    nuevosErrores[pred.eventoId] = 'Resultado visitante debe ser mayor o igual a 0';
                     esValido = false;
                 }
             }
@@ -98,15 +98,15 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
 
     const obtenerResultadoPrediccion = (pred: PrediccionEvento): string => {
         if (pred.tipoPrediccion === 'SOLO_GANADOR') {
-            if (pred.resultadoPredichoLocal! > pred.resultadoPredichoVisitante!) {
+            if (pred.resultadoPredichoLocal > pred.resultadoPredichoVisitante) {
                 return 'Local gana';
-            } else if (pred.resultadoPredichoLocal! < pred.resultadoPredichoVisitante!) {
+            } else if (pred.resultadoPredichoLocal < pred.resultadoPredichoVisitante) {
                 return 'Visitante gana';
             } else {
                 return 'Empate';
             }
         }
-        return `${pred.resultadoPredichoLocal || 0} - ${pred.resultadoPredichoVisitante || 0}`;
+        return `${pred.resultadoPredichoLocal} - ${pred.resultadoPredichoVisitante}`;
     };
 
     return (
@@ -180,7 +180,7 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
                                         <input
                                             type="number"
                                             min="0"
-                                            value={prediccion.resultadoPredichoLocal || ''}
+                                            value={prediccion.resultadoPredichoLocal}
                                             onChange={(e) => handlePrediccionChange(
                                                 evento.id,
                                                 'resultadoPredichoLocal',
@@ -198,7 +198,7 @@ export const HacerPrediccionesForm: React.FC<Props> = ({
                                         <input
                                             type="number"
                                             min="0"
-                                            value={prediccion.resultadoPredichoVisitante || ''}
+                                            value={prediccion.resultadoPredichoVisitante}
                                             onChange={(e) => handlePrediccionChange(
                                                 evento.id,
                                                 'resultadoPredichoVisitante',

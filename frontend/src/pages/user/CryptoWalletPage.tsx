@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CryptoBalanceCard } from '../../components/crypto/CryptoBalanceCard';
 import { CryptoDepositForm } from '../../components/crypto/CryptoDepositForm';
 import { CryptoTransactionHistory } from '../../components/crypto/CryptoTransactionHistory';
 
-export const CryptoWalletPage: React.FC = () => {
+export const CryptoWalletPage = () => {
   const [showDepositForm, setShowDepositForm] = useState(false);
   const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [selectedCryptoForWithdraw, setSelectedCryptoForWithdraw] = useState<string>('');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { USER_ROUTES } from '../../constants/ROUTERS';
-import { useQuinielasCreadas } from '../../hooks/useQuinielasCreadas';
+import { useQuiniela } from '../../hooks/useQuiniela';
 
 export const QuinielasQuickAccess: React.FC = () => {
     const history = useHistory();
@@ -12,9 +12,8 @@ export const QuinielasQuickAccess: React.FC = () => {
         loading,
         obtenerQuinielasDisponibles,
         obtenerQuinielasEnCurso,
-        calcularTotalPremiosPendientes,
-        formatearMoneda
-    } = useQuinielasCreadas();
+        calcularTotalPremiosPendientes
+    } = useQuiniela();
 
     const quinielasDisponibles = obtenerQuinielasDisponibles();
     const quinielasEnCurso = obtenerQuinielasEnCurso();
@@ -81,7 +80,7 @@ export const QuinielasQuickAccess: React.FC = () => {
                         <span className="font-medium">Premios Pendientes</span>
                     </div>
                     <p className="text-2xl font-bold">
-                        {formatearMoneda(premiosPendientes)}
+                        {premiosPendientes}
                     </p>
                     <p className="text-sm opacity-90">
                         ¡Tienes premios por reclamar!
@@ -128,15 +127,15 @@ export const QuinielasQuickAccess: React.FC = () => {
                                         {quiniela.nombre}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        {quiniela.participantesActuales} participantes
+                                        {quiniela.participantes} participantes
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-bold text-green-600">
-                                        {formatearMoneda(quiniela.premioTotal || 0, quiniela.esCrypto, quiniela.cryptoTipo)}
+                                        €{(quiniela.participantes * quiniela.precioEntrada).toFixed(2)}
                                     </p>
                                     <p className="text-xs text-gray-500">
-                                        {formatearMoneda(quiniela.precioEntrada, quiniela.esCrypto, quiniela.cryptoTipo)} entrada
+                                        €{quiniela.precioEntrada.toFixed(2)} entrada
                                     </p>
                                 </div>
                             </div>

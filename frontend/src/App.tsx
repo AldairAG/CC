@@ -3,7 +3,7 @@ import { store } from './store/store'
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import LandingPage from './pages/LandingPage';
 import { ADMIN_ROUTES, USER_ROUTES } from './constants/ROUTERS'
-import UserLayoutNew from './layout/UserLayoutNew';
+import UserLayoutNew from './layout/UserLayout';
 import AdminLayout from './layout/AdminLayout';
 import { Provider } from 'react-redux';
 import { ToastContainer } from 'react-toastify';

@@ -1,12 +1,14 @@
 import React, { type JSX } from 'react';
-import { Formik, Form, Field, ErrorMessage, type FormikProps } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import type { CrearQuinielaRequest, QuinielaCreada } from '../../types/QuinielaType';
-import { useQuinielasCreadas } from '../../hooks/useQuinielasCreadas';
-import { EventSelector } from './EventSelector';
+import type { CrearQuinielaRequest, QuinielaResponse, EventoQuinielaRequest } from '../../types/QuinielaType';
+import { useQuiniela } from '../../hooks/useQuiniela';
+import { SportLeagueSelector } from './SportLeagueSelector';
+import { EnhancedEventSelector } from './EnhancedEventSelector';
+import { GameModeSelector } from './GameModeSelector';
 
 interface Props {
-    onQuinielaCreada?: (quiniela: QuinielaCreada) => void;
+    onQuinielaCreada?: (quiniela: QuinielaResponse) => void;
     onCancelar?: () => void;
 }
 
@@ -47,7 +49,7 @@ const validationSchema = Yup.object({
         .max(1000, 'Máximo 1000 participantes'),
     
     tipoDistribucion: Yup.string()
-        .oneOf(['WINNER_TAKES_ALL', 'TOP_3', 'PERCENTAGE'], 'Tipo de distribución inválido')
+        .oneOf(['WINNER_TAKES_ALL', 'TOP_3', 'PERCENTAGE', 'ELIMINATION', 'ACCUMULATIVE', 'TEAMS'], 'Tipo de distribución inválido')
         .required('Selecciona un tipo de distribución'),
     
     porcentajePremiosPrimero: Yup.number()
@@ -64,13 +66,12 @@ const validationSchema = Yup.object({
     
     esPublica: Yup.boolean(),
     
-    esCrypto: Yup.boolean(),
+    // Nuevos campos para deporte y liga
+    selectedSport: Yup.string()
+        .required('Debes seleccionar un deporte'),
     
-    cryptoTipo: Yup.string().when('esCrypto', {
-        is: true,
-        then: (schema) => schema.required('Selecciona el tipo de criptomoneda'),
-        otherwise: (schema) => schema.nullable(),
-    }),
+    selectedLeague: Yup.string()
+        .required('Debes seleccionar una liga'),
     
     eventos: Yup.array()
         .min(1, 'Debes seleccionar al menos un evento')
@@ -117,7 +118,12 @@ const validationSchema = Yup.object({
 });
 
 // Valores iniciales del formulario
-const initialValues: CrearQuinielaRequest & { horaInicio: string; horaFin: string } = {
+const initialValues: CrearQuinielaRequest & { 
+    horaInicio: string; 
+    horaFin: string; 
+    selectedSport: string; 
+    selectedLeague: string; 
+} = {
     nombre: '',
     descripcion: '',
     fechaInicio: "",
@@ -131,13 +137,13 @@ const initialValues: CrearQuinielaRequest & { horaInicio: string; horaFin: strin
     porcentajePremiosSegundo: 0,
     porcentajePremiosTercero: 0,
     esPublica: true,
-    esCrypto: false,
-    cryptoTipo: undefined,
+    selectedSport: '',
+    selectedLeague: '',
     eventos: []
 };
 
 export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancelar }) => {
-    const { crearQuiniela, loading } = useQuinielasCreadas();
+    const { crearQuiniela, loading } = useQuiniela();
 
     // Función para formatear fecha y hora a ISO string
     const formatDateTimeForAPI = (date: string | Date, time: string): string => {
@@ -153,27 +159,13 @@ export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancela
         return now.toTimeString().slice(0, 5); // "HH:MM"
     };
 
-    // Función para manejar cambio de tipo de distribución
-    const handleTipoDistribucionChange = (
-        tipo: 'WINNER_TAKES_ALL' | 'TOP_3' | 'PERCENTAGE',
-        setFieldValue: FormikProps<CrearQuinielaRequest>['setFieldValue']
-    ) => {
-        let nuevosPorcentajes = { primero: 100, segundo: 0, tercero: 0 };
-        
-        if (tipo === 'TOP_3') {
-            nuevosPorcentajes = { primero: 50, segundo: 30, tercero: 20 };
-        } else if (tipo === 'PERCENTAGE') {
-            nuevosPorcentajes = { primero: 60, segundo: 25, tercero: 15 };
-        }
-
-        setFieldValue('tipoDistribucion', tipo);
-        setFieldValue('porcentajePremiosPrimero', nuevosPorcentajes.primero);
-        setFieldValue('porcentajePremiosSegundo', nuevosPorcentajes.segundo);
-        setFieldValue('porcentajePremiosTercero', nuevosPorcentajes.tercero);
-    };
-
     // Función para manejar el envío del formulario
-    const handleSubmit = async (values: CrearQuinielaRequest & { horaInicio: string; horaFin: string }) => {
+    const handleSubmit = async (values: CrearQuinielaRequest & { 
+        horaInicio: string; 
+        horaFin: string;
+        selectedSport: string;
+        selectedLeague: string;
+    }) => {
         try {
             // Formatear fechas con horas antes de enviar
             const formattedValues: CrearQuinielaRequest = {
@@ -181,11 +173,14 @@ export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancela
                 fechaInicio: formatDateTimeForAPI(values.fechaInicio, values.horaInicio),
                 fechaFin: formatDateTimeForAPI(values.fechaFin, values.horaFin),
                 // Limpiar campos condicionales
-                cryptoTipo: values.esCrypto ? values.cryptoTipo : undefined,
                 maxParticipantes: values.maxParticipantes || undefined,
             };
-            // Remover campos de hora que no van al backend
-            const { ...finalValues } = formattedValues as CrearQuinielaRequest & { horaInicio: string; horaFin: string };
+            // Remover campos que no van al backend
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { selectedSport, selectedLeague, ...finalValues } = formattedValues as CrearQuinielaRequest & { 
+                selectedSport: string; 
+                selectedLeague: string;
+            };
             
             const quinielaCreada = await crearQuiniela(finalValues);
             onQuinielaCreada?.(quinielaCreada);
@@ -254,9 +249,7 @@ export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancela
                                     Precio de Entrada *
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500">
-                                        {values.esCrypto ? '₿' : '$'}
-                                    </span>
+                                    <span className="absolute left-3 top-2 text-gray-500">$</span>
                                     <Field
                                         type="number"
                                         name="precioEntrada"
@@ -432,7 +425,7 @@ export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancela
                                 <ErrorMessage name="maxParticipantes" component="p" className="text-red-500 text-sm mt-1" />
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="flex items-center space-y-3">
                                 <div className="flex items-center">
                                     <Field
                                         type="checkbox"
@@ -441,148 +434,46 @@ export const CrearQuinielaForm: React.FC<Props> = ({ onQuinielaCreada, onCancela
                                     />
                                     <label className="text-sm text-gray-700">Quiniela pública</label>
                                 </div>
-                                
-                                <div className="flex items-center">
-                                    <Field
-                                        type="checkbox"
-                                        name="esCrypto"
-                                        className="mr-2 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                    <label className="text-sm text-gray-700">Pagos en criptomoneda</label>
-                                </div>
                             </div>
                         </div>
 
-                        {/* Tipo de criptomoneda */}
-                        {values.esCrypto && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Tipo de Criptomoneda *
-                                </label>
-                                <Field
-                                    as="select"
-                                    name="cryptoTipo"
-                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                        errors.cryptoTipo && touched.cryptoTipo ? 'border-red-500' : 'border-gray-300'
-                                    }`}
-                                >
-                                    <option value="">Seleccionar...</option>
-                                    <option value="BTC">Bitcoin (BTC)</option>
-                                    <option value="ETH">Ethereum (ETH)</option>
-                                    <option value="SOL">Solana (SOL)</option>
-                                    <option value="ADA">Cardano (ADA)</option>
-                                    <option value="DOT">Polkadot (DOT)</option>
-                                </Field>
-                                <ErrorMessage name="cryptoTipo" component="p" className="text-red-500 text-sm mt-1" />
-                            </div>
-                        )}
-
-                        {/* Distribución de Premios */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Distribución de Premios *
-                            </label>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoDistribucionChange('WINNER_TAKES_ALL', setFieldValue)}
-                                    className={`p-3 border rounded-lg text-center transition-colors ${
-                                        values.tipoDistribucion === 'WINNER_TAKES_ALL'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                    }`}
-                                >
-                                    <div className="font-medium">🏆 Ganador se lleva todo</div>
-                                    <div className="text-sm text-gray-600">100% al primer lugar</div>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoDistribucionChange('TOP_3', setFieldValue)}
-                                    className={`p-3 border rounded-lg text-center transition-colors ${
-                                        values.tipoDistribucion === 'TOP_3'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                    }`}
-                                >
-                                    <div className="font-medium">🥇🥈🥉 Top 3</div>
-                                    <div className="text-sm text-gray-600">50% - 30% - 20%</div>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleTipoDistribucionChange('PERCENTAGE', setFieldValue)}
-                                    className={`p-3 border rounded-lg text-center transition-colors ${
-                                        values.tipoDistribucion === 'PERCENTAGE'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                    }`}
-                                >
-                                    <div className="font-medium">⚙️ Personalizado</div>
-                                    <div className="text-sm text-gray-600">Configura porcentajes</div>
-                                </button>
-                            </div>
-                            <ErrorMessage name="tipoDistribucion" component="p" className="text-red-500 text-sm mt-1" />
+                        {/* Selección de Deporte y Liga */}
+                        <div className="border-t pt-6">
+                            <SportLeagueSelector
+                                selectedSport={values.selectedSport}
+                                selectedLeague={values.selectedLeague}
+                                onSportChange={(sport: string) => {
+                                    setFieldValue('selectedSport', sport);
+                                    setFieldValue('eventos', []); // Limpiar eventos al cambiar deporte
+                                }}
+                                onLeagueChange={(league: string) => {
+                                    setFieldValue('selectedLeague', league);
+                                    setFieldValue('eventos', []); // Limpiar eventos al cambiar liga
+                                }}
+                            />
+                            <ErrorMessage name="selectedSport" component="p" className="text-red-500 text-sm mt-1" />
+                            <ErrorMessage name="selectedLeague" component="p" className="text-red-500 text-sm mt-1" />
                         </div>
 
-                        {/* Porcentajes personalizados */}
-                        {(values.tipoDistribucion === 'TOP_3' || values.tipoDistribucion === 'PERCENTAGE') && (
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <h4 className="font-medium text-gray-700 mb-3">Distribución de Premios</h4>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-sm text-gray-600 mb-1">1er Lugar (%)</label>
-                                        <Field
-                                            type="number"
-                                            name="porcentajePremiosPrimero"
-                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            min="0"
-                                            max="100"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm text-gray-600 mb-1">2do Lugar (%)</label>
-                                        <Field
-                                            type="number"
-                                            name="porcentajePremiosSegundo"
-                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            min="0"
-                                            max="100"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm text-gray-600 mb-1">3er Lugar (%)</label>
-                                        <Field
-                                            type="number"
-                                            name="porcentajePremiosTercero"
-                                            className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            min="0"
-                                            max="100"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                {/* Error de porcentajes */}
-                                <ErrorMessage name="porcentajes" component="p" className="text-red-500 text-sm mt-2" />
-                                
-                                {/* Indicador de total */}
-                                <div className="mt-2 text-sm text-gray-600">
-                                    Total: {(values.porcentajePremiosPrimero || 0) + (values.porcentajePremiosSegundo || 0) + (values.porcentajePremiosTercero || 0)}%
-                                    {((values.porcentajePremiosPrimero || 0) + (values.porcentajePremiosSegundo || 0) + (values.porcentajePremiosTercero || 0)) === 100 && 
-                                        <span className="text-green-600 ml-2">✓</span>
-                                    }
-                                </div>
-                            </div>
-                        )}
+                        {/* Selección de Modo de Juego */}
+                        <div className="border-t pt-6">
+                            <GameModeSelector
+                                tipoDistribucion={values.tipoDistribucion}
+                                porcentajes={{
+                                    primero: values.porcentajePremiosPrimero || 0,
+                                    segundo: values.porcentajePremiosSegundo || 0,
+                                    tercero: values.porcentajePremiosTercero || 0
+                                }}
+                            />
+                        </div>
 
                         {/* Selector de eventos */}
                         <div className="border-t pt-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-3">
-                                Eventos de la Quiniela *
-                            </label>
-                            <EventSelector
+                            <EnhancedEventSelector
+                                selectedSport={values.selectedSport}
+                                selectedLeague={values.selectedLeague}
                                 eventosSeleccionados={values.eventos}
-                                onEventosChange={(eventos) => setFieldValue('eventos', eventos)}
+                                onEventosChange={(eventos: EventoQuinielaRequest[]) => setFieldValue('eventos', eventos)}
                             />
                             <ErrorMessage name="eventos" component="p" className="text-red-500 text-sm mt-1" />
                         </div>

@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import QuinielaItem from '../../components/items/QuinielaItem';
 import { useQuiniela } from '../../hooks/useQuiniela';
-import type { FiltrosBusquedaAvanzada } from '../../types/QuinielaServiceTypes';
+import { USER_ROUTES } from '../../constants/ROUTERS';
+import type { QuinielaResponse } from '../../types/QuinielaType';
 
 const QuinielaList = () => {
+  const history = useHistory();
   const {
-    quinielaList,
-    quinielasFiltradas,
-    obtenerQuinielasPublicas,
-    obtenerTodasQuinielas,
-    obtenerQuinielasPorEstado,
-    obtenerQuinielasPorPrecioMaximo,
-    obtenerQuinielasPorTipoPremio,
-    busquedaAvanzadaQuinielas,
-    filterByNombre,
-    limpiarQuinielas
+    quinielasPublicas,
+    loading: hookLoading,
+    error: hookError,
+    cargarQuinielasPublicas,
   } = useQuiniela();
 
   const [loading, setLoading] = useState(true);
@@ -22,6 +19,7 @@ const QuinielaList = () => {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [quinielasFiltradas, setQuinielasFiltradas] = useState<QuinielaResponse[]>([]);
   
   // Filtros avanzados
   const [priceFilter, setPriceFilter] = useState<number | ''>('');
@@ -30,38 +28,19 @@ const QuinielaList = () => {
   const [fechaFinFilter, setFechaFinFilter] = useState<string>('');
   
   // Paginación
-  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
   const [hasMorePages, setHasMorePages] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMore] = useState(false);
 
   // Estados únicos para filtros
   const [uniqueStates, setUniqueStates] = useState<string[]>([]);
   const [uniqueTipos, setUniqueTipos] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchQuinielas();
-  }, []);
-
-  useEffect(() => {
-    // Actualizar estados únicos cuando cambien las quinielas
-    if (quinielaList.length > 0) {
-      const states = [...new Set(quinielaList.map(q => q.estado).filter(Boolean))];
-      const tipos = [...new Set(quinielaList.map(q => q.tipoPremio).filter(Boolean))];
-      setUniqueStates(states);
-      setUniqueTipos(tipos);
-    }
-  }, [quinielaList]);
-
-  /**
-   * Cargar quinielas iniciales
-   */
-  const fetchQuinielas = async () => {
+  const fetchQuinielas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      await obtenerQuinielasPublicas();
-      setCurrentPage(0);
+      await cargarQuinielasPublicas();
       setHasMorePages(true);
     } catch (err) {
       setError('Error al cargar las quinielas');
@@ -69,30 +48,71 @@ const QuinielaList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cargarQuinielasPublicas]);
+
+  useEffect(() => {
+    fetchQuinielas();
+  }, [fetchQuinielas]);
+
+  // Actualizar estado cuando cambie el hook
+  useEffect(() => {
+    setLoading(hookLoading);
+    setError(hookError);
+  }, [hookLoading, hookError]);
+
+  useEffect(() => {
+    // Actualizar estados únicos cuando cambien las quinielas
+    if (quinielasPublicas.length > 0) {
+      const states = [...new Set(quinielasPublicas.map((q: QuinielaResponse) => q.estado).filter(Boolean))] as string[];
+      const tipos = [...new Set(quinielasPublicas.map((q: QuinielaResponse) => q.tipoDistribucion).filter(Boolean))] as string[];
+      setUniqueStates(states);
+      setUniqueTipos(tipos);
+    }
+  }, [quinielasPublicas]);
+
+  // Aplicar filtros localmente
+  useEffect(() => {
+    let filtered = [...quinielasPublicas];
+
+    // Filtro por estado
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(q => q.estado?.toLowerCase() === selectedFilter.toLowerCase());
+    }
+
+    // Filtro por búsqueda
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(q => 
+        q.nombre?.toLowerCase().includes(term) ||
+        q.descripcion?.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtros avanzados
+    if (tipoFilter) {
+      filtered = filtered.filter(q => q.tipoDistribucion === tipoFilter);
+    }
+
+    if (priceFilter && typeof priceFilter === 'number') {
+      filtered = filtered.filter(q => q.precioEntrada <= priceFilter);
+    }
+
+    if (fechaInicioFilter) {
+      filtered = filtered.filter(q => new Date(q.fechaInicio) >= new Date(fechaInicioFilter));
+    }
+
+    if (fechaFinFilter) {
+      filtered = filtered.filter(q => new Date(q.fechaFin) <= new Date(fechaFinFilter));
+    }
+
+    setQuinielasFiltradas(filtered);
+  }, [quinielasPublicas, selectedFilter, searchTerm, tipoFilter, priceFilter, fechaInicioFilter, fechaFinFilter]);
 
   /**
    * Manejar cambio de filtro por estado
    */
-  const handleFilterChange = async (filter: string) => {
+  const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter);
-    setCurrentPage(0);
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (filter === 'all') {
-        await obtenerQuinielasPublicas();
-      } else {
-        await obtenerQuinielasPorEstado(filter);
-      }
-    } catch (err) {
-      setError('Error al filtrar quinielas por estado');
-      console.error('Error filtering by state:', err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   /**
@@ -100,93 +120,29 @@ const QuinielaList = () => {
    */
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
-    if (term.trim()) {
-      filterByNombre(term);
-    } else {
-      limpiarQuinielas();
-    }
   };
 
   /**
-   * Aplicar filtros avanzados usando búsqueda avanzada del backend
+   * Aplicar filtros avanzados
    */
-  const handleAdvancedFilters = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const filtros: FiltrosBusquedaAvanzada = {};
-
-      // Solo agregar filtros que tengan valor
-      if (selectedFilter !== 'all') {
-        filtros.estado = selectedFilter;
-      }
-      if (tipoFilter) {
-        filtros.tipoPremio = tipoFilter;
-      }
-      if (priceFilter && typeof priceFilter === 'number') {
-        filtros.precioMaximo = priceFilter;
-      }
-      if (fechaInicioFilter && fechaFinFilter) {
-        filtros.fechaInicio = fechaInicioFilter;
-        filtros.fechaFin = fechaFinFilter;
-      }
-
-      // Si hay filtros, usar búsqueda avanzada; si no, obtener todas
-      if (Object.keys(filtros).length > 0) {
-        await busquedaAvanzadaQuinielas(filtros);
-      } else {
-        await obtenerQuinielasPublicas();
-      }
-
-      // Si hay término de búsqueda, aplicarlo después
-      if (searchTerm.trim()) {
-        filterByNombre(searchTerm);
-      }
-
-    } catch (err) {
-      setError('Error al aplicar filtros avanzados');
-      console.error('Error applying advanced filters:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleAdvancedFilters = () => {
+    // Los filtros se aplican automáticamente en el useEffect
   };
 
   /**
    * Limpiar filtros avanzados
    */
-  const clearAdvancedFilters = async () => {
+  const clearAdvancedFilters = () => {
     setPriceFilter('');
     setTipoFilter('');
     setFechaInicioFilter('');
     setFechaFinFilter('');
-
-    try {
-      setLoading(true);
-      
-      // Reapliar solo el filtro de estado si no es 'all'
-      if (selectedFilter !== 'all') {
-        await obtenerQuinielasPorEstado(selectedFilter);
-      } else {
-        await obtenerQuinielasPublicas();
-      }
-
-      // Reapliar búsqueda por nombre si existe
-      if (searchTerm.trim()) {
-        filterByNombre(searchTerm);
-      }
-    } catch (err) {
-      setError('Error al limpiar filtros');
-      console.error('Error clearing filters:', err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   /**
    * Limpiar todos los filtros
    */
-  const clearAllFilters = async () => {
+  const clearAllFilters = () => {
     setSelectedFilter('all');
     setSearchTerm('');
     setPriceFilter('');
@@ -194,9 +150,6 @@ const QuinielaList = () => {
     setFechaInicioFilter('');
     setFechaFinFilter('');
     setShowAdvancedFilters(false);
-    
-    limpiarQuinielas();
-    await fetchQuinielas();
   };
 
   /**
@@ -204,63 +157,33 @@ const QuinielaList = () => {
    */
   const loadMoreQuinielas = async () => {
     if (loadingMore || !hasMorePages) return;
-
-    try {
-      setLoadingMore(true);
-      const nextPage = currentPage + 1;
-      const newQuinielas = await obtenerTodasQuinielas(nextPage, pageSize);
-      
-      if (newQuinielas.length < pageSize) {
-        setHasMorePages(false);
-      }
-      
-      setCurrentPage(nextPage);
-    } catch (err) {
-      console.error('Error loading more quinielas:', err);
-    } finally {
-      setLoadingMore(false);
-    }
+    // Simulamos paginación simple incrementando el tamaño de página
+    setPageSize(prev => prev + 12);
   };
 
   /**
    * Filtros rápidos por tipo de premio
    */
-  const handleQuickFilterTipo = async (tipo: string) => {
+  const handleQuickFilterTipo = (tipo: string) => {
     setTipoFilter(tipo);
-    try {
-      setLoading(true);
-      await obtenerQuinielasPorTipoPremio(tipo);
-    } catch {
-      setError('Error al filtrar por tipo de premio');
-    } finally {
-      setLoading(false);
-    }
   };
 
   /**
    * Filtros rápidos por precio
    */
-  const handleQuickFilterPrice = async (maxPrice: number) => {
+  const handleQuickFilterPrice = (maxPrice: number) => {
     setPriceFilter(maxPrice);
-    try {
-      setLoading(true);
-      await obtenerQuinielasPorPrecioMaximo(maxPrice);
-    } catch{
-      setError('Error al filtrar por precio');
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Determinar qué quinielas mostrar
-  const displayQuinielas = quinielasFiltradas.length > 0 ? quinielasFiltradas : quinielaList;
+  const displayQuinielas = quinielasFiltradas.length > 0 ? quinielasFiltradas : quinielasPublicas;
 
   const getFilteredCount = (estado: string) => {
-    if (estado === 'all') return quinielaList.length;
-    return quinielaList.filter(q => q.estado?.toLowerCase() === estado?.toLowerCase()).length;
+    if (estado === 'all') return quinielasPublicas.length;
+    return quinielasPublicas.filter((q: QuinielaResponse) => q.estado?.toLowerCase() === estado?.toLowerCase()).length;
   };
 
-  if (loading && quinielaList.length === 0) {
+  if (loading && quinielasPublicas.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-64">
         <div className="flex flex-col items-center">
@@ -296,6 +219,17 @@ const QuinielaList = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">
             Quinielas Disponibles
           </h1>
+
+          {/* Botón Armar Quiniela */}
+          <div className="mb-4 md:mb-0">
+            <button
+              onClick={() => history.push(USER_ROUTES.ARMAR_QUINIELA)}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center space-x-2"
+            >
+              <span className="text-lg">🛠️</span>
+              <span>Armar Mi Quiniela</span>
+            </button>
+          </div>
 
           {/* Search and Controls */}
           <div className="flex gap-2">
@@ -471,7 +405,7 @@ const QuinielaList = () => {
         {/* Results Info */}
         <div className="flex justify-between items-center text-sm text-gray-600 mb-4">
           <span>
-            Mostrando {displayQuinielas.length} de {quinielaList.length} quinielas
+            Mostrando {displayQuinielas.length} de {quinielasPublicas.length} quinielas
           </span>
           {loading && (
             <span className="flex items-center">
@@ -509,10 +443,26 @@ const QuinielaList = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {displayQuinielas.map(quiniela => (
+            {displayQuinielas.map((quiniela: QuinielaResponse) => (
               <QuinielaItem
-                key={quiniela.idQuiniela}
-                quiniela={quiniela}
+                key={quiniela.id}
+                quiniela={{
+                  ...quiniela,
+                  idQuiniela: quiniela.id,
+                  nombreQuiniela: quiniela.nombre,
+                  premioAcumulado: quiniela.participantes * quiniela.precioEntrada,
+                  numeroParticipantes: quiniela.participantes,
+                  fechaInicio: quiniela.fechaInicio,
+                  fechaFin: quiniela.fechaFin,
+                  precioParticipacion: quiniela.precioEntrada,
+                  strDescripcion: quiniela.descripcion,
+                  urlBanner: '',
+                  allowDoubleBets: false,
+                  allowTripleBets: false,
+                  tipoPremio: quiniela.tipoDistribucion,
+                  tiposApuestas: [],
+                  eventos: []
+                }}
               />
             ))}
           </div>

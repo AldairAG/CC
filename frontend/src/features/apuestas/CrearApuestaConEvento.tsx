@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApuestas } from '../../hooks/useApuestasConEventos';
+import { useApuestas } from '../../../hooks/useApuestasConEventos';
 
 export const CrearApuestaConEvento: React.FC = () => {
   const [formData, setFormData] = useState({

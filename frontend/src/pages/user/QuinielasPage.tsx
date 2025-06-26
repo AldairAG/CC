@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { QuinielaCard } from '../../components/quinielas/QuinielaCardNew';
-import { CrearQuinielaForm } from '../../components/quinielas/CrearQuinielaForm';
-import { QuinielaDetalle } from '../../components/quinielas/QuinielaDetalle';
-import { useQuinielasCreadas } from '../../hooks/useQuinielasCreadas2';
+import { QuinielaCard } from '../../features/quinielas/QuinielaCard';
+import { CrearQuinielaForm } from '../../features/quinielas/CrearQuinielaForm';
+import { QuinielaDetalle } from '../../features/quinielas/QuinielaDetalle';
+import { useQuiniela } from '../../hooks/useQuiniela';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/navigation/Tabs';
 import type { QuinielaResponse } from '../../types/QuinielaType';
 
-export const QuinielasPage: React.FC = () => {
+const QuinielasPage= () => {
     const {
         quinielasPublicas,
         misQuinielas,
@@ -21,15 +22,29 @@ export const QuinielasPage: React.FC = () => {
         obtenerQuinielasFinalizadas,
         calcularTotalPremiosPendientes,
         limpiarError
-    } = useQuinielasCreadas();    const [tabActiva, setTabActiva] = useState<'publicas' | 'mis-quinielas' | 'participaciones'>('publicas');
+    } = useQuiniela();
+
+    const [tabActiva, setTabActiva] = useState<'publicas' | 'mis-quinielas' | 'participaciones'>('publicas');
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [mostrarDetalle, setMostrarDetalle] = useState<number | null>(null);
     const [filtro, setFiltro] = useState<'todas' | 'disponibles' | 'en-curso' | 'finalizadas'>('todas');
 
+    // Función wrapper para el cambio de tab compatible con React.Dispatch
+    const handleTabChange: React.Dispatch<React.SetStateAction<string>> = (value) => {
+        if (typeof value === 'function') {
+            setTabActiva(prev => value(prev) as 'publicas' | 'mis-quinielas' | 'participaciones');
+        } else {
+            setTabActiva(value as 'publicas' | 'mis-quinielas' | 'participaciones');
+        }
+    };
+
     useEffect(() => {
         cargarQuinielasPublicas();
         cargarMisQuinielas();
-        cargarMisParticipaciones();    }, [cargarQuinielasPublicas, cargarMisQuinielas, cargarMisParticipaciones]);    const handleCrearQuiniela = () => {
+        cargarMisParticipaciones();
+    }, [cargarQuinielasPublicas, cargarMisQuinielas, cargarMisParticipaciones]);
+
+    const handleCrearQuiniela = () => {
         setMostrarFormulario(false);
         alert('¡Quiniela creada exitosamente!');
         // Actualizar las listas localmente
@@ -66,10 +81,12 @@ export const QuinielasPage: React.FC = () => {
                 </div>
             </div>
         );
-    }    const handleUnirse = async (quinielaId: number) => {
+    }
+    // Si no se está mostrando ni el formulario ni el detalle, mostrar la lista de quinielas
+    const handleUnirse = async (quinielaId: number) => {
         try {
             const codigoInvitacion = '';
-            
+
             // Si es privada, pedir código (esto debería manejarse según la lógica del componente)
             // if (!quiniela.esPublica) {
             //     codigoInvitacion = prompt('Esta quiniela es privada. Ingresa el código de invitación:') || '';
@@ -81,7 +98,8 @@ export const QuinielasPage: React.FC = () => {
                 codigoInvitacion: codigoInvitacion || undefined
             });
 
-            alert('¡Te has unido exitosamente a la quiniela!');} catch (error) {
+            alert('¡Te has unido exitosamente a la quiniela!');
+        } catch (error) {
             alert(error instanceof Error ? error.message : 'Error al unirse a la quiniela');
         }
     };
@@ -167,38 +185,39 @@ export const QuinielasPage: React.FC = () => {
             {/* Tabs */}
             <div className="bg-white border-b">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex space-x-8">
-                        <button
-                            onClick={() => setTabActiva('publicas')}
-                            className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                                tabActiva === 'publicas'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                        >
-                            🌍 Quinielas Públicas
-                        </button>
-                        <button
-                            onClick={() => setTabActiva('mis-quinielas')}
-                            className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                                tabActiva === 'mis-quinielas'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                        >
-                            🎯 Mis Quinielas
-                        </button>
-                        <button
-                            onClick={() => setTabActiva('participaciones')}
-                            className={`py-4 px-2 border-b-2 font-medium text-sm ${
-                                tabActiva === 'participaciones'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                        >
-                            👥 Mis Participaciones
-                        </button>
-                    </div>
+                    <Tabs 
+                        defaultValue="publicas" 
+                        activeTab={tabActiva} 
+                        setActiveTab={handleTabChange}
+                        className="w-full"
+                    >
+                        <TabsList className="flex space-x-8 mb-0 border-b-0">
+                            <TabsTrigger 
+                                value="publicas" 
+                                className="py-4 px-2 border-b-2 font-medium text-sm"
+                                activeClassName="border-blue-500 text-blue-600"
+                                inactiveClassName="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            >
+                                🌍 Quinielas Públicas
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="mis-quinielas" 
+                                className="py-4 px-2 border-b-2 font-medium text-sm"
+                                activeClassName="border-blue-500 text-blue-600"
+                                inactiveClassName="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            >
+                                🎯 Mis Quinielas
+                            </TabsTrigger>
+                            <TabsTrigger 
+                                value="participaciones" 
+                                className="py-4 px-2 border-b-2 font-medium text-sm"
+                                activeClassName="border-blue-500 text-blue-600"
+                                inactiveClassName="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                            >
+                                👥 Mis Participaciones
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                 </div>
             </div>
 
@@ -210,56 +229,51 @@ export const QuinielasPage: React.FC = () => {
                             <>
                                 <button
                                     onClick={() => setFiltro('todas')}
-                                    className={`px-3 py-1 text-sm rounded-full ${
-                                        filtro === 'todas'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                    className={`px-3 py-1 text-sm rounded-full ${filtro === 'todas'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
                                 >
                                     Todas
                                 </button>
                                 <button
                                     onClick={() => setFiltro('disponibles')}
-                                    className={`px-3 py-1 text-sm rounded-full ${
-                                        filtro === 'disponibles'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                    className={`px-3 py-1 text-sm rounded-full ${filtro === 'disponibles'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
                                 >
                                     Disponibles
                                 </button>
                             </>
                         )}
-                        
+
                         {tabActiva === 'participaciones' && (
                             <>
                                 <button
                                     onClick={() => setFiltro('todas')}
-                                    className={`px-3 py-1 text-sm rounded-full ${
-                                        filtro === 'todas'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                    className={`px-3 py-1 text-sm rounded-full ${filtro === 'todas'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
                                 >
                                     Todas
                                 </button>
                                 <button
                                     onClick={() => setFiltro('en-curso')}
-                                    className={`px-3 py-1 text-sm rounded-full ${
-                                        filtro === 'en-curso'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                    className={`px-3 py-1 text-sm rounded-full ${filtro === 'en-curso'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
                                 >
                                     En Curso
                                 </button>
                                 <button
                                     onClick={() => setFiltro('finalizadas')}
-                                    className={`px-3 py-1 text-sm rounded-full ${
-                                        filtro === 'finalizadas'
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
+                                    className={`px-3 py-1 text-sm rounded-full ${filtro === 'finalizadas'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
                                 >
                                     Finalizadas
                                 </button>
@@ -283,67 +297,182 @@ export const QuinielasPage: React.FC = () => {
 
             {/* Content */}
             <div className="max-w-6xl mx-auto px-4 pb-8">
-                {error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
-                        <span>{error}</span>
-                        <button onClick={limpiarError} className="text-red-500 hover:text-red-700">
-                            ✕
-                        </button>
-                    </div>
-                )}
-
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
-                                <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="h-16 bg-gray-200 rounded"></div>
-                                    <div className="h-16 bg-gray-200 rounded"></div>
-                                </div>
-                                <div className="h-10 bg-gray-200 rounded"></div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <>
-                        {obtenerQuinielasFiltradas().length === 0 ? (
-                            <div className="text-center py-12">
-                                <div className="text-6xl mb-4">🎯</div>
-                                <h3 className="text-xl font-medium text-gray-700 mb-2">
-                                    No hay quinielas disponibles
-                                </h3>
-                                <p className="text-gray-500 mb-6">
-                                    {tabActiva === 'publicas' && 'No hay quinielas públicas disponibles en este momento.'}
-                                    {tabActiva === 'mis-quinielas' && 'Aún no has creado ninguna quiniela.'}
-                                    {tabActiva === 'participaciones' && 'No estás participando en ninguna quiniela.'}
-                                </p>
-                                {tabActiva === 'publicas' && (
-                                    <button
-                                        onClick={() => setMostrarFormulario(true)}
-                                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
-                                    >
-                                        ➕ Crear la Primera Quiniela
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {obtenerQuinielasFiltradas().map((quiniela: QuinielaResponse) => (                                    <QuinielaCard
-                                        key={quiniela.id}
-                                        quiniela={quiniela}
-                                        onVerDetalles={() => handleMostrarDetalle(quiniela.id)}
-                                        onUnirse={handleUnirse}
-                                        showJoinButton={tabActiva === 'publicas'}
-                                    />
-                                ))}
+                <Tabs 
+                    defaultValue="publicas" 
+                    activeTab={tabActiva} 
+                    setActiveTab={handleTabChange}
+                    className="w-full"
+                >
+                    <TabsContent value="publicas" className="mt-0">
+                        {error && (
+                            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
+                                <span>{error}</span>
+                                <button onClick={limpiarError} className="text-red-500 hover:text-red-700">
+                                    ✕
+                                </button>
                             </div>
                         )}
-                    </>
-                )}
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
+                                        <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                        </div>
+                                        <div className="h-10 bg-gray-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <>
+                                {(filtro === 'todas' ? quinielasPublicas : obtenerQuinielasDisponibles()).length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <div className="text-6xl mb-4">🎯</div>
+                                        <h3 className="text-xl font-medium text-gray-700 mb-2">
+                                            No hay quinielas públicas disponibles
+                                        </h3>
+                                        <p className="text-gray-500 mb-6">
+                                            No hay quinielas públicas disponibles en este momento.
+                                        </p>
+                                        <button
+                                            onClick={() => setMostrarFormulario(true)}
+                                            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium"
+                                        >
+                                            ➕ Crear la Primera Quiniela
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {(filtro === 'todas' ? quinielasPublicas : obtenerQuinielasDisponibles()).map((quiniela: QuinielaResponse) => (
+                                            <QuinielaCard
+                                                key={quiniela.id}
+                                                quiniela={quiniela}
+                                                onVerDetalles={() => handleMostrarDetalle(quiniela.id)}
+                                                onUnirse={handleUnirse}
+                                                showJoinButton={true}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="mis-quinielas" className="mt-0">
+                        {error && (
+                            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
+                                <span>{error}</span>
+                                <button onClick={limpiarError} className="text-red-500 hover:text-red-700">
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
+                                        <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                        </div>
+                                        <div className="h-10 bg-gray-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <>
+                                {misQuinielas.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <div className="text-6xl mb-4">🎯</div>
+                                        <h3 className="text-xl font-medium text-gray-700 mb-2">
+                                            No has creado quinielas
+                                        </h3>
+                                        <p className="text-gray-500 mb-6">
+                                            Aún no has creado ninguna quiniela.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {misQuinielas.map((quiniela: QuinielaResponse) => (
+                                            <QuinielaCard
+                                                key={quiniela.id}
+                                                quiniela={quiniela}
+                                                onVerDetalles={() => handleMostrarDetalle(quiniela.id)}
+                                                onUnirse={handleUnirse}
+                                                showJoinButton={false}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="participaciones" className="mt-0">
+                        {error && (
+                            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex justify-between items-center">
+                                <span>{error}</span>
+                                <button onClick={limpiarError} className="text-red-500 hover:text-red-700">
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
+                                        <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                                        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                            <div className="h-16 bg-gray-200 rounded"></div>
+                                        </div>
+                                        <div className="h-10 bg-gray-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <>
+                                {obtenerQuinielasFiltradas().length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <div className="text-6xl mb-4">🎯</div>
+                                        <h3 className="text-xl font-medium text-gray-700 mb-2">
+                                            No tienes participaciones
+                                        </h3>
+                                        <p className="text-gray-500 mb-6">
+                                            No estás participando en ninguna quiniela.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {obtenerQuinielasFiltradas().map((quiniela: QuinielaResponse) => (
+                                            <QuinielaCard
+                                                key={quiniela.id}
+                                                quiniela={quiniela}
+                                                onVerDetalles={() => handleMostrarDetalle(quiniela.id)}
+                                                onUnirse={handleUnirse}
+                                                showJoinButton={false}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </TabsContent>
+                </Tabs>
             </div>
         </div>
     );
 };
+export default QuinielasPage;

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import EditProfile from '../../components/user/EditProfile';
-import ChangePassword from '../../components/user/ChangePassword';
-import TwoFactorAuth from '../../components/user/TwoFactorAuth';
-import DocumentUploadComponent from '../../components/user/DocumentUpload';
-import GameHistory from '../../components/user/GameHistory';
-import TechnicalSupport from '../../components/user/TechnicalSupport';
+import EditProfile from '../../features/user/EditProfile';
+import ChangePassword from '../../features/user/ChangePassword';
+import TwoFactorAuth from '../../features/user/TwoFactorAuth';
+import DocumentUploadComponent from '../../features/user/DocumentUpload';
+import GameHistory from '../../features/user/GameHistory';
+import TechnicalSupport from '../../features/user/TechnicalSupport';
 
 const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');

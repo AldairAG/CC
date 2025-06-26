@@ -5,6 +5,7 @@ export const USER_ROUTES = {
     QUINIELAS_LIST: '/c/quiniela-list',
     QUINIELAS_CREADAS: '/c/quinielas-creadas',
     CREAR_QUINIELA: '/c/crear-quiniela',
+    ARMAR_QUINIELA: '/c/armar-quiniela',
     QUINIELA: '/c/quiniela/:id',
     CARRITO: '/c/carrito',
     DEPOSITAR: '/c/depositar',
