@@ -1,4 +1,4 @@
-package com.example.cc.service;
+package com.example.cc.service.estadisticas;
 
 import com.example.cc.dto.QuinielaResumenDto;
 import com.example.cc.entities.Quiniela;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class EstadisticasService {
+public class EstadisticasService implements IEstadisticasService {
 
     private final QuinielaRepository quinielaRepository;
     private final QuinielaParticipacionRepository participacionRepository;

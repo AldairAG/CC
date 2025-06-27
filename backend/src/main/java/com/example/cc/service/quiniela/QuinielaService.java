@@ -1,7 +1,9 @@
-package com.example.cc.service;
+package com.example.cc.service.quiniela;
 
 import com.example.cc.entities.*;
 import com.example.cc.repository.*;
+import com.example.cc.service.notificaion.NotificationService;
+import com.example.cc.service.wallet.WalletService;
 import com.example.cc.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class QuinielaService {
+public class QuinielaService implements IQuinielaService {
 
     private final QuinielaRepository quinielaRepository;
     private final QuinielaParticipacionRepository participacionRepository;

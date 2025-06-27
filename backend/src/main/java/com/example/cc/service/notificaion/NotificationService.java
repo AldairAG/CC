@@ -1,4 +1,4 @@
-package com.example.cc.service;
+package com.example.cc.service.notificaion;
 
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.Usuario;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationService {
+public class NotificationService implements INotificationService {
 
     /**
      * Notificar participación exitosa en quiniela

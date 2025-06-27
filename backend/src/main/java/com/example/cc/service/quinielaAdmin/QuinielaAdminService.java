@@ -1,8 +1,9 @@
-package com.example.cc.service;
+package com.example.cc.service.quinielaAdmin;
 
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.QuinielaParticipacion;
 import com.example.cc.repository.QuinielaRepository;
+import com.example.cc.service.wallet.WalletService;
 import com.example.cc.repository.QuinielaParticipacionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class QuinielaAdminService {
+public class QuinielaAdminService implements IQuinielaAdminService {
 
     private final QuinielaRepository quinielaRepository;
     private final QuinielaParticipacionRepository participacionRepository;

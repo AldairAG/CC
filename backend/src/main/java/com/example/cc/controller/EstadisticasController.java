@@ -2,7 +2,8 @@ package com.example.cc.controller;
 
 import com.example.cc.dto.QuinielaResumenDto;
 import com.example.cc.entities.QuinielaParticipacion;
-import com.example.cc.service.EstadisticasService;
+import com.example.cc.service.estadisticas.EstadisticasService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

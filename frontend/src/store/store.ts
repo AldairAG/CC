@@ -6,6 +6,7 @@ import { combineReducers } from 'redux';
 
 import userSlice from './slices/userSlice'; // Importa el slice de auth con datos de ususario
 import profileSlice from './slices/profileSlice'; // Importa el slice de perfil
+import quinielaSlice from './slices/quinielaSlice'; // Importa el slice de quinielas
 
 // Configuración de Redux-Persist
 const persistConfig = {
@@ -18,6 +19,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   user: userSlice,
   profile: profileSlice,
+  quiniela: quinielaSlice,
 });
 
 // Aplica persistencia al reducer combinado

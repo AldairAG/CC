@@ -2,7 +2,8 @@ package com.example.cc.controller;
 
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.QuinielaParticipacion;
-import com.example.cc.service.QuinielaAdminService;
+import com.example.cc.service.quinielaAdmin.QuinielaAdminService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

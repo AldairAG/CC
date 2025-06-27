@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class TheSportsDbService {
+public class TheSportsDbService implements ITheSportsDbService {
 
     private final RestTemplate restTemplate;
     

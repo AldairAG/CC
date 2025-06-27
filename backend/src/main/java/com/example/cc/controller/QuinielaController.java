@@ -5,8 +5,9 @@ import com.example.cc.dto.PrediccionRequest;
 import com.example.cc.dto.RankingParticipacionDto;
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.QuinielaParticipacion;
+import com.example.cc.service.quiniela.QuinielaService;
 import com.example.cc.entities.PrediccionEvento;
-import com.example.cc.service.QuinielaService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

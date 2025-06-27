@@ -20,7 +20,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EventoDeportivoService {
+public class EventoDeportivoService implements IEventoDeportivoService {
 
     private final EventoDeportivoRepository eventoRepository;
     private final TheSportsDbService theSportsDbService;

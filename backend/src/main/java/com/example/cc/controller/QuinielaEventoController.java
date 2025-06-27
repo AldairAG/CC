@@ -2,7 +2,8 @@ package com.example.cc.controller;
 
 import com.example.cc.entities.EventoDeportivo;
 import com.example.cc.entities.TipoPrediccion;
-import com.example.cc.service.QuinielaEventoService;
+import com.example.cc.service.quinielaEvento.QuinielaEventoService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

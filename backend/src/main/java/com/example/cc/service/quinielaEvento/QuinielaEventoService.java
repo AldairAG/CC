@@ -1,4 +1,4 @@
-package com.example.cc.service;
+package com.example.cc.service.quinielaEvento;
 
 import com.example.cc.entities.EventoDeportivo;
 import com.example.cc.entities.Quiniela;
@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class QuinielaEventoService {
+public class QuinielaEventoService implements IQuinielaEventoService {
 
     private final QuinielaRepository quinielaRepository;
     private final EventoDeportivoRepository eventoDeportivoRepository;

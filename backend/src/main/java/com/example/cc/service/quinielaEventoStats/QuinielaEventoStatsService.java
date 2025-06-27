@@ -1,4 +1,4 @@
-package com.example.cc.service;
+package com.example.cc.service.quinielaEventoStats;
 
 import com.example.cc.entities.QuinielaEvento;
 import com.example.cc.repository.PrediccionEventoRepository;
@@ -12,7 +12,7 @@ import java.math.RoundingMode;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class QuinielaEventoStatsService {
+public class QuinielaEventoStatsService implements IQuinielaEventoStatsService {
 
     private final PrediccionEventoRepository prediccionRepository;
 

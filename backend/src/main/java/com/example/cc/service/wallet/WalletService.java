@@ -1,4 +1,4 @@
-package com.example.cc.service;
+package com.example.cc.service.wallet;
 
 import com.example.cc.entities.Transaccion;
 import com.example.cc.entities.Usuario;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class WalletService {
+public class WalletService implements IWalletService {
 
     private final UsuarioRepository usuarioRepository;
     private final TransaccionRepository transaccionRepository;

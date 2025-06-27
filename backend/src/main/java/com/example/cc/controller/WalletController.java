@@ -1,9 +1,10 @@
 package com.example.cc.controller;
 
-import com.example.cc.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.example.cc.service.wallet.WalletService;
 
 import java.math.BigDecimal;
 

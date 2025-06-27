@@ -2,7 +2,8 @@ package com.example.cc.scheduler;
 
 import com.example.cc.entities.Quiniela;
 import com.example.cc.repository.QuinielaRepository;
-import com.example.cc.service.QuinielaService;
+import com.example.cc.service.quiniela.QuinielaService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
