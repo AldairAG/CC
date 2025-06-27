@@ -40,35 +40,53 @@ const Tabs: React.FC<TabsProps> = ({ defaultValue, children, className, activeTa
     const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
     const setActiveTab = externalSetActiveTab !== undefined ? externalSetActiveTab : internalSetActiveTab;
 
-    const childrenWithProps = React.Children.map(children, (child) => {
-        if (isValidElement(child) && child.type === TabsList) {
-            return cloneElement(child as React.ReactElement<TabsTriggerProps>, { activeTab, setActiveTab });
-        } 
-        if (isValidElement(child) && child.type === TabsContent) {
-            return cloneElement(child as React.ReactElement<TabsContentProps>, { activeTab });
-        } else return null;
-    })
+    // Función recursiva para procesar elementos profundamente anidados
+    const processChildren = (children: React.ReactNode): React.ReactNode => {
+        return React.Children.map(children, (child) => {
+            if (isValidElement(child)) {
+                // Si es TabsList, clonamos con props
+                if (child.type === TabsList) {
+                    return cloneElement(child as React.ReactElement<TabsListProps>, { activeTab, setActiveTab });
+                }
+                // Si es TabsContent, clonamos con props
+                else if (child.type === TabsContent) {
+                    return cloneElement(child as React.ReactElement<TabsContentProps>, { activeTab });
+                }
+                // Si tiene hijos y no es un componente de Tabs, procesamos sus hijos recursivamente
+                else if (child.props && typeof child.props === 'object' && 'children' in child.props) {
+                    // Create a properly typed clone with processed children
+                    const childProps = { ...child.props };
+                    const processedChildChildren = processChildren(child.props.children as React.ReactNode);
+                    return React.cloneElement(child, childProps, processedChildChildren);
+                }
+            }
+            // Si no es un elemento válido o no tiene hijos, lo devolvemos tal como está
+            return child;
+        });
+    };
+
+    const processedChildren = processChildren(children);
 
     return (
         <div className={twMerge("w-full", className)}>
-            {childrenWithProps}
+            {processedChildren}
         </div>
-    )
+    );
 };
 
 const TabsList: React.FC<TabsListProps> = ({ children, activeTab, setActiveTab, className }) => {
     const childrenWithProps = React.Children.map(children, (child) => {
-        if (isValidElement<TabsTriggerProps>(child) && child.type === TabsTrigger) {
-            return cloneElement<TabsTriggerProps>(child, { activeTab, setActiveTab });
-        } else return null;
-    })
-
+        if (isValidElement(child) && child.type === TabsTrigger) {
+            return cloneElement(child as React.ReactElement<TabsTriggerProps>, { activeTab, setActiveTab });
+        }
+        return child;
+    });
 
     return (
-        <div className={twMerge("mb-6 flex border-b text-sm", className)}>
+        <div className={twMerge("flex", className)}>
             {childrenWithProps}
         </div>
-    )
+    );
 };
 
 const TabsTrigger: React.FC<TabsTriggerProps> = ({
@@ -77,33 +95,36 @@ const TabsTrigger: React.FC<TabsTriggerProps> = ({
     activeTab,
     setActiveTab,
     className,
-    activeClassName = "border-blue-500 font-bold stroke-3 text-blue-500",
+    activeClassName = "border-blue-500 font-bold stroke-3 text-blue-500",  
     inactiveClassName = "border-transparent"
-  }) => {
+}) => {
     const isActive = activeTab === value;
   
     return (
-      <button
-      type="button"
-        className={twMerge(
-          "px-4 py-2 border-b-2",
-          isActive ? activeClassName : inactiveClassName,
-          className
-        )}
-        onClick={() => setActiveTab?.(value)}
-      >
-        {children}
-      </button>
+        <button
+            type="button"
+            className={twMerge(
+                "px-4 py-2 transition-colors",
+                // Solo agregar border-b-2 si no hay border-none en las clases personalizadas
+                !className?.includes('border-none') && !activeClassName?.includes('border-none') ? "border-b-2" : "",
+                isActive ? activeClassName : inactiveClassName,
+                className
+            )}
+            onClick={() => setActiveTab?.(value)}
+        >
+            {children}
+        </button>
     );
-  };
-  
+};
 
 const TabsContent: React.FC<TabsContentProps> = ({ value, activeTab, children, className }) => {
+    if (activeTab !== value) return null;
+    
     return (
-        activeTab === value ? <div className={twMerge("mt-4", className)}>{children}</div> : null
-    )
-
-}
-
+        <div className={twMerge("mt-4", className)}>
+            {children}
+        </div>
+    );
+};
 
 export { Tabs, TabsList, TabsTrigger, TabsContent };

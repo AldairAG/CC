@@ -39,7 +39,6 @@ public class TicketSoporte {
     
     public enum CategoriaTicket {
         CUENTA("Problemas de Cuenta"),
-        APUESTAS("Consultas sobre Apuestas"),
         PAGOS("Problemas de Pagos"),
         TECNICO("Problemas Técnicos"),
         QUEJA("Quejas"),

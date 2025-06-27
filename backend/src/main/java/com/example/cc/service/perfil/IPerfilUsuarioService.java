@@ -15,6 +15,7 @@ import java.util.Optional;
 public interface IPerfilUsuarioService {
     
     // Gestión de perfil
+    PerfilUsuarioResponse obtenerPerfilUsuario(Long idUsuario);
     void actualizarPerfil(Long idUsuario, ActualizarPerfilRequest request);
     void cambiarPassword(Long idUsuario, CambiarPasswordRequest request);
     
@@ -28,10 +29,7 @@ public interface IPerfilUsuarioService {
     Page<TransaccionResponse> obtenerHistorialTransaccionesPaginado(Long idUsuario, Pageable pageable);
     List<TransaccionResponse> obtenerDepositos(Long idUsuario);
     List<TransaccionResponse> obtenerRetiros(Long idUsuario);
-    
-    // Historial de apuestas (ya existe en ApuestaService, pero incluido para completitud)
-    List<ApuestaResponse> obtenerHistorialApuestas(Long idUsuario);
-    Page<ApuestaResponse> obtenerHistorialApuestasPaginado(Long idUsuario, Pageable pageable);
+
     
     // Soporte
     TicketSoporteResponse crearTicketSoporte(Long idUsuario, CrearTicketSoporteRequest request);

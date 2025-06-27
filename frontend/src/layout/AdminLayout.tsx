@@ -12,15 +12,7 @@ import { ADMIN_ROUTES } from "../constants/ROUTERS";
 import { Link, Route, Switch } from "react-router-dom";
 
 // Importar componentes de administración existentes
-import Quinielas from "../pages/admin/Quinielas";
-import CreateQuiniela from "../pages/admin/CreateQuiniela";
 import AdminDashboard from "../pages/admin/AdminDashboard";
-import AdminUsers from "../pages/admin/AdminUsers";
-import AdminApuestas from "../pages/admin/AdminApuestas";
-import AdminEventos from "../pages/admin/AdminEventos";
-import AdminCrypto from "../pages/admin/AdminCrypto";
-import AdminNotificaciones from "../pages/admin/AdminNotificaciones";
-import AdminConfig from "../pages/admin/AdminConfig";
 
 const routes = [
     {
@@ -134,14 +126,6 @@ const AdminLayout = () => {
                 <Switch>
                     <Route exact path={ADMIN_ROUTES.ADMIN_LAYOUT} component={AdminDashboard} />
                     <Route path={ADMIN_ROUTES.ADMIN_DASHBOARD} component={AdminDashboard} />
-                    <Route path={ADMIN_ROUTES.ADMIN_USERS} component={AdminUsers} />
-                    <Route path={ADMIN_ROUTES.ADMIN_QUINIELAS} component={Quinielas} />
-                    <Route path={ADMIN_ROUTES.ADMIN_CREATE_QUINIELA} component={CreateQuiniela} />
-                    <Route path={ADMIN_ROUTES.ADMIN_APUESTAS} component={AdminApuestas} />
-                    <Route path={ADMIN_ROUTES.ADMIN_EVENTOS} component={AdminEventos} />
-                    <Route path={ADMIN_ROUTES.ADMIN_CRYPTO} component={AdminCrypto} />
-                    <Route path={ADMIN_ROUTES.ADMIN_NOTIFICACIONES} component={AdminNotificaciones} />
-                    <Route path={ADMIN_ROUTES.ADMIN_CONFIG} component={AdminConfig} />
                 </Switch>
             </main>
         </div>

@@ -1,11 +1,7 @@
 import { Route, Switch, useHistory, useLocation } from "react-router-dom";
 import { USER_ROUTES } from "../constants/ROUTERS";
 import UserProfile from "../pages/user/UserProfile";
-import QuinielaList from "../pages/user/QuinielaList";
 import Dashboard from "../pages/user/Dashboard";
-import { CryptoWalletPage } from "../pages/user/CryptoWalletPage";
-import QuinielasPage from "../pages/user/QuinielasPage";
-import QuinielaArmar from "../pages/user/QuinielaArmar";
 import UserProfileButton from "../components/ui/UserProfileButton";
 
 const UserLayout = () => {
@@ -96,11 +92,7 @@ const UserLayout = () => {
             <div className="flex justify-center min-h-screen bg-casino-gradient">
                 <Switch>
                     <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
-                    <Route path={USER_ROUTES.HOME} component={Dashboard} /> 
-                    <Route path={USER_ROUTES.QUINIELAS_LIST} component={QuinielaList} />
-                    <Route path={USER_ROUTES.QUINIELAS_CREADAS} component={QuinielasPage} />
-                    <Route path={USER_ROUTES.ARMAR_QUINIELA} component={QuinielaArmar} />
-                    <Route path={USER_ROUTES.CRYPTO_WALLET} component={CryptoWalletPage} />
+                    <Route path={USER_ROUTES.HOME} component={Dashboard} />
                 </Switch>
             </div>
         </main>

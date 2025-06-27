@@ -6,7 +6,7 @@ import com.example.cc.dto.request.CrearTicketSoporteRequest;
 import com.example.cc.dto.response.*;
 import com.example.cc.entities.*;
 import com.example.cc.repository.*;
-import com.example.cc.service.apuesta.ApuestaService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,7 +41,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
     private final TransaccionRepository transaccionRepository;
     private final TicketSoporteRepository ticketRepository;
     private final Autenticacion2FARepository autenticacion2FARepository;
-    private final ApuestaService apuestaService;
+
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.upload.dir:uploads}")
@@ -242,18 +243,6 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<ApuestaResponse> obtenerHistorialApuestas(Long idUsuario) {
-        return apuestaService.obtenerApuestasPorUsuario(idUsuario);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<ApuestaResponse> obtenerHistorialApuestasPaginado(Long idUsuario, Pageable pageable) {
-        return apuestaService.obtenerApuestasPorUsuarioPaginado(idUsuario, pageable);
-    }
-
-    @Override
     public TicketSoporteResponse crearTicketSoporte(Long idUsuario, CrearTicketSoporteRequest request) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -400,9 +389,6 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Estadísticas de apuestas
-        EstadisticasApuestaResponse estadisticasApuestas = apuestaService.obtenerEstadisticasUsuario(idUsuario);
-
         // Estadísticas de transacciones
         BigDecimal totalDepositado = transaccionRepository
                 .sumMontoByUsuarioAndTipoAndEstado(usuario, Transaccion.TipoTransaccion.DEPOSITO, Transaccion.EstadoTransaccion.COMPLETADA)
@@ -436,7 +422,6 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                 .nombre(usuario.getPerfil() != null ? usuario.getPerfil().getNombre() : null)
                 .saldoActual(usuario.getSaldoUsuario())
                 .cuentaActiva(usuario.getEstadoCuenta())
-                .estadisticasApuestas(estadisticasApuestas)
                 .totalDepositado(totalDepositado)
                 .totalRetirado(totalRetirado)
                 .numeroDepositos(numeroDepositos)
@@ -448,8 +433,49 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                 .ticketsResueltos(ticketsResueltos)
                 .autenticacion2FAHabilitada(auth2FAHabilitada)
                 .nivelSeguridad(calcularNivelSeguridad(documentosAprobados, auth2FAHabilitada))
-                .ultimasApuestas(estadisticasApuestas.getUltimasApuestas())
                 .ultimasTransacciones(obtenerUltimasTransacciones(usuario, 5))
+                .build();
+    }
+
+    @Override
+    public PerfilUsuarioResponse obtenerPerfilUsuario(Long idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        Perfil perfil = usuario.getPerfil();
+        
+        // Verificar si tiene 2FA habilitado
+        boolean tiene2FA = usuario.getAutenticacion2FA() != null && 
+                          usuario.getAutenticacion2FA().isHabilitado();
+        
+        // Contar documentos subidos
+        int documentosSubidos = usuario.getDocumentos() != null ? 
+                               usuario.getDocumentos().size() : 0;
+        
+        // Obtener última transacción para determinar última actividad
+        Date ultimaActividad = usuario.getTransacciones() != null && !usuario.getTransacciones().isEmpty() ?
+                              usuario.getTransacciones().stream()
+                                     .map(t -> java.sql.Timestamp.valueOf(t.getFechaCreacion()))
+                                     .max(Date::compareTo)
+                                     .orElse(null) : null;
+
+        return PerfilUsuarioResponse.builder()
+                .idUsuario(usuario.getIdUsuario())
+                .email(usuario.getEmail())
+                .saldoUsuario(usuario.getSaldoUsuario())
+                .estadoCuenta(usuario.getEstadoCuenta())
+                .idPerfil(perfil != null ? perfil.getIdPerfil() : null)
+                .fotoPerfil(perfil != null ? perfil.getFotoPerfil() : null)
+                .nombre(perfil != null ? perfil.getNombre() : null)
+                .apellido(perfil != null ? perfil.getApellido() : null)
+                .fechaRegistro(perfil != null ? perfil.getFechaRegistro() : null)
+                .fechaNacimiento(perfil != null ? perfil.getFechaNacimiento() : null)
+                .telefono(perfil != null ? perfil.getTelefono() : null)
+                .lada(perfil != null ? perfil.getLada() : null)
+                .username(perfil != null ? perfil.getUsername() : null)
+                .tiene2FAHabilitado(tiene2FA)
+                .documentosSubidos(documentosSubidos)
+                .ultimaActividad(ultimaActividad)
                 .build();
     }
 

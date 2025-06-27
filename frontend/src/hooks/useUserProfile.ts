@@ -1,321 +1,431 @@
 import { useState, useCallback } from 'react';
 import { useUser } from './useUser';
-import type { 
-  UserProfileUpdate, 
-  PasswordChange, 
-  DocumentUploadRequest, 
-  UserDocument, 
-  GameHistory, 
-  SupportTicket, 
-  TSVData
+import { 
+  getUserProfileAsync,
+  updateProfileAsync,
+  changePasswordAsync,
+  uploadDocumentAsync,
+  fetchDocumentsAsync,
+  deleteDocumentAsync,
+  fetchTransactionHistoryAsync,
+  fetchTransactionHistoryPaginatedAsync,
+  createSupportTicketAsync,
+  fetchSupportTicketsAsync,
+  fetch2FAStatusAsync,
+  enable2FAAsync,
+  disable2FAAsync,
+  verify2FACodeAsync,
+  fetchUserStatisticsAsync,
+  selectPerfilCompleto,
+  selectFetchingProfile,
+  selectProfileError,
+  selectProfileLoading,
+  selectDocuments,
+  selectTransactionHistory,
+  selectPaginatedTransactions,
+  selectSupportTickets,
+  selectTSVStatus,
+  selectUserStatistics,
+  selectUploadingDocument,
+  selectUpdatingProfile,
+  selectChangingPassword,
+  selectCreating2FA,
+  selectCreatingTicket,
+  clearError
+} from '../store/slices/profileSlice';
+import { profileService } from '../service/casino/profileService';
+import type {
+  DocumentUploadRequest
 } from '../types/UserProfileTypes';
+import type {
+  CreateTicketRequest
+} from '../service/casino/profileService';
+import type {
+  PerfilUsuarioCompleto,
+  ActualizarPerfilRequest,
+  CambiarPasswordRequest
+} from '../types/PerfilTypes';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 
-// Mock service - En producción esto sería un servicio real
-const userProfileService = {
-  updateProfile: async (data: UserProfileUpdate) => {
-    // Simular API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: 'Perfil actualizado correctamente' };
-  },
-
-  changePassword: async (data: PasswordChange) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { success: true, message: 'Contraseña actualizada correctamente' };
-  },
-
-  uploadDocument: async (document: DocumentUploadRequest) => {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return {
-      id: Date.now(),
-      tipo: document.type,
-      nombreArchivo: document.file.name,
-      fechaSubida: new Date().toISOString(),
-      estado: 'PENDIENTE' as const
-    };
-  },
-
-  getDocuments: async (): Promise<UserDocument[]> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-      {
-        id: 1,
-        tipo: 'INE',
-        nombreArchivo: 'ine_frontal.jpg',
-        fechaSubida: '2024-01-15T10:30:00Z',
-        estado: 'APROBADO'
-      },
-      {
-        id: 2,
-        tipo: 'COMPROBANTE_DOMICILIO',
-        nombreArchivo: 'comprobante_luz.pdf',
-        fechaSubida: '2024-01-16T14:20:00Z',
-        estado: 'PENDIENTE'
-      }
-    ];
-  },
-  getGameHistory: async (type?: string): Promise<GameHistory[]> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-      {
-        id: 1,
-        tipo: 'APUESTA',
-        fecha: '2024-01-20T18:30:00Z',
-        descripcion: 'Apuesta Fútbol - Real Madrid vs Barcelona',
-        monto: 500,
-        resultado: 'Ganada',
-        estado: 'COMPLETADA'
-      },
-      {
-        id: 2,
-        tipo: 'CASINO',
-        fecha: '2024-01-19T20:15:00Z',
-        descripcion: 'Ruleta - Mesa 1',
-        monto: 200,
-        resultado: 'Perdida',
-        estado: 'COMPLETADA'
-      },
-      {
-        id: 3,
-        tipo: 'QUINIELA',
-        fecha: '2024-01-18T16:45:00Z',
-        descripcion: 'Quiniela Liga MX - Jornada 5',
-        monto: 100,
-        resultado: 'Ganada',
-        estado: 'COMPLETADA'
-      }
-    ];
-  },
-
-  createSupportTicket: async (ticket: Omit<SupportTicket, 'id' | 'fechaCreacion' | 'estado'>) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      ...ticket,
-      id: Date.now(),
-      estado: 'ABIERTO' as const,
-      fechaCreacion: new Date().toISOString()
-    };
-  },
-
-  getSupportTickets: async (): Promise<SupportTicket[]> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return [
-      {
-        id: 1,
-        asunto: 'Problema con el depósito',
-        descripcion: 'No se reflejó mi depósito de $1000',
-        categoria: 'CUENTA',
-        estado: 'EN_PROCESO',
-        fechaCreacion: '2024-01-20T10:00:00Z',
-        fechaActualizacion: '2024-01-20T14:30:00Z'
-      }
-    ];
-  },
-
-  getTSVStatus: async (): Promise<TSVData> => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-      enabled: false,
-      secret: undefined,
-      qrCode: undefined
-    };
-  },
-
-  enableTSV: async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {
-      enabled: true,
-      secret: 'JBSWY3DPEHPK3PXP',
-      qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-    };
-  },
-
-  disableTSV: async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { enabled: false };
-  }
-};
 
 export const useUserProfile = () => {
   const { user } = useUser();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [documents, setDocuments] = useState<UserDocument[]>([]);
-  const [gameHistory, setGameHistory] = useState<GameHistory[]>([]);
-  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
-  const [tsvStatus, setTsvStatus] = useState<TSVData>({ enabled: false });
+  const dispatch = useAppDispatch();
+  
+  // Redux selectors
+  const perfilCompleto = useAppSelector(selectPerfilCompleto);
+  const fetchingProfile = useAppSelector(selectFetchingProfile);
+  const profileError = useAppSelector(selectProfileError);
+  const profileLoading = useAppSelector(selectProfileLoading);
+  const documents = useAppSelector(selectDocuments);
+  const transactionHistory = useAppSelector(selectTransactionHistory);
+  const paginatedTransactions = useAppSelector(selectPaginatedTransactions);
+  const supportTickets = useAppSelector(selectSupportTickets);
+  const tsvStatus = useAppSelector(selectTSVStatus);
+  const statistics = useAppSelector(selectUserStatistics);
+  
+  // Loading states
+  const uploadingDocument = useAppSelector(selectUploadingDocument);
+  const updatingProfile = useAppSelector(selectUpdatingProfile);
+  const changingPassword = useAppSelector(selectChangingPassword);
+  const creating2FA = useAppSelector(selectCreating2FA);
+  const creatingTicket = useAppSelector(selectCreatingTicket);
+
+  // Local state for additional functionality
+  const [localLoading, setLocalLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // Profile management
-  const updateProfile = useCallback(async (profileData: UserProfileUpdate) => {
+  const updateProfile = useCallback(async (profileData: ActualizarPerfilRequest) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
     try {
-      setLoading(true);
-      setError(null);
-      const result = await userProfileService.updateProfile(profileData);
+      const result = await dispatch(updateProfileAsync({ userId: user.idUsuario, profileData })).unwrap();
       return result;
     } catch (err) {
-      setError('Error al actualizar el perfil');
-      return { success: false, message: 'Error al actualizar el perfil' };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const changePassword = useCallback(async (passwordData: PasswordChange) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (passwordData.newPassword !== passwordData.confirmPassword) {
-        throw new Error('Las contraseñas no coinciden');
-      }      const result = await userProfileService.changePassword(passwordData);
-      return result;    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error al cambiar la contraseña';
-      setError(errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar el perfil';
+      setLocalError(errorMessage);
       return { success: false, message: errorMessage };
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [user?.idUsuario, dispatch]);
+
+  const changePassword = useCallback(async (passwordData: CambiarPasswordRequest) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
+    try {
+      const result = await dispatch(changePasswordAsync({ userId: user.idUsuario, passwordData })).unwrap();
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cambiar la contraseña';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
 
   // Document management
   const uploadDocument = useCallback(async (document: DocumentUploadRequest) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const newDocument = await userProfileService.uploadDocument(document);
-      setDocuments(prev => [...prev, newDocument]);
-      return { success: true, document: newDocument };    } catch {
-      setError('Error al subir el documento');
-      return { success: false, message: 'Error al subir el documento' };
-    } finally {
-      setLoading(false);
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
     }
-  }, []);
+
+    try {
+      const newDocument = await dispatch(uploadDocumentAsync({ userId: user.idUsuario, document })).unwrap();
+      return { success: true, document: newDocument, message: 'Documento subido exitosamente' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al subir el documento';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
 
   const fetchDocuments = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const docs = await userProfileService.getDocuments();
-      setDocuments(docs);
-      return docs;    } catch {
-      setError('Error al cargar los documentos');
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
       return [];
-    } finally {
-      setLoading(false);
     }
-  }, []);
 
-  // Game history
-  const fetchGameHistory = useCallback(async (type?: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      const history = await userProfileService.getGameHistory(type);
-      setGameHistory(history);
-      return history;    } catch {
-      setError('Error al cargar el historial de juegos');
+      const docs = await dispatch(fetchDocumentsAsync(user.idUsuario)).unwrap();
+      return docs;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar los documentos';
+      setLocalError(errorMessage);
       return [];
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [user?.idUsuario, dispatch]);
+
+  const deleteDocument = useCallback(async (documentId: number) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
+    try {
+      await dispatch(deleteDocumentAsync({ userId: user.idUsuario, documentId })).unwrap();
+      return { success: true, message: 'Documento eliminado exitosamente' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al eliminar el documento';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  // Transaction history
+  const fetchTransactionHistory = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return [];
+    }
+
+    try {
+      const history = await dispatch(fetchTransactionHistoryAsync(user.idUsuario)).unwrap();
+      return history;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el historial de transacciones';
+      setLocalError(errorMessage);
+      return [];
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  const fetchTransactionHistoryPaginated = useCallback(async (
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'fechaCreacion',
+    sortDir: 'asc' | 'desc' = 'desc'
+  ) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { content: [], totalElements: 0, totalPages: 0, size: 0, number: 0, first: true, last: true };
+    }
+
+    try {
+      const paginatedHistory = await dispatch(fetchTransactionHistoryPaginatedAsync({
+        userId: user.idUsuario,
+        page,
+        size,
+        sortBy,
+        sortDir
+      })).unwrap();
+      return paginatedHistory;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el historial paginado';
+      setLocalError(errorMessage);
+      return { content: [], totalElements: 0, totalPages: 0, size: 0, number: 0, first: true, last: true };
+    }
+  }, [user?.idUsuario, dispatch]);
 
   // Support system
-  const createSupportTicket = useCallback(async (ticketData: Omit<SupportTicket, 'id' | 'fechaCreacion' | 'estado'>) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const newTicket = await userProfileService.createSupportTicket(ticketData);
-      setSupportTickets(prev => [newTicket, ...prev]);
-      return { success: true, ticket: newTicket };    } catch {
-      setError('Error al crear el ticket de soporte');
-      return { success: false, message: 'Error al crear el ticket de soporte' };
-    } finally {
-      setLoading(false);
+  const createSupportTicket = useCallback(async (ticketData: CreateTicketRequest) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
     }
-  }, []);
+
+    try {
+      const newTicket = await dispatch(createSupportTicketAsync({ userId: user.idUsuario, ticketData })).unwrap();
+      return { success: true, ticket: newTicket, message: 'Ticket creado exitosamente' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al crear el ticket de soporte';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
 
   const fetchSupportTickets = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const tickets = await userProfileService.getSupportTickets();
-      setSupportTickets(tickets);
-      return tickets;    } catch {
-      setError('Error al cargar los tickets de soporte');
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
       return [];
-    } finally {
-      setLoading(false);
     }
-  }, []);
 
-  // Two-Factor Authentication (TSV)
-  const fetchTSVStatus = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const status = await userProfileService.getTSVStatus();
-      setTsvStatus(status);
-      return status;    } catch {
-      setError('Error al cargar el estado de TSV');
+      const tickets = await dispatch(fetchSupportTicketsAsync(user.idUsuario)).unwrap();
+      return tickets;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar los tickets de soporte';
+      setLocalError(errorMessage);
+      return [];
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  const fetchSupportTicketById = useCallback(async (ticketId: number) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return null;
+    }
+
+    try {
+      setLocalLoading(true);
+      setLocalError(null);
+      const ticket = await profileService.getSupportTicketById(user.idUsuario, ticketId);
+      return ticket;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el ticket';
+      setLocalError(errorMessage);
+      return null;
+    } finally {
+      setLocalLoading(false);
+    }
+  }, [user?.idUsuario]);
+
+  // Two-Factor Authentication (2FA)
+  const fetch2FAStatus = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
       return { enabled: false };
-    } finally {
-      setLoading(false);
     }
-  }, []);
 
-  const enableTSV = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const result = await userProfileService.enableTSV();
-      setTsvStatus(result);
-      return { success: true, data: result };    } catch {
-      setError('Error al habilitar TSV');
-      return { success: false, message: 'Error al habilitar TSV' };
-    } finally {
-      setLoading(false);
+      const status = await dispatch(fetch2FAStatusAsync(user.idUsuario)).unwrap();
+      return status;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar el estado de 2FA';
+      setLocalError(errorMessage);
+      return { enabled: false };
     }
-  }, []);
+  }, [user?.idUsuario, dispatch]);
 
-  const disableTSV = useCallback(async () => {
+  const enable2FA = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
     try {
-      setLoading(true);
-      setError(null);
-      const result = await userProfileService.disableTSV();
-      setTsvStatus(result);
-      return { success: true };    } catch {
-      setError('Error al deshabilitar TSV');
-      return { success: false, message: 'Error al deshabilitar TSV' };
-    } finally {
-      setLoading(false);
+      const result = await dispatch(enable2FAAsync(user.idUsuario)).unwrap();
+      return { success: true, data: result, message: '2FA habilitado exitosamente' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al habilitar 2FA';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
     }
-  }, []);
+  }, [user?.idUsuario, dispatch]);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  const disable2FA = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
+    try {
+      await dispatch(disable2FAAsync(user.idUsuario)).unwrap();
+      return { success: true, message: '2FA deshabilitado exitosamente' };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al deshabilitar 2FA';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  const verify2FACode = useCallback(async (code: string) => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { valido: false, mensaje: 'Usuario no encontrado' };
+    }
+
+    try {
+      const result = await dispatch(verify2FACodeAsync({ userId: user.idUsuario, code })).unwrap();
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al verificar el código';
+      setLocalError(errorMessage);
+      return { valido: false, mensaje: errorMessage };
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  const generateBackupCodes = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return { success: false, message: 'Usuario no encontrado' };
+    }
+
+    try {
+      setLocalLoading(true);
+      setLocalError(null);
+      const result = await profileService.generateBackupCodes(user.idUsuario);
+      return { success: true, codigos: result.codigos };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al generar códigos de backup';
+      setLocalError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setLocalLoading(false);
+    }
+  }, [user?.idUsuario]);
+
+  // Statistics
+  const fetchUserStatistics = useCallback(async () => {
+    if (!user?.idUsuario) {
+      setLocalError('Usuario no encontrado');
+      return null;
+    }
+
+    try {
+      const stats = await dispatch(fetchUserStatisticsAsync(user.idUsuario)).unwrap();
+      return stats;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar las estadísticas';
+      setLocalError(errorMessage);
+      return null;
+    }
+  }, [user?.idUsuario, dispatch]);
+
+  // Obtener perfil de usuario por ID
+  const getUserProfile = useCallback(async (userId: number): Promise<PerfilUsuarioCompleto | null> => {
+    try {
+      const result = await dispatch(getUserProfileAsync(userId)).unwrap();
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al obtener el perfil del usuario';
+      setLocalError(errorMessage);
+      return null;
+    }
+  }, [dispatch]);
+
+  const clearErrorLocal = useCallback(() => {
+    setLocalError(null);
+    dispatch(clearError());
+  }, [dispatch]);
 
   return {
     user,
-    loading,
-    error,
+    // Combined loading states
+    loading: localLoading || profileLoading || fetchingProfile || uploadingDocument || updatingProfile || changingPassword || creating2FA || creatingTicket,
+    error: localError || profileError,
+    
+    // Redux state data
+    perfilCompleto,
     documents,
-    gameHistory,
+    transactionHistory,
+    paginatedTransactions,
     supportTickets,
     tsvStatus,
-    
-    // Actions
+    statistics,
+
+    // Specific loading states
+    fetchingProfile,
+    uploadingDocument,
+    updatingProfile,
+    changingPassword,
+    creating2FA,
+    creatingTicket,
+
+    // Profile Actions
     updateProfile,
     changePassword,
+    getUserProfile,
+
+    // Document Actions
     uploadDocument,
     fetchDocuments,
-    fetchGameHistory,
+    deleteDocument,
+
+    // Transaction Actions
+    fetchTransactionHistory,
+    fetchTransactionHistoryPaginated,
+
+    // Support Actions
     createSupportTicket,
     fetchSupportTickets,
-    fetchTSVStatus,
-    enableTSV,
-    disableTSV,
-    clearError
+    fetchSupportTicketById,
+
+    // 2FA Actions
+    fetch2FAStatus,
+    enable2FA,
+    disable2FA,
+    verify2FACode,
+    generateBackupCodes,
+
+    // Statistics Actions
+    fetchUserStatistics,
+
+    // Utility Actions
+    clearError: clearErrorLocal
   };
 };

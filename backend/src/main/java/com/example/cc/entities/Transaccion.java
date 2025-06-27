@@ -38,8 +38,6 @@ public class Transaccion {
     public enum TipoTransaccion {
         DEPOSITO("Depósito"),
         RETIRO("Retiro"),
-        GANANCIA_APUESTA("Ganancia de Apuesta"),
-        PERDIDA_APUESTA("Pérdida de Apuesta"),
         BONIFICACION("Bonificación"),
         PENALIZACION("Penalización"),
         REEMBOLSO("Reembolso");

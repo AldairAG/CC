@@ -36,10 +36,7 @@ public class Usuario {
     @JsonManagedReference
     private Perfil perfil;
     
-    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<Apuesta> apuestas;
-    
+
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<DocumentoIdentidad> documentos;

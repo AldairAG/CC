@@ -1,45 +1,42 @@
 package com.example.cc.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EstadisticasUsuarioResponse {
-    // Información básica
     private String email;
     private String nombre;
     private BigDecimal saldoActual;
     private boolean cuentaActiva;
-    
-    // Estadísticas de apuestas
-    private EstadisticasApuestaResponse estadisticasApuestas;
     
     // Estadísticas de transacciones
     private BigDecimal totalDepositado;
     private BigDecimal totalRetirado;
     private Long numeroDepositos;
     private Long numeroRetiros;
-    private TransaccionResponse ultimoDeposito;
-    private TransaccionResponse ultimoRetiro;
     
-    // Verificación
+    // Documentos
     private boolean documentosVerificados;
     private int documentosPendientes;
     private int documentosAprobados;
     
-    // Soporte
+    // Tickets de soporte
     private Long ticketsAbiertos;
     private Long ticketsResueltos;
-    private TicketSoporteResponse ultimoTicket;
     
     // Seguridad
     private boolean autenticacion2FAHabilitada;
-    private String nivelSeguridad; // BAJO, MEDIO, ALTO
+    private String nivelSeguridad;
     
-    // Actividad reciente
-    private List<ApuestaResponse> ultimasApuestas;
+    // Últimas transacciones
     private List<TransaccionResponse> ultimasTransacciones;
 }
