@@ -2,7 +2,52 @@
 import { useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { quinielaSelector } from '../store/slices/quinielaSlice';
+import { 
+    quinielaSelector,
+    setQuinielasActivasLoading,
+    setQuinielasActivas,
+    setQuinielasActivasError,
+    setQuinielasPopularesLoading,
+    setQuinielasPopulares,
+    setQuinielasPopularesError,
+    setQuinielasMayorPoolLoading,
+    setQuinielasMayorPool,
+    setQuinielasMayorPoolError,
+    setQuinielasProximasCerrarLoading,
+    setQuinielasProximasCerrar,
+    setQuinielasProximasCerrarError,
+    setQuinielaActualLoading,
+    setQuinielaActual,
+    setQuinielaActualError,
+    clearQuinielaActual,
+    setParticipacionesLoading,
+    setParticipacionesUsuario,
+    setParticipacionesError,
+    setRankingLoading,
+    setRankingQuiniela,
+    setRankingError,
+    setEstadisticasLoading,
+    setEstadisticasDashboard,
+    setEstadisticasError,
+    setCreandoQuinielaLoading,
+    setCrearQuinielaError,
+    quinielaCreadaExitosamente,
+    setParticipandoEnQuinielaLoading,
+    setParticiparEnQuinielaError,
+    participacionExitosa,
+    setFiltroTipo,
+    setFiltroEstado,
+    setFiltroBusqueda,
+    clearFiltros,
+    setQuinielasCreadasPorUsuario,
+    actualizarPoolQuiniela,
+    clearQuinielaData,
+    clearErrors,
+    setPrediccionesLoading,
+    setPredicciones,
+    setPrediccionesError,
+    clearPredicciones
+} from '../store/slices/quinielaSlice';
 import { QuinielaService } from '../service/casino/quinielaService';
 import { USER_ROUTES } from '../constants/ROUTERS';
 
@@ -22,72 +67,7 @@ import type {
 import type {
     EventoQuinielaType
 } from '../types/QuinielaServiceTypes';
-
-// ===== CONSTANTES DE ACCIONES DEL SLICE =====
-const SLICE_ACTIONS = {
-    // Quinielas Activas
-    SET_QUINIELAS_ACTIVAS_LOADING: 'quiniela/setQuinielasActivasLoading',
-    SET_QUINIELAS_ACTIVAS: 'quiniela/setQuinielasActivas',
-    SET_QUINIELAS_ACTIVAS_ERROR: 'quiniela/setQuinielasActivasError',
-    
-    // Quinielas Populares
-    SET_QUINIELAS_POPULARES_LOADING: 'quiniela/setQuinielasPopularesLoading',
-    SET_QUINIELAS_POPULARES: 'quiniela/setQuinielasPopulares',
-    SET_QUINIELAS_POPULARES_ERROR: 'quiniela/setQuinielasPopularesError',
-    
-    // Quinielas Mayor Pool
-    SET_QUINIELAS_MAYOR_POOL_LOADING: 'quiniela/setQuinielasMayorPoolLoading',
-    SET_QUINIELAS_MAYOR_POOL: 'quiniela/setQuinielasMayorPool',
-    SET_QUINIELAS_MAYOR_POOL_ERROR: 'quiniela/setQuinielasMayorPoolError',
-    
-    // Quinielas Próximas a Cerrar
-    SET_QUINIELAS_PROXIMAS_CERRAR_LOADING: 'quiniela/setQuinielasProximasCerrarLoading',
-    SET_QUINIELAS_PROXIMAS_CERRAR: 'quiniela/setQuinielasProximasCerrar',
-    SET_QUINIELAS_PROXIMAS_CERRAR_ERROR: 'quiniela/setQuinielasProximasCerrarError',
-    
-    // Quiniela Actual
-    SET_QUINIELA_ACTUAL_LOADING: 'quiniela/setQuinielaActualLoading',
-    SET_QUINIELA_ACTUAL: 'quiniela/setQuinielaActual',
-    SET_QUINIELA_ACTUAL_ERROR: 'quiniela/setQuinielaActualError',
-    CLEAR_QUINIELA_ACTUAL: 'quiniela/clearQuinielaActual',
-    
-    // Participaciones
-    SET_PARTICIPACIONES_LOADING: 'quiniela/setParticipacionesLoading',
-    SET_PARTICIPACIONES_USUARIO: 'quiniela/setParticipacionesUsuario',
-    SET_PARTICIPACIONES_ERROR: 'quiniela/setParticipacionesError',
-    
-    // Ranking
-    SET_RANKING_LOADING: 'quiniela/setRankingLoading',
-    SET_RANKING_QUINIELA: 'quiniela/setRankingQuiniela',
-    SET_RANKING_ERROR: 'quiniela/setRankingError',
-    
-    // Estadísticas
-    SET_ESTADISTICAS_LOADING: 'quiniela/setEstadisticasLoading',
-    SET_ESTADISTICAS_DASHBOARD: 'quiniela/setEstadisticasDashboard',
-    SET_ESTADISTICAS_ERROR: 'quiniela/setEstadisticasError',
-    
-    // Crear Quiniela
-    SET_CREANDO_QUINIELA_LOADING: 'quiniela/setCreandoQuinielaLoading',
-    SET_CREAR_QUINIELA_ERROR: 'quiniela/setCrearQuinielaError',
-    QUINIELA_CREADA_EXITOSAMENTE: 'quiniela/quinielaCreadaExitosamente',
-    
-    // Participar en Quiniela
-    SET_PARTICIPANDO_EN_QUINIELA_LOADING: 'quiniela/setParticipandoEnQuinielaLoading',
-    SET_PARTICIPAR_EN_QUINIELA_ERROR: 'quiniela/setParticiparEnQuinielaError',
-    PARTICIPACION_EXITOSA: 'quiniela/participacionExitosa',
-    
-    // Filtros
-    SET_FILTRO_TIPO: 'quiniela/setFiltroTipo',
-    SET_FILTRO_ESTADO: 'quiniela/setFiltroEstado',
-    SET_FILTRO_BUSQUEDA: 'quiniela/setFiltroBusqueda',
-    CLEAR_FILTROS: 'quiniela/clearFiltros',
-    
-    // Utilidades
-    SET_QUINIELAS_CREADAS_POR_USUARIO: 'quiniela/setQuinielasCreadasPorUsuario',
-    ACTUALIZAR_POOL_QUINIELA: 'quiniela/actualizarPoolQuiniela',
-    CLEAR_QUINIELA_DATA: 'quiniela/clearQuinielaData',
-    CLEAR_ERRORS: 'quiniela/clearErrors',
-} as const;
+import type { Prediccion } from '../types/ParticipacionType';
 
 /**
  * Hook personalizado `useQuiniela` para gestionar el estado de las quinielas y todas sus operaciones.
@@ -114,11 +94,6 @@ export const useQuiniela = () => {
     const dispatch = useDispatch();
     const navigate = useHistory();
 
-    // ===== HELPER FUNCTION PARA DISPATCH =====
-    const dispatchAction = useCallback((actionType: string, payload?: any) => {
-        dispatch({ type: actionType, payload });
-    }, [dispatch]);
-
     // ===== SELECTORES DEL ESTADO =====
     const quinielasActivas = useSelector(quinielaSelector.quinielasActivas);
     const quinielasPopulares = useSelector(quinielaSelector.quinielasPopulares);
@@ -130,6 +105,7 @@ export const useQuiniela = () => {
     const participacionActual = useSelector(quinielaSelector.participacionActual);
     const rankingQuiniela = useSelector(quinielaSelector.rankingQuiniela);
     const estadisticasDashboard = useSelector(quinielaSelector.estadisticasDashboard);
+    const predicciones = useSelector(quinielaSelector.predicciones);
 
     // Estados de carga
     const loading = useSelector(quinielaSelector.loading);
@@ -137,6 +113,7 @@ export const useQuiniela = () => {
     const isLoadingQuinielaActual = useSelector(quinielaSelector.isLoadingQuinielaActual);
     const isCreandoQuiniela = useSelector(quinielaSelector.isCreandoQuiniela);
     const isParticipandoEnQuiniela = useSelector(quinielaSelector.isParticiparEnQuiniela);
+    const isLoadingPredicciones = useSelector(quinielaSelector.isLoadingPredicciones);
 
     // Estados de error
     const errors = useSelector(quinielaSelector.errors);
@@ -144,6 +121,7 @@ export const useQuiniela = () => {
     const errorQuinielaActual = useSelector(quinielaSelector.errorQuinielaActual);
     const errorCrearQuiniela = useSelector(quinielaSelector.errorCrearQuiniela);
     const errorParticiparEnQuiniela = useSelector(quinielaSelector.errorParticiparEnQuiniela);
+    const errorPredicciones = useSelector(quinielaSelector.errorPredicciones);
 
     // Filtros y datos computados
     const filtros = useSelector(quinielaSelector.filtros);
@@ -190,10 +168,10 @@ export const useQuiniela = () => {
      * Carga quinielas activas con paginación
      */
     const loadQuinielasActivas = useCallback(async (page: number = 0, size: number = 10): Promise<QuinielasResponse | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_ACTIVAS_LOADING, true);
+        dispatch(setQuinielasActivasLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielasActivas(page, size);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_ACTIVAS, {
+            dispatch(setQuinielasActivas({
                 quinielas: response.content,
                 paginacion: {
                     page: response.number,
@@ -201,106 +179,105 @@ export const useQuiniela = () => {
                     totalElements: response.totalElements,
                     totalPages: response.totalPages,
                 }
-            });
+            }));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar quinielas activas';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_ACTIVAS_ERROR, errorMessage);
+            dispatch(setQuinielasActivasError(errorMessage));
             return null;
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga quinielas populares
      */
     const loadQuinielasPopulares = useCallback(async (limit: number = 10): Promise<QuinielaResumenType[]> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_POPULARES_LOADING, true);
+        dispatch(setQuinielasPopularesLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielasPopulares(limit);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_POPULARES, response);
+            dispatch(setQuinielasPopulares(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar quinielas populares';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_POPULARES_ERROR, errorMessage);
+            dispatch(setQuinielasPopularesError(errorMessage));
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga quinielas con mayor pool
      */
     const loadQuinielasMayorPool = useCallback(async (limit: number = 10): Promise<QuinielaResumenType[]> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_MAYOR_POOL_LOADING, true);
+        dispatch(setQuinielasMayorPoolLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielasMayorPool(limit);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_MAYOR_POOL, response);
+            dispatch(setQuinielasMayorPool(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar quinielas con mayor pool';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_MAYOR_POOL_ERROR, errorMessage);
+            dispatch(setQuinielasMayorPoolError(errorMessage));
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga quinielas próximas a cerrar
      */
     const loadQuinielasProximasCerrar = useCallback(async (limit: number = 10): Promise<QuinielaResumenType[]> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_PROXIMAS_CERRAR_LOADING, true);
+        dispatch(setQuinielasProximasCerrarLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielasProximasACerrar(limit);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_PROXIMAS_CERRAR, response);
+            dispatch(setQuinielasProximasCerrar(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar quinielas próximas a cerrar';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_PROXIMAS_CERRAR_ERROR, errorMessage);
+            dispatch(setQuinielasProximasCerrarError(errorMessage));
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga el detalle de una quiniela específica
      */
     const loadQuinielaDetail = useCallback(async (quinielaId: number): Promise<QuinielaType | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL_LOADING, true);
+        dispatch(setQuinielaActualLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielaPorId(quinielaId);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL, response);
+            dispatch(setQuinielaActual(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar detalle de la quiniela';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL_ERROR, errorMessage);
+            dispatch(setQuinielaActualError(errorMessage));
             return null;
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga quiniela por código único
      */
     const loadQuinielaByCode = useCallback(async (codigo: string): Promise<QuinielaType | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL_LOADING, true);
+        dispatch(setQuinielaActualLoading(true));
         try {
             const response = await QuinielaService.obtenerQuinielaPorCodigo(codigo);
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL, response);
+            dispatch(setQuinielaActual(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar quiniela por código';
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL_ERROR, errorMessage);
+            dispatch(setQuinielaActualError(errorMessage));
             return null;
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga participaciones del usuario
      */
     const loadParticipacionesUsuario = useCallback(async (usuarioId: number, page: number = 0, size: number = 10): Promise<QuinielaParticipacionType[]> => {
-        dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_LOADING, true);
+        dispatch(setParticipacionesLoading(true));
         try {
             const response = await QuinielaService.obtenerParticipacionesUsuario(usuarioId, page, size);
-            
             // Manejar respuesta que puede ser array o objeto paginado
             if (Array.isArray(response)) {
-                dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_USUARIO, {
+                dispatch(setParticipacionesUsuario({
                     participaciones: response,
                     paginacion: {
                         page: 0,
@@ -308,10 +285,10 @@ export const useQuiniela = () => {
                         totalElements: response.length,
                         totalPages: 1,
                     }
-                });
+                }));
                 return response;
             } else {
-                dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_USUARIO, {
+                dispatch(setParticipacionesUsuario({
                     participaciones: response.content || [],
                     paginacion: {
                         page: response.number || 0,
@@ -319,47 +296,71 @@ export const useQuiniela = () => {
                         totalElements: response.totalElements || 0,
                         totalPages: response.totalPages || 1,
                     }
-                });
+                }));
                 return response.content || [];
             }
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar participaciones del usuario';
-            dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_ERROR, errorMessage);
+            dispatch(setParticipacionesError(errorMessage));
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
+
+    /**
+     * Carga participaciones del usuario con relaciones completas
+     */
+    const loadParticipacionesUsuarioConRelaciones = useCallback(async (usuarioId: number): Promise<QuinielaParticipacionType[]> => {
+        dispatch(setParticipacionesLoading(true));
+        try {
+            const response = await QuinielaService.obtenerParticipacionesUsuarioConRelaciones(usuarioId);
+            dispatch(setParticipacionesUsuario({
+                participaciones: response,
+                paginacion: {
+                    page: 0,
+                    size: response.length,
+                    totalElements: response.length,
+                    totalPages: 1,
+                }
+            }));
+            return response;
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Error al cargar participaciones del usuario con relaciones';
+            dispatch(setParticipacionesError(errorMessage));
+            return [];
+        }
+    }, [dispatch]);
 
     /**
      * Carga el ranking de una quiniela
      */
     const loadRankingQuiniela = useCallback(async (quinielaId: number): Promise<RankingParticipacionType[]> => {
-        dispatchAction(SLICE_ACTIONS.SET_RANKING_LOADING, true);
+        dispatch(setRankingLoading(true));
         try {
             const response = await QuinielaService.obtenerRanking(quinielaId);
-            dispatchAction(SLICE_ACTIONS.SET_RANKING_QUINIELA, response);
+            dispatch(setRankingQuiniela(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar ranking de la quiniela';
-            dispatchAction(SLICE_ACTIONS.SET_RANKING_ERROR, errorMessage);
+            dispatch(setRankingError(errorMessage));
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga estadísticas del dashboard
      */
     const loadEstadisticasDashboard = useCallback(async (): Promise<EstadisticasQuinielaType | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_ESTADISTICAS_LOADING, true);
+        dispatch(setEstadisticasLoading(true));
         try {
             const response = await QuinielaService.obtenerEstadisticasDashboard();
-            dispatchAction(SLICE_ACTIONS.SET_ESTADISTICAS_DASHBOARD, response);
+            dispatch(setEstadisticasDashboard(response));
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cargar estadísticas del dashboard';
-            dispatchAction(SLICE_ACTIONS.SET_ESTADISTICAS_ERROR, errorMessage);
+            dispatch(setEstadisticasError(errorMessage));
             return null;
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga quinielas creadas por un usuario
@@ -368,13 +369,13 @@ export const useQuiniela = () => {
         try {
             const response = await QuinielaService.obtenerQuinielasCreadasPorUsuario(usuarioId);
             const quinielas = Array.isArray(response) ? response : response.content || [];
-            dispatchAction(SLICE_ACTIONS.SET_QUINIELAS_CREADAS_POR_USUARIO, quinielas);
+            dispatch(setQuinielasCreadasPorUsuario(quinielas));
             return quinielas;
         } catch (error: any) {
             console.error('Error al cargar quinielas creadas por usuario:', error);
             return [];
         }
-    }, [dispatchAction]);
+    }, [dispatch]);
 
     /**
      * Carga eventos de una quiniela
@@ -395,10 +396,10 @@ export const useQuiniela = () => {
      * Crea una nueva quiniela
      */
     const createQuiniela = useCallback(async (datosQuiniela: CrearQuinielaRequestType): Promise<QuinielaType | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_CREANDO_QUINIELA_LOADING, true);
+        dispatch(setCreandoQuinielaLoading(true));
         try {
             const response = await QuinielaService.crearQuiniela(datosQuiniela);
-            dispatchAction(SLICE_ACTIONS.QUINIELA_CREADA_EXITOSAMENTE, response);
+            dispatch(quinielaCreadaExitosamente(response));
             
             // Navegar al detalle de la quiniela creada
             navigateToQuinielaDetail(response.id);
@@ -406,35 +407,54 @@ export const useQuiniela = () => {
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al crear la quiniela';
-            dispatchAction(SLICE_ACTIONS.SET_CREAR_QUINIELA_ERROR, errorMessage);
+            dispatch(setCrearQuinielaError(errorMessage));
             return null;
         }
-    }, [dispatchAction, navigateToQuinielaDetail]);
+    }, [dispatch, navigateToQuinielaDetail]);
+
+    /**
+     * Obtiene las predicciones realizadas en una participación
+     * @param participacionId ID de la participación
+     * @returns Lista de predicciones
+     */
+    const loadPrediccionesUsuario = useCallback(async (participacionId: number): Promise<Prediccion[]> => {
+        dispatch(setPrediccionesLoading(true));
+        try {
+            const response = await QuinielaService.obtenerPrediccionesPorParticipacion(participacionId);
+            dispatch(setPredicciones(response));
+            return response;
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Error al obtener predicciones de la participación';
+            dispatch(setPrediccionesError(errorMessage));
+            console.error(errorMessage);
+            return [];
+        }
+    }, [dispatch]);
 
     /**
      * Participa en una quiniela
      */
     const participateInQuiniela = useCallback(async (quinielaId: number, usuarioId: number): Promise<QuinielaParticipacionType | null> => {
-        dispatchAction(SLICE_ACTIONS.SET_PARTICIPANDO_EN_QUINIELA_LOADING, true);
+        dispatch(setParticipandoEnQuinielaLoading(true));
         try {
             const response = await QuinielaService.participarEnQuiniela(quinielaId, usuarioId);
-            dispatchAction(SLICE_ACTIONS.PARTICIPACION_EXITOSA, response);
+            dispatch(participacionExitosa(response));
             
             // Actualizar el pool de la quiniela si es la actual
             if (quinielaActual && quinielaActual.id === quinielaId) {
-                dispatchAction(SLICE_ACTIONS.ACTUALIZAR_POOL_QUINIELA, {
+                dispatch(actualizarPoolQuiniela({
                     quinielaId,
                     nuevoPool: quinielaActual.poolActual + quinielaActual.costoParticipacion
-                });
+                }));
             }
             
             return response;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al participar en la quiniela';
-            dispatchAction(SLICE_ACTIONS.SET_PARTICIPAR_EN_QUINIELA_ERROR, errorMessage);
+            dispatch(setParticiparEnQuinielaError(errorMessage));
             return null;
         }
-    }, [dispatchAction, quinielaActual]);
+    }, [dispatch, quinielaActual]);
 
     /**
      * Realiza predicciones para una participación
@@ -448,10 +468,10 @@ export const useQuiniela = () => {
             if (participacionIndex >= 0) {
                 const nuevasParticipaciones = [...participacionesUsuario];
                 nuevasParticipaciones[participacionIndex] = response;
-                dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_USUARIO, {
+                dispatch(setParticipacionesUsuario({
                     participaciones: nuevasParticipaciones,
                     paginacion: paginacion.participacionesUsuario
-                });
+                }));
             }
             
             return response;
@@ -459,10 +479,11 @@ export const useQuiniela = () => {
             const errorMessage = error.response?.data?.message || 'Error al realizar predicciones';
             throw new Error(errorMessage);
         }
-    }, [dispatchAction, participacionesUsuario, paginacion]);
+    }, [dispatch, participacionesUsuario, paginacion]);
 
     /**
-     * Activa una quiniela (solo para creadores/admins)
+     * Activa una quiniela (DEPRECATED - las quinielas ahora se crean directamente activas)
+     * @deprecated Las quinielas se activan automáticamente al crearlas
      */
     const activateQuiniela = useCallback(async (quinielaId: number, usuarioId: number): Promise<QuinielaType | null> => {
         try {
@@ -470,7 +491,7 @@ export const useQuiniela = () => {
             
             // Si es la quiniela actual, actualizar el estado
             if (quinielaActual && quinielaActual.id === quinielaId) {
-                dispatchAction(SLICE_ACTIONS.SET_QUINIELA_ACTUAL, response);
+                dispatch(setQuinielaActual(response));
             }
             
             return response;
@@ -478,7 +499,7 @@ export const useQuiniela = () => {
             const errorMessage = error.response?.data?.message || 'Error al activar la quiniela';
             throw new Error(errorMessage);
         }
-    }, [dispatchAction, quinielaActual]);
+    }, [dispatch, quinielaActual]);
 
     /**
      * Cancela participación en una quiniela
@@ -489,17 +510,17 @@ export const useQuiniela = () => {
             
             // Remover la participación del estado local
             const nuevasParticipaciones = participacionesUsuario.filter(p => p.id !== participacionId);
-            dispatchAction(SLICE_ACTIONS.SET_PARTICIPACIONES_USUARIO, {
+            dispatch(setParticipacionesUsuario({
                 participaciones: nuevasParticipaciones,
                 paginacion: paginacion.participacionesUsuario
-            });
+            }));
             
             return true;
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Error al cancelar participación';
             throw new Error(errorMessage);
         }
-    }, [dispatchAction, participacionesUsuario, paginacion]);
+    }, [dispatch, participacionesUsuario, paginacion]);
 
     // ===== FUNCIONES DE BÚSQUEDA Y FILTROS =====
 
@@ -533,29 +554,29 @@ export const useQuiniela = () => {
      * Aplica filtro por tipo de quiniela
      */
     const applyFilterByType = useCallback((tipo: TipoQuiniela | null) => {
-        dispatchAction(SLICE_ACTIONS.SET_FILTRO_TIPO, tipo);
-    }, [dispatchAction]);
+        dispatch(setFiltroTipo(tipo));
+    }, [dispatch]);
 
     /**
      * Aplica filtro por estado de quiniela
      */
     const applyFilterByState = useCallback((estado: EstadoQuiniela | null) => {
-        dispatchAction(SLICE_ACTIONS.SET_FILTRO_ESTADO, estado);
-    }, [dispatchAction]);
+        dispatch(setFiltroEstado(estado));
+    }, [dispatch]);
 
     /**
      * Aplica filtro de búsqueda por texto
      */
     const applySearchFilter = useCallback((busqueda: string) => {
-        dispatchAction(SLICE_ACTIONS.SET_FILTRO_BUSQUEDA, busqueda);
-    }, [dispatchAction]);
+        dispatch(setFiltroBusqueda(busqueda));
+    }, [dispatch]);
 
     /**
      * Limpia todos los filtros
      */
     const clearAllFilters = useCallback(() => {
-        dispatchAction(SLICE_ACTIONS.CLEAR_FILTROS);
-    }, [dispatchAction]);
+        dispatch(clearFiltros());
+    }, [dispatch]);
 
     // ===== FUNCIONES DE VALIDACIÓN =====
 
@@ -565,6 +586,7 @@ export const useQuiniela = () => {
     const canUserParticipate = useCallback(async (quinielaId: number, usuarioId: number): Promise<boolean> => {
         try {
             const response = await QuinielaService.puedeParticipar(quinielaId, usuarioId);
+  
             return response;
         } catch (error: any) {
             console.error('Error al verificar si puede participar:', error);
@@ -591,29 +613,36 @@ export const useQuiniela = () => {
      * Limpia la quiniela actual seleccionada
      */
     const clearCurrentQuiniela = useCallback(() => {
-        dispatchAction(SLICE_ACTIONS.CLEAR_QUINIELA_ACTUAL);
-    }, [dispatchAction]);
+        dispatch(clearQuinielaActual());
+    }, [dispatch]);
+
+    /**
+     * Limpia las predicciones actuales
+     */
+    const clearPrediccionesActuales = useCallback(() => {
+        dispatch(clearPredicciones());
+    }, [dispatch]);
 
     /**
      * Limpia todos los datos de quinielas
      */
     const clearAllQuinielaData = useCallback(() => {
-        dispatchAction(SLICE_ACTIONS.CLEAR_QUINIELA_DATA);
-    }, [dispatchAction]);
+        dispatch(clearQuinielaData());
+    }, [dispatch]);
 
     /**
      * Limpia todos los errores
      */
     const clearAllErrors = useCallback(() => {
-        dispatchAction(SLICE_ACTIONS.CLEAR_ERRORS);
-    }, [dispatchAction]);
+        dispatch(clearErrors());
+    }, [dispatch]);
 
     /**
      * Actualiza el pool de una quiniela
      */
     const updateQuinielaPool = useCallback((quinielaId: number, nuevoPool: number) => {
-        dispatchAction(SLICE_ACTIONS.ACTUALIZAR_POOL_QUINIELA, { quinielaId, nuevoPool });
-    }, [dispatchAction]);
+        dispatch(actualizarPoolQuiniela({ quinielaId, nuevoPool }));
+    }, [dispatch]);
 
     /**
      * Carga el dashboard completo
@@ -689,6 +718,7 @@ export const useQuiniela = () => {
         loadQuinielaDetail,
         loadQuinielaByCode,
         loadParticipacionesUsuario,
+        loadParticipacionesUsuarioConRelaciones,
         loadRankingQuiniela,
         loadEstadisticasDashboard,
         loadQuinielasCreadasPorUsuario,
@@ -701,6 +731,13 @@ export const useQuiniela = () => {
         makePredicciones,
         activateQuiniela,
         cancelParticipacion,
+        loadPrediccionesUsuario,
+        clearPrediccionesActuales,
+
+        // ===== PREDICCIONES =====
+        predicciones,
+        isLoadingPredicciones,
+        errorPredicciones,
 
         // ===== FUNCIONES DE BÚSQUEDA Y FILTROS =====
         searchQuinielas,

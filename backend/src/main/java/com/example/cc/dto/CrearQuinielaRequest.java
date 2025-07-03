@@ -5,8 +5,9 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
-
+ 
 @Data
 public class CrearQuinielaRequest {
     private String nombre;
@@ -26,4 +27,6 @@ public class CrearQuinielaRequest {
     private BigDecimal porcentajeCasa;
     private BigDecimal porcentajeCreador;
     private Map<String, Object> configuracionDistribucion;
+    private List<EventoQuinielaRequest> eventos; // Agregamos los eventos
+    private String tipoPrediccionNombre; // Tipo de predicción para todos los eventos de la quiniela
 }

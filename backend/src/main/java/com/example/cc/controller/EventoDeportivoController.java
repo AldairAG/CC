@@ -1,7 +1,11 @@
 package com.example.cc.controller;
 
 import com.example.cc.entities.EventoDeportivo;
-import com.example.cc.service.deportes.EventoDeportivoService;
+import com.example.cc.entities.Deporte;
+import com.example.cc.entities.Liga;
+import com.example.cc.service.deportes.IEventoDeportivoService;
+import com.example.cc.service.deportes.IDeporteService;
+import com.example.cc.service.deportes.ILigaService;
 import com.example.cc.scheduler.EventoDeportivoScheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,15 +16,19 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/eventos-deportivos")
+@RequestMapping("/cc/eventos-deportivos")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "*")
 public class EventoDeportivoController {
 
-    private final EventoDeportivoService eventoDeportivoService;
+    private final IEventoDeportivoService eventoDeportivoService;
+    private final IDeporteService deporteService;
+    private final ILigaService ligaService;
     private final EventoDeportivoScheduler eventoScheduler;
 
     /**
@@ -30,16 +38,26 @@ public class EventoDeportivoController {
     public ResponseEntity<List<EventoDeportivo>> getEventos(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
-            @RequestParam(required = false) String deporte,
-            @RequestParam(required = false) String liga) {
+            @RequestParam(required = false) String deporteNombre,
+            @RequestParam(required = false) String ligaNombre) {
 
         try {
             List<EventoDeportivo> eventos;
 
-            if (deporte != null && !deporte.trim().isEmpty()) {
-                eventos = eventoDeportivoService.getEventosPorDeporte(deporte);
-            } else if (liga != null && !liga.trim().isEmpty()) {
-                eventos = eventoDeportivoService.getEventosPorLiga(liga);
+            if (deporteNombre != null && !deporteNombre.trim().isEmpty()) {
+                Optional<Deporte> deporteOpt = deporteService.getDeporteByNombre(deporteNombre);
+                if (deporteOpt.isPresent()) {
+                    eventos = eventoDeportivoService.getEventosPorDeporte(deporteOpt.get());
+                } else {
+                    return ResponseEntity.ok(List.of()); // Sin eventos si no existe el deporte
+                }
+            } else if (ligaNombre != null && !ligaNombre.trim().isEmpty()) {
+                Optional<Liga> ligaOpt = ligaService.getLigaByNombre(ligaNombre);
+                if (ligaOpt.isPresent()) {
+                    eventos = eventoDeportivoService.getEventosPorLiga(ligaOpt.get());
+                } else {
+                    return ResponseEntity.ok(List.of()); // Sin eventos si no existe la liga
+                }
             } else if (fechaInicio != null && fechaFin != null) {
                 eventos = eventoDeportivoService.getEventosPorFechas(fechaInicio, fechaFin);
             } else {
@@ -76,11 +94,16 @@ public class EventoDeportivoController {
     /**
      * Obtener eventos por deporte específico
      */
-    @GetMapping("/deporte/{deporte}")
-    public ResponseEntity<List<EventoDeportivo>> getEventosPorDeporte(@PathVariable String deporte) {
+    @GetMapping("/deporte/{deporteNombre}")
+    public ResponseEntity<List<EventoDeportivo>> getEventosPorDeporte(@PathVariable String deporteNombre) {
         try {
-            List<EventoDeportivo> eventos = eventoDeportivoService.getEventosPorDeporte(deporte);
-            return ResponseEntity.ok(eventos);
+            Optional<Deporte> deporteOpt = deporteService.getDeporteByNombre(deporteNombre);
+            if (deporteOpt.isPresent()) {
+                List<EventoDeportivo> eventos = eventoDeportivoService.getEventosPorDeporte(deporteOpt.get());
+                return ResponseEntity.ok(eventos);
+            } else {
+                return ResponseEntity.ok(List.of()); // Sin eventos si no existe el deporte
+            }
         } catch (Exception e) {
             log.error("Error al obtener eventos por deporte: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
@@ -90,11 +113,16 @@ public class EventoDeportivoController {
     /**
      * Obtener eventos por liga específica
      */
-    @GetMapping("/liga/{liga}")
-    public ResponseEntity<List<EventoDeportivo>> getEventosPorLiga(@PathVariable String liga) {
+    @GetMapping("/liga/{ligaNombre}")
+    public ResponseEntity<List<EventoDeportivo>> getEventosPorLiga(@PathVariable String ligaNombre) {
         try {
-            List<EventoDeportivo> eventos = eventoDeportivoService.getEventosPorLiga(liga);
-            return ResponseEntity.ok(eventos);
+            Optional<Liga> ligaOpt = ligaService.getLigaByNombre(ligaNombre);
+            if (ligaOpt.isPresent()) {
+                List<EventoDeportivo> eventos = eventoDeportivoService.getEventosPorLiga(ligaOpt.get());
+                return ResponseEntity.ok(eventos);
+            } else {
+                return ResponseEntity.ok(List.of()); // Sin eventos si no existe la liga
+            }
         } catch (Exception e) {
             log.error("Error al obtener eventos por liga: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
@@ -158,16 +186,16 @@ public class EventoDeportivoController {
             
             // Contar eventos por deporte
             Map<String, Long> eventosPorDeporte = eventosProximos.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
-                    evento -> evento.getDeporte() != null ? evento.getDeporte() : "Sin especificar",
-                    java.util.stream.Collectors.counting()
+                .collect(Collectors.groupingBy(
+                    evento -> evento.getDeporte() != null ? evento.getDeporte().getNombre() : "Sin especificar",
+                    Collectors.counting()
                 ));
             
             // Contar eventos por estado
             Map<String, Long> eventosPorEstado = eventosProximos.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                     evento -> evento.getEstado() != null ? evento.getEstado() : "Sin especificar",
-                    java.util.stream.Collectors.counting()
+                    Collectors.counting()
                 ));
             
             return ResponseEntity.ok(Map.of(
@@ -179,6 +207,104 @@ public class EventoDeportivoController {
             
         } catch (Exception e) {
             log.error("Error al obtener estadísticas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener todos los deportes disponibles
+     */
+    @GetMapping("/deportes")
+    public ResponseEntity<List<Deporte>> getDeportes() {
+        try {
+            List<Deporte> deportes = deporteService.getDeportesActivos();
+            return ResponseEntity.ok(deportes);
+        } catch (Exception e) {
+            log.error("Error al obtener deportes: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener todas las ligas disponibles
+     */
+    @GetMapping("/ligas")
+    public ResponseEntity<List<Liga>> getLigas() {
+        try {
+            List<Liga> ligas = ligaService.getLigasActivas();
+            return ResponseEntity.ok(ligas);
+        } catch (Exception e) {
+            log.error("Error al obtener ligas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener ligas por deporte
+     */
+    @GetMapping("/deportes/{deporteNombre}/ligas")
+    public ResponseEntity<List<Liga>> getLigasPorDeporte(@PathVariable String deporteNombre) {
+        try {
+            Optional<Deporte> deporteOpt = deporteService.getDeporteByNombre(deporteNombre);
+            if (deporteOpt.isPresent()) {
+                List<Liga> ligas = ligaService.getLigasByDeporte(deporteOpt.get());
+                return ResponseEntity.ok(ligas);
+            } else {
+                return ResponseEntity.ok(List.of());
+            }
+        } catch (Exception e) {
+            log.error("Error al obtener ligas por deporte: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Buscar evento por nombre y fecha específica
+     */
+    @GetMapping("/buscar-por-nombre-fecha")
+    public ResponseEntity<EventoDeportivo> obtenerEventoPorNombreYFecha(
+            @RequestParam String nombreEvento,
+            @RequestParam String fecha,
+            @RequestParam(required = false) String equipoLocal,
+            @RequestParam(required = false) String equipoVisitante) {
+        
+        try {
+            LocalDateTime fechaEvento = LocalDateTime.parse(fecha + "T00:00:00");
+            LocalDateTime fechaFin = fechaEvento.plusDays(1);
+            
+            Optional<EventoDeportivo> evento = eventoDeportivoService.buscarPorNombreYFecha(
+                nombreEvento, fechaEvento, fechaFin, equipoLocal, equipoVisitante);
+            
+            if (evento.isPresent()) {
+                return ResponseEntity.ok(evento.get());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("Error al buscar evento por nombre y fecha: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener eventos por fecha específica
+     */
+    @GetMapping("/por-fecha")
+    public ResponseEntity<List<EventoDeportivo>> obtenerEventosPorFecha(
+            @RequestParam String fecha,
+            @RequestParam(required = false) String deporte,
+            @RequestParam(required = false) String liga) {
+        
+        try {
+            LocalDateTime fechaEvento = LocalDateTime.parse(fecha + "T00:00:00");
+            LocalDateTime fechaFin = fechaEvento.plusDays(1);
+            
+            List<EventoDeportivo> eventos = eventoDeportivoService.buscarPorFecha(
+                fechaEvento, fechaFin, deporte, liga);
+            
+            return ResponseEntity.ok(eventos);
+        } catch (Exception e) {
+            log.error("Error al obtener eventos por fecha: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }

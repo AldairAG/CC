@@ -19,8 +19,8 @@ apiClient.interceptors.request.use((config) => {
   const token = store.getState().user.token; // Assuming your auth slice has a token field
   
   if (import.meta.env.MODE === 'development') {
-    console.log('🔗 API Request:', config.method?.toUpperCase(), config.url);
-    console.log('🔑 Token:', token ? 'Present' : 'Not found');
+    //console.log('🔗 API Request:', config.method?.toUpperCase(), config.url);
+    //console.log('🔑 Token:', token ? 'Present' : 'Not found');
   }
   
   if (token) {

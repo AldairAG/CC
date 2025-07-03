@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/quiniela-eventos")
+@RequestMapping("/cc/quiniela-eventos")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class QuinielaEventoController {

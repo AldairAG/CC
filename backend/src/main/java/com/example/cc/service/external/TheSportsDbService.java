@@ -1,6 +1,8 @@
 package com.example.cc.service.external;
 
 import com.example.cc.dto.external.TheSportsDbEventResponse;
+import com.example.cc.dto.response.TheSportsDbSportResponse;
+import com.example.cc.dto.response.TheSportsDbLeagueResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -126,5 +128,55 @@ public class TheSportsDbService implements ITheSportsDbService {
         }
         
         return new ArrayList<>();
+    }
+
+    /**
+     * Obtener todos los deportes disponibles desde TheSportsDB
+     */
+    @Override
+    public List<TheSportsDbSportResponse.SportData> obtenerTodosLosDeportes() {
+        try {
+            String url = baseUrl + "/all_sports.php";
+            log.info("Obteniendo todos los deportes desde: {}", url);
+            
+            TheSportsDbSportResponse response = restTemplate.getForObject(url, TheSportsDbSportResponse.class);
+            
+            if (response != null && response.getSports() != null) {
+                log.info("Se encontraron {} deportes en TheSportsDB", response.getSports().size());
+                return response.getSports();
+            } else {
+                log.warn("No se encontraron deportes en la respuesta de TheSportsDB");
+                return new ArrayList<>();
+            }
+            
+        } catch (RestClientException e) {
+            log.error("Error al obtener deportes de TheSportsDB: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtener todas las ligas disponibles desde TheSportsDB
+     */
+    @Override
+    public List<TheSportsDbLeagueResponse.LeagueData> obtenerTodasLasLigas() {
+        try {
+            String url = baseUrl + "/all_leagues.php";
+            log.info("Obteniendo todas las ligas desde: {}", url);
+            
+            TheSportsDbLeagueResponse response = restTemplate.getForObject(url, TheSportsDbLeagueResponse.class);
+            
+            if (response != null && response.getLeagues() != null) {
+                log.info("Se encontraron {} ligas en TheSportsDB", response.getLeagues().size());
+                return response.getLeagues();
+            } else {
+                log.warn("No se encontraron ligas en la respuesta de TheSportsDB");
+                return new ArrayList<>();
+            }
+            
+        } catch (RestClientException e) {
+            log.error("Error al obtener ligas de TheSportsDB: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 }

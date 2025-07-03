@@ -30,19 +30,19 @@ public interface PrediccionEventoRepository extends JpaRepository<PrediccionEven
     Optional<PrediccionEvento> findByParticipacionAndEventoDeportivo_Id(QuinielaParticipacion participacion, Long eventoId);
 
     /**
-     * Obtener predicciones de una participación
+     * Obtener predicciones de una participación por ID
      */
-    List<PrediccionEvento> findByParticipacionIdOrderByFechaPrediccionDesc(Long participacionId);
+    List<PrediccionEvento> findByParticipacion_IdOrderByFechaPrediccionDesc(Long participacionId);
 
     /**
-     * Obtener predicción específica
+     * Obtener predicción específica por IDs
      */
-    Optional<PrediccionEvento> findByParticipacionIdAndEventoDeportivoId(Long participacionId, Long eventoDeportivoId);
+    Optional<PrediccionEvento> findByParticipacion_IdAndEventoDeportivo_Id(Long participacionId, Long eventoDeportivoId);
 
     /**
-     * Verificar si existe predicción
+     * Verificar si existe predicción por IDs
      */
-    boolean existsByParticipacionIdAndEventoDeportivoId(Long participacionId, Long eventoDeportivoId);
+    boolean existsByParticipacion_IdAndEventoDeportivo_Id(Long participacionId, Long eventoDeportivoId);
 
     /**
      * Obtener predicciones pendientes de resolución
@@ -54,7 +54,7 @@ public interface PrediccionEventoRepository extends JpaRepository<PrediccionEven
     /**
      * Obtener predicciones por evento deportivo
      */
-    List<PrediccionEvento> findByEventoDeportivoIdOrderByFechaPrediccionDesc(Long eventoDeportivoId);
+    List<PrediccionEvento> findByEventoDeportivo_IdOrderByFechaPrediccionDesc(Long eventoDeportivoId);
 
     /**
      * Obtener predicciones correctas de una participación

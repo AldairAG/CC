@@ -1,14 +1,15 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { createSelector } from 'reselect';
-import type { 
-    QuinielaType, 
-    QuinielaResumenType, 
+import type {
+    QuinielaType,
+    QuinielaResumenType,
     QuinielaParticipacionType,
     RankingParticipacionType,
     EstadisticasQuinielaType,
     EstadoQuiniela,
     TipoQuiniela
 } from "../../types/QuinielaType";
+import type { Prediccion } from "../../types/ParticipacionType";
 
 interface QuinielaState {
     // Quinielas principales
@@ -17,18 +18,21 @@ interface QuinielaState {
     quinielasMayorPool: QuinielaResumenType[];
     quinielasProximasCerrar: QuinielaResumenType[];
     quinielasCreadasPorUsuario: QuinielaResumenType[];
-    
+
     // Quiniela actual seleccionada
     quinielaActual: QuinielaType | null;
-    
+
     // Participaciones del usuario
     participacionesUsuario: QuinielaParticipacionType[];
     participacionActual: QuinielaParticipacionType | null;
-    
+
     // Rankings y estadísticas
     rankingQuiniela: RankingParticipacionType[];
     estadisticasDashboard: EstadisticasQuinielaType | null;
-    
+
+    // Predicciones del usuario
+    predicciones: Prediccion[];
+
     // Estados de carga
     loading: {
         quinielasActivas: boolean;
@@ -41,8 +45,9 @@ interface QuinielaState {
         estadisticas: boolean;
         creandoQuiniela: boolean;
         participandoEnQuiniela: boolean;
+        predicciones: boolean;
     };
-    
+
     // Estados de error
     error: {
         quinielasActivas: string | null;
@@ -55,15 +60,16 @@ interface QuinielaState {
         estadisticas: string | null;
         crearQuiniela: string | null;
         participarEnQuiniela: string | null;
+        predicciones: string | null;
     };
-    
+
     // Filtros y paginación
     filtros: {
         tipo: TipoQuiniela | null;
         estado: EstadoQuiniela | null;
         busqueda: string;
     };
-    
+
     paginacion: {
         quinielasActivas: {
             page: number;
@@ -91,7 +97,8 @@ const initialState: QuinielaState = {
     participacionActual: null,
     rankingQuiniela: [],
     estadisticasDashboard: null,
-    
+    predicciones: [],
+
     loading: {
         quinielasActivas: false,
         quinielasPopulares: false,
@@ -103,8 +110,9 @@ const initialState: QuinielaState = {
         estadisticas: false,
         creandoQuiniela: false,
         participandoEnQuiniela: false,
+        predicciones: false,
     },
-    
+
     error: {
         quinielasActivas: null,
         quinielasPopulares: null,
@@ -116,14 +124,15 @@ const initialState: QuinielaState = {
         estadisticas: null,
         crearQuiniela: null,
         participarEnQuiniela: null,
+        predicciones: null,
     },
-    
+
     filtros: {
         tipo: null,
         estado: null,
         busqueda: '',
     },
-    
+
     paginacion: {
         quinielasActivas: {
             page: 0,
@@ -249,6 +258,7 @@ const quinielaSlice = createSlice({
                 state.error.participaciones = null;
             }
         },
+        
         setParticipacionesUsuario: (state, action: PayloadAction<{
             participaciones: QuinielaParticipacionType[];
             paginacion: {
@@ -263,6 +273,7 @@ const quinielaSlice = createSlice({
             state.loading.participaciones = false;
             state.error.participaciones = null;
         },
+
         setParticipacionesError: (state, action: PayloadAction<string>) => {
             state.error.participaciones = action.payload;
             state.loading.participaciones = false;
@@ -339,7 +350,7 @@ const quinielaSlice = createSlice({
             state.participacionesUsuario.unshift(action.payload);
             state.loading.participandoEnQuiniela = false;
             state.error.participarEnQuiniela = null;
-            
+
             // Actualizar contador de participantes en quiniela actual si existe
             if (state.quinielaActual && state.quinielaActual.id === action.payload.quinielaId) {
                 state.quinielaActual.participantesActuales += 1;
@@ -372,12 +383,12 @@ const quinielaSlice = createSlice({
         // Acción para actualizar pool de quiniela
         actualizarPoolQuiniela: (state, action: PayloadAction<{ quinielaId: number; nuevoPool: number }>) => {
             const { quinielaId, nuevoPool } = action.payload;
-            
+
             // Actualizar en quiniela actual
             if (state.quinielaActual && state.quinielaActual.id === quinielaId) {
                 state.quinielaActual.poolActual = nuevoPool;
             }
-            
+
             // Actualizar en listas de quinielas
             const listas = [
                 state.quinielasActivas,
@@ -386,13 +397,34 @@ const quinielaSlice = createSlice({
                 state.quinielasProximasCerrar,
                 state.quinielasCreadasPorUsuario
             ];
-            
+
             listas.forEach(lista => {
                 const quiniela = lista.find(q => q.id === quinielaId);
                 if (quiniela) {
                     quiniela.poolActual = nuevoPool;
                 }
             });
+        },
+
+        // Acciones para predicciones
+        setPrediccionesLoading: (state, action: PayloadAction<boolean>) => {
+            state.loading.predicciones = action.payload;
+            if (action.payload) {
+                state.error.predicciones = null;
+            }
+        },
+        setPredicciones: (state, action: PayloadAction<Prediccion[]>) => {
+            state.predicciones = action.payload;
+            state.loading.predicciones = false;
+            state.error.predicciones = null;
+        },
+        setPrediccionesError: (state, action: PayloadAction<string>) => {
+            state.error.predicciones = action.payload;
+            state.loading.predicciones = false;
+        },
+        clearPredicciones: (state) => {
+            state.predicciones = [];
+            state.error.predicciones = null;
         },
 
         // Limpiar todos los datos
@@ -413,6 +445,7 @@ const quinielaSlice = createSlice({
                 estadisticas: null,
                 crearQuiniela: null,
                 participarEnQuiniela: null,
+                predicciones: null,
             };
         },
     },
@@ -460,6 +493,10 @@ export const {
     actualizarPoolQuiniela,
     clearQuinielaData,
     clearErrors,
+    setPrediccionesLoading,
+    setPredicciones,
+    setPrediccionesError,
+    clearPredicciones,
 } = quinielaSlice.actions;
 
 // Selectores usando createSelector para optimización
@@ -477,30 +514,35 @@ export const quinielaSelector = {
     participacionActual: createSelector([selectQuinielaState], (state) => state.participacionActual),
     rankingQuiniela: createSelector([selectQuinielaState], (state) => state.rankingQuiniela),
     estadisticasDashboard: createSelector([selectQuinielaState], (state) => state.estadisticasDashboard),
-    
+
     // Selectores de loading
     loading: createSelector([selectQuinielaState], (state) => state.loading),
     isLoadingQuinielasActivas: createSelector([selectQuinielaState], (state) => state.loading.quinielasActivas),
     isLoadingQuinielaActual: createSelector([selectQuinielaState], (state) => state.loading.quinielaActual),
     isCreandoQuiniela: createSelector([selectQuinielaState], (state) => state.loading.creandoQuiniela),
     isParticiparEnQuiniela: createSelector([selectQuinielaState], (state) => state.loading.participandoEnQuiniela),
-    
+
     // Selectores de errores
     errors: createSelector([selectQuinielaState], (state) => state.error),
     errorQuinielasActivas: createSelector([selectQuinielaState], (state) => state.error.quinielasActivas),
     errorQuinielaActual: createSelector([selectQuinielaState], (state) => state.error.quinielaActual),
     errorCrearQuiniela: createSelector([selectQuinielaState], (state) => state.error.crearQuiniela),
     errorParticiparEnQuiniela: createSelector([selectQuinielaState], (state) => state.error.participarEnQuiniela),
-    
+
+    // Selectores para predicciones
+    predicciones: createSelector([selectQuinielaState], (state) => state.predicciones),
+    isLoadingPredicciones: createSelector([selectQuinielaState], (state) => state.loading.predicciones),
+    errorPredicciones: createSelector([selectQuinielaState], (state) => state.error.predicciones),
+
     // Selectores de filtros
     filtros: createSelector([selectQuinielaState], (state) => state.filtros),
     paginacion: createSelector([selectQuinielaState], (state) => state.paginacion),
-    
+
     // Selectores computados
     hasQuinielasActivas: createSelector([selectQuinielaState], (state) => state.quinielasActivas.length > 0),
     hasParticipaciones: createSelector([selectQuinielaState], (state) => state.participacionesUsuario.length > 0),
     totalQuinielasActivas: createSelector([selectQuinielaState], (state) => state.paginacion.quinielasActivas.totalElements),
-    
+
     // Selector para verificar si el usuario ya participa en la quiniela actual
     yaParticipaEnQuinielaActual: createSelector(
         [selectQuinielaState],
@@ -511,29 +553,29 @@ export const quinielaSelector = {
             );
         }
     ),
-    
+
     // Selector para quinielas filtradas
     quinielasActivasFiltradas: createSelector(
         [selectQuinielaState],
         (state) => {
             let quinielas = state.quinielasActivas;
-            
+
             if (state.filtros.tipo) {
                 quinielas = quinielas.filter(q => q.tipoQuiniela === state.filtros.tipo);
             }
-            
+
             if (state.filtros.estado) {
                 quinielas = quinielas.filter(q => q.estado === state.filtros.estado);
             }
-            
+
             if (state.filtros.busqueda) {
                 const busqueda = state.filtros.busqueda.toLowerCase();
-                quinielas = quinielas.filter(q => 
+                quinielas = quinielas.filter(q =>
                     q.nombre.toLowerCase().includes(busqueda) ||
                     q.descripcion.toLowerCase().includes(busqueda)
                 );
             }
-            
+
             return quinielas;
         }
     ),

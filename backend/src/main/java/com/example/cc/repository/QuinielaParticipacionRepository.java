@@ -39,6 +39,27 @@ public interface QuinielaParticipacionRepository extends JpaRepository<QuinielaP
     Page<QuinielaParticipacion> findByUsuario_IdUsuarioOrderByFechaParticipacionDesc(Long usuarioId, Pageable pageable);
 
     /**
+     * Obtener todas las participaciones de un usuario con quiniela cargada
+     */
+    @Query("SELECT p FROM QuinielaParticipacion p " +
+           "JOIN FETCH p.quiniela q " +
+           "JOIN FETCH p.usuario u " +
+           "WHERE u.idUsuario = :usuarioId " +
+           "ORDER BY p.fechaParticipacion DESC")
+    List<QuinielaParticipacion> findByUsuarioIdWithQuiniela(@Param("usuarioId") Long usuarioId);
+
+    /**
+     * Obtener participación por ID con relaciones cargadas
+     */
+    @Query("SELECT p FROM QuinielaParticipacion p " +
+           "JOIN FETCH p.quiniela q " +
+           "LEFT JOIN FETCH q.eventos qe " +
+           "LEFT JOIN FETCH qe.eventoDeportivo " +
+           "JOIN FETCH p.usuario u " +
+           "WHERE p.id = :participacionId")
+    Optional<QuinielaParticipacion> findByIdWithRelations(@Param("participacionId") Long participacionId);
+
+    /**
      * Obtener participaciones de una quiniela ordenadas por puntaje
      */
     @Query("SELECT p FROM QuinielaParticipacion p WHERE p.quiniela.id = :quinielaId " +
@@ -153,4 +174,9 @@ public interface QuinielaParticipacionRepository extends JpaRepository<QuinielaP
     @Query("SELECT COUNT(p) FROM QuinielaParticipacion p WHERE p.usuario.idUsuario = :usuarioId " +
            "AND p.posicionFinal = 1")
     Long countQuinielasGanadas(@Param("usuarioId") Long usuarioId);
+
+    /**
+     * Buscar participación por usuario y quiniela
+     */
+    Optional<QuinielaParticipacion> findByUsuario_IdUsuarioAndQuiniela_Id(Long usuarioId, Long quinielaId);
 }

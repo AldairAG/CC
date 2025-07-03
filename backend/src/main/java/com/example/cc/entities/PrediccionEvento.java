@@ -9,11 +9,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "prediccion_eventos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PrediccionEvento {
 
     @Id
@@ -22,14 +27,17 @@ public class PrediccionEvento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "participacion_id", nullable = false)
+    @JsonIgnore
     private QuinielaParticipacion participacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evento_deportivo_id", nullable = false)
+    @JsonIgnore
     private EventoDeportivo eventoDeportivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_prediccion_id", nullable = false)
+    @JsonIgnore
     private TipoPrediccion tipoPrediccion;
 
     @Column(name = "prediccion_texto")
@@ -148,6 +156,22 @@ public class PrediccionEvento {
 
     public boolean puedeModificar() {
         return estado == EstadoPrediccion.PENDIENTE && !esPrediccionVencida();
+    }
+
+    // Métodos getter para exponer IDs en JSON sin exponer las entidades completas
+    @JsonProperty("participacionId")
+    public Long getParticipacionId() {
+        return participacion != null ? participacion.getId() : null;
+    }
+
+    @JsonProperty("eventoDeportivoId")
+    public Long getEventoDeportivoId() {
+        return eventoDeportivo != null ? eventoDeportivo.getId() : null;
+    }
+
+    @JsonProperty("tipoPrediccionId")
+    public Long getTipoPrediccionId() {
+        return tipoPrediccion != null ? tipoPrediccion.getId() : null;
     }
 
     // Enums

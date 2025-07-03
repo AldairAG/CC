@@ -150,6 +150,18 @@ export interface QuinielaResumenType {
     totalEventos?: number;
 }
 
+export interface EventoQuinielaCrearType {
+    id?: number; // Para eventos existentes
+    nombreEvento: string;
+    equipoLocal: string;
+    equipoVisitante: string;
+    fechaEvento: string; // ISO string
+    puntosPorAcierto: number;
+    multiplicadorPuntos?: number;
+    esObligatorio: boolean;
+    tipoPrediccion: string;
+}
+
 export interface CrearQuinielaRequestType {
     nombre: string;
     descripcion: string;
@@ -168,6 +180,8 @@ export interface CrearQuinielaRequestType {
     porcentajeCasa?: number;
     porcentajeCreador?: number;
     configuracionDistribucion?: ConfiguracionDistribucion;
+    eventos?: EventoQuinielaCrearType[]; // Agregamos eventos
+    tipoPrediccionNombre?: string; // Tipo de predicción para todos los eventos
 }
 
 export interface RankingParticipacionType {

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { 
-    QuinielaType, 
-    QuinielaResumenType, 
-    CrearQuinielaRequestType, 
+import type {
+    QuinielaType,
+    QuinielaResumenType,
+    CrearQuinielaRequestType,
     RankingParticipacionType,
     PrediccionRequestType,
     QuinielaParticipacionType,
@@ -34,6 +34,8 @@ export const QuinielaService = {
         const response = await apiClient.get<QuinielasResponse>(`${BASE_URL}/activas`, {
             params: { page, size }
         });
+        console.log(response.data);
+
         return response.data;
     },
 
@@ -64,8 +66,8 @@ export const QuinielaService = {
      * @returns La participación creada
      */
     participarEnQuiniela: async (quinielaId: number, usuarioId: number): Promise<QuinielaParticipacionType> => {
-        const response = await apiClient.post<QuinielaParticipacionType>(`${BASE_URL}/${quinielaId}/participar`, {
-            usuarioId
+        const response = await apiClient.post<QuinielaParticipacionType>(`${BASE_URL}/${quinielaId}/participar`, {}, {
+            params: { usuarioId }
         });
         return response.data;
     },
@@ -77,9 +79,9 @@ export const QuinielaService = {
      * @returns Respuesta de la operación
      */
     realizarPredicciones: async (participacionId: number, predicciones: PrediccionRequestType[]): Promise<any> => {
-        const response = await apiClient.post(`${BASE_URL}/participaciones/${participacionId}/predicciones`, {
-            predicciones
-        });
+        const response = await apiClient.post(`${BASE_URL}/participaciones/${participacionId}/predicciones`,
+            predicciones  // ✅ Enviar array directamente, no envuelto en objeto
+        );
         return response.data;
     },
 
@@ -94,6 +96,27 @@ export const QuinielaService = {
     },
 
     /**
+     * Obtener predicciones de un usuario para una quiniela específica
+     * @param usuarioId ID del usuario
+     * @param quinielaId ID de la quiniela
+     * @returns Predicciones del usuario para la quiniela
+     */
+    obtenerPrediccionesUsuario: async (usuarioId: number, quinielaId: number): Promise<any> => {
+        const response = await apiClient.get(`${BASE_URL}/predicciones/usuario/${usuarioId}/quiniela/${quinielaId}`);
+        return response.data;
+    },
+
+    /**
+     * Obtener predicciones por participación
+     * @param participacionId ID de la participación
+     * @returns Predicciones asociadas a la participación
+     */
+    obtenerPrediccionesPorParticipacion: async (participacionId: number): Promise<any> => {
+        const response = await apiClient.get(`${BASE_URL}/participaciones/${participacionId}/predicciones`);
+        return response.data;
+    },
+
+    /**
      * Obtener participaciones de un usuario
      * @param usuarioId ID del usuario
      * @param page Número de página (0-based)
@@ -104,6 +127,16 @@ export const QuinielaService = {
         const response = await apiClient.get(`${BASE_URL}/participaciones/usuario/${usuarioId}`, {
             params: { page, size }
         });
+        return response.data;
+    },
+
+    /**
+     * Obtener participaciones de un usuario con relaciones cargadas
+     * @param usuarioId ID del usuario
+     * @returns Lista completa de participaciones con quinielas cargadas
+     */
+    obtenerParticipacionesUsuarioConRelaciones: async (usuarioId: number): Promise<QuinielaParticipacionType[]> => {
+        const response = await apiClient.get<QuinielaParticipacionType[]>(`${BASE_URL}/participaciones/usuario/${usuarioId}/with-relations`);
         return response.data;
     },
 
@@ -179,9 +212,11 @@ export const QuinielaService = {
      */
     puedeParticipar: async (quinielaId: number, usuarioId: number): Promise<boolean> => {
         try {
-            const response = await apiClient.get<{puedeParticipar: boolean}>(
+            const response = await apiClient.get<{ puedeParticipar: boolean }>(
                 `${BASE_URL}/${quinielaId}/puede-participar/${usuarioId}`
             );
+            console.log(`Usuario ${usuarioId} puede participar en quiniela ${quinielaId}:`, response.data);
+
             return response.data.puedeParticipar;
         } catch {
             return false;
@@ -208,7 +243,8 @@ export const QuinielaService = {
     },
 
     /**
-     * Activar una quiniela (solo para creadores/admins)
+     * Activar una quiniela (DEPRECATED - las quinielas ahora se crean directamente activas)
+     * @deprecated Las quinielas se activan automáticamente al crearlas
      * @param quinielaId ID de la quiniela
      * @param usuarioId ID del usuario que activa
      * @returns La quiniela activada

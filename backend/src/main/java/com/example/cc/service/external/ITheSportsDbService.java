@@ -1,6 +1,8 @@
 package com.example.cc.service.external;
 
 import com.example.cc.dto.external.TheSportsDbEventResponse;
+import com.example.cc.dto.response.TheSportsDbSportResponse;
+import com.example.cc.dto.response.TheSportsDbLeagueResponse;
 
 import java.util.List;
 
@@ -28,4 +30,16 @@ public interface ITheSportsDbService {
      * @return Lista de eventos del deporte
      */
     List<TheSportsDbEventResponse.EventData> getEventsBySport(String sport);
+
+    /**
+     * Obtener todos los deportes disponibles desde TheSportsDB
+     * @return Lista de deportes disponibles
+     */
+    List<TheSportsDbSportResponse.SportData> obtenerTodosLosDeportes();
+
+    /**
+     * Obtener todas las ligas disponibles desde TheSportsDB
+     * @return Lista de ligas disponibles
+     */
+    List<TheSportsDbLeagueResponse.LeagueData> obtenerTodasLasLigas();
 }

@@ -8,11 +8,16 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "quiniela_eventos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class QuinielaEvento {
 
     @Id
@@ -21,10 +26,12 @@ public class QuinielaEvento {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiniela_id", nullable = false)
+    @JsonIgnore
     private Quiniela quiniela;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evento_deportivo_id", nullable = false)
+    @JsonIgnore
     private EventoDeportivo eventoDeportivo;
 
     @Column(name = "orden_en_quiniela", nullable = false)
@@ -108,5 +115,21 @@ public class QuinielaEvento {
     public BigDecimal getPorcentajeAciertos() {
         // Este método requiere una consulta al repositorio
         return BigDecimal.ZERO; // Placeholder - implementar en el servicio
+    }
+
+    // Métodos getter para exponer IDs en JSON sin exponer las entidades completas
+    @JsonProperty("quinielaId")
+    public Long getQuinielaId() {
+        return quiniela != null ? quiniela.getId() : null;
+    }
+
+    @JsonProperty("eventoDeportivoId")
+    public Long getEventoDeportivoId() {
+        return eventoDeportivo != null ? eventoDeportivo.getId() : null;
+    }
+
+    @JsonProperty("tipoPrediccionId")
+    public Long getTipoPrediccionId() {
+        return tipoPrediccion != null ? tipoPrediccion.getId() : null;
     }
 }

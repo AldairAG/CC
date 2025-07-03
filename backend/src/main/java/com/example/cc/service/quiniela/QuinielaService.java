@@ -8,7 +8,6 @@ import com.example.cc.dto.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,6 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class QuinielaService implements IQuinielaService {
 
@@ -29,6 +27,8 @@ public class QuinielaService implements IQuinielaService {
     private final QuinielaParticipacionRepository participacionRepository;
     private final PrediccionEventoRepository prediccionRepository;
     private final EventoDeportivoRepository eventoRepository;
+    private final QuinielaEventoRepository quinielaEventoRepository;
+    private final TipoPrediccionRepository tipoPrediccionRepository;
     private final UsuarioRepository usuarioRepository;
     private final WalletService walletService;
     private final NotificationService notificationService;
@@ -38,9 +38,10 @@ public class QuinielaService implements IQuinielaService {
      * Crear una nueva quiniela
      */
     public Quiniela crearQuiniela(CrearQuinielaRequest request) {
-        // Validar usuario creador
-        Usuario creador = usuarioRepository.findById(request.getCreadorId())
-                .orElseThrow(() -> new RuntimeException("Usuario creador no encontrado"));
+        // Validar que el usuario creador existe
+        if (!usuarioRepository.existsById(request.getCreadorId())) {
+            throw new RuntimeException("Usuario creador no encontrado");
+        }
 
         // Validar fechas
         if (request.getFechaInicio().isAfter(request.getFechaCierre())) {
@@ -67,7 +68,7 @@ public class QuinielaService implements IQuinielaService {
         quiniela.setRequiereAprobacion(request.getRequiereAprobacion());
         quiniela.setReglasEspeciales(request.getReglasEspeciales());
         quiniela.setRequiereMinParticipantes(request.getRequiereMinParticipantes());
-        
+
         // Configurar porcentajes
         if (request.getPorcentajeCasa() != null) {
             quiniela.setPorcentajeCasa(request.getPorcentajeCasa());
@@ -86,15 +87,29 @@ public class QuinielaService implements IQuinielaService {
             }
         }
 
-        // Estado inicial
-        quiniela.setEstado(Quiniela.EstadoQuiniela.BORRADOR);
+        // Validar que se proporcionen eventos
+        if (request.getEventos() == null || request.getEventos().isEmpty()) {
+            throw new RuntimeException("La quiniela debe tener al menos un evento asociado");
+        }
 
-        return quinielaRepository.save(quiniela);
+        // Estado inicial - directamente ACTIVA (no requiere activación manual)
+        quiniela.setEstado(Quiniela.EstadoQuiniela.ACTIVA);
+
+        // Guardar la quiniela primero
+        Quiniela quinielaSaved = quinielaRepository.save(quiniela);
+
+        // Procesar eventos (ahora obligatorios)
+        procesarEventosQuiniela(quinielaSaved, request.getEventos(), request.getTipoPrediccionNombre());
+
+        return quinielaSaved;
     }
 
     /**
-     * Activar una quiniela (cambiar de BORRADOR a ACTIVA)
+     * Activar una quiniela (DEPRECATED - las quinielas ahora se crean directamente
+     * activas)
+     * Este método se mantiene por compatibilidad, pero no es necesario
      */
+    @Deprecated
     public Quiniela activarQuiniela(Long quinielaId, Long usuarioId) {
         Quiniela quiniela = quinielaRepository.findById(quinielaId)
                 .orElseThrow(() -> new RuntimeException("Quiniela no encontrada"));
@@ -104,7 +119,12 @@ public class QuinielaService implements IQuinielaService {
             throw new RuntimeException("Solo el creador puede activar la quiniela");
         }
 
-        // Validar estado actual
+        // Si ya está activa, simplemente retornarla
+        if (quiniela.getEstado() == Quiniela.EstadoQuiniela.ACTIVA) {
+            return quiniela;
+        }
+
+        // Validar estado actual - solo permitir BORRADOR para compatibilidad
         if (quiniela.getEstado() != Quiniela.EstadoQuiniela.BORRADOR) {
             throw new RuntimeException("Solo se pueden activar quinielas en estado BORRADOR");
         }
@@ -119,8 +139,17 @@ public class QuinielaService implements IQuinielaService {
     }
 
     /**
+     * Obtener una quiniela por su ID
+     */
+    public Quiniela obtenerQuinielaPorId(Long quinielaId) {
+        return quinielaRepository.findById(quinielaId)
+                .orElseThrow(() -> new RuntimeException("Quiniela no encontrada con ID: " + quinielaId));
+    }
+
+    /**
      * Participar en una quiniela
      */
+    @Transactional(timeout = 30)
     public QuinielaParticipacion participarEnQuiniela(Long quinielaId, Long usuarioId) {
         Quiniela quiniela = quinielaRepository.findById(quinielaId)
                 .orElseThrow(() -> new RuntimeException("Quiniela no encontrada"));
@@ -137,23 +166,31 @@ public class QuinielaService implements IQuinielaService {
         }
 
         // Procesar pago
-        walletService.procesarPagoParticipacion(usuario, quiniela.getCostoParticipacion(), 
+        walletService.procesarPagoParticipacion(usuario, quiniela.getCostoParticipacion(),
                 "Participación en quiniela: " + quiniela.getNombre());
 
-        // Crear participación
+        // Crear participación - Asegurarse de que las relaciones están bien
+        // establecidas
         QuinielaParticipacion participacion = new QuinielaParticipacion();
         participacion.setQuiniela(quiniela);
         participacion.setUsuario(usuario);
         participacion.setFechaParticipacion(LocalDateTime.now());
         participacion.setMontoApostado(quiniela.getCostoParticipacion());
+        participacion.setPagado(true); // Marcar como pagado ya que se procesó el pago
         participacion.setEstado(QuinielaParticipacion.EstadoParticipacion.ACTIVA);
+
+        // Guardar la participación PRIMERO para asegurar que se persiste la relación
+        QuinielaParticipacion savedParticipacion = participacionRepository.save(participacion);
+
+        // Forzar la sincronización para asegurar que la relación está persistida
+        participacionRepository.flush();
 
         // Actualizar contadores de la quiniela
         quiniela.setParticipantesActuales(quiniela.getParticipantesActuales() + 1);
         quiniela.setPoolActual(quiniela.getPoolActual().add(quiniela.getCostoParticipacion()));
 
+        // Guardar la quiniela actualizada
         quinielaRepository.save(quiniela);
-        QuinielaParticipacion savedParticipacion = participacionRepository.save(participacion);
 
         // Notificar participación exitosa
         notificationService.notificarParticipacionExitosa(usuario, quiniela);
@@ -164,9 +201,10 @@ public class QuinielaService implements IQuinielaService {
     /**
      * Realizar predicciones para una participación
      */
-    public List<PrediccionEvento> realizarPredicciones(Long participacionId, 
-                                                      List<PrediccionRequest> predicciones) {
-        QuinielaParticipacion participacion = participacionRepository.findById(participacionId)
+    @Transactional
+    public List<PrediccionEvento> realizarPredicciones(Long participacionId,
+            List<PrediccionRequest> predicciones) {
+        QuinielaParticipacion participacion = participacionRepository.findByIdWithRelations(participacionId)
                 .orElseThrow(() -> new RuntimeException("Participación no encontrada"));
 
         // Validar que la quiniela esté activa y no cerrada
@@ -181,11 +219,20 @@ public class QuinielaService implements IQuinielaService {
         List<PrediccionEvento> prediccionesGuardadas = new ArrayList<>();
 
         for (PrediccionRequest prediccionRequest : predicciones) {
-            // Verificar que el evento pertenezca a la quiniela
-            QuinielaEvento quinielaEvento = participacion.getQuiniela().getEventos().stream()
-                    .filter(qe -> qe.getEventoDeportivo().getId().equals(prediccionRequest.getEventoId()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Evento no pertenece a esta quiniela"));
+            // Buscar el evento en la quiniela
+            // Debug temporal - verificar qué eventos tiene realmente la quiniela
+
+            QuinielaEvento quinielaEvento = null;
+            for (QuinielaEvento qe : participacion.getQuiniela().getEventos()) {
+                if (qe.getId().equals(prediccionRequest.getEventoId())) {
+                    quinielaEvento = qe;
+                    break;
+                }
+            }
+            
+            if (quinielaEvento == null) {
+                throw new RuntimeException("El evento no pertenece a esta quiniela");
+            }
 
             // Crear o actualizar predicción
             PrediccionEvento prediccion = prediccionRepository
@@ -196,15 +243,22 @@ public class QuinielaService implements IQuinielaService {
             prediccion.setEventoDeportivo(quinielaEvento.getEventoDeportivo());
             prediccion.setPrediccion(prediccionRequest.getPrediccion());
             prediccion.setConfianza(prediccionRequest.getConfianza());
+            prediccion.setPuntosPosibles(quinielaEvento.getPuntosPorAcierto());
+            
+            // Usar el tipo de predicción del QuinielaEvento (ya no debería ser null)
+            prediccion.setTipoPrediccion(quinielaEvento.getTipoPrediccion());
+            
             prediccion.setFechaPrediccion(LocalDateTime.now());
 
-            prediccionesGuardadas.add(prediccionRepository.save(prediccion));
+            PrediccionEvento prediccionCreada=prediccionRepository.save(prediccion);
+
+            prediccionesGuardadas.add(prediccionCreada);
         }
 
         // Marcar participación como completa si tiene todas las predicciones
         long prediccionesTotales = participacion.getQuiniela().getEventos().size();
         long prediccionesRealizadas = prediccionRepository.countByParticipacion(participacion);
-        
+
         if (prediccionesRealizadas >= prediccionesTotales) {
             participacion.setEstado(QuinielaParticipacion.EstadoParticipacion.PREDICCIONES_COMPLETADAS);
             participacionRepository.save(participacion);
@@ -269,17 +323,55 @@ public class QuinielaService implements IQuinielaService {
      */
     @Transactional(readOnly = true)
     public List<RankingParticipacionDto> obtenerRanking(Long quinielaId) {
-        Quiniela quiniela = quinielaRepository.findById(quinielaId)
-                .orElseThrow(() -> new RuntimeException("Quiniela no encontrada"));
+        // Validar que la quiniela existe
+        if (!quinielaRepository.existsById(quinielaId)) {
+            throw new RuntimeException("Quiniela no encontrada");
+        }
 
         List<RankingParticipacionDto> ranking = participacionRepository.findRankingByQuiniela(quinielaId);
-        
+
         // Asignar posiciones manualmente
         for (int i = 0; i < ranking.size(); i++) {
             ranking.get(i).setPosicion(i + 1);
         }
-        
+
         return ranking;
+    }
+
+    /**
+     * Obtener predicciones por ID de participación
+     * @param participacionId ID de la participación
+     * @return Lista de predicciones
+     */
+    @Override
+    public List<PrediccionEvento> obtenerPrediccionesPorParticipacion(Long participacionId) {
+        // Verificar que la participación existe
+        if (!participacionRepository.existsById(participacionId)) {
+            throw new RuntimeException("Participación no encontrada");
+        }
+        
+        // Obtener las predicciones ordenadas por fecha de predicción
+        return prediccionRepository.findByParticipacion_IdOrderByFechaPrediccionDesc(participacionId);
+    }
+
+    /**
+     * Obtener predicciones de un usuario para una quiniela específica
+     * @param usuarioId ID del usuario
+     * @param quinielaId ID de la quiniela
+     * @return Lista de predicciones del usuario para la quiniela
+     */
+    @Override
+    public List<PrediccionEvento> obtenerPrediccionesUsuarioPorQuiniela(Long usuarioId, Long quinielaId) {
+        // Buscar la participación del usuario en esa quiniela
+        Optional<QuinielaParticipacion> participacion = participacionRepository.findByUsuario_IdUsuarioAndQuiniela_Id(usuarioId, quinielaId);
+        
+        if (participacion.isPresent()) {
+            // Si existe la participación, obtener las predicciones
+            return obtenerPrediccionesPorParticipacion(participacion.get().getId());
+        } else {
+            // Si no hay participación, devolver lista vacía
+            return new ArrayList<>();
+        }
     }
 
     // Métodos privados auxiliares
@@ -300,8 +392,8 @@ public class QuinielaService implements IQuinielaService {
         }
 
         // Validar límite de participantes
-        if (quiniela.getMaxParticipantes() != null && 
-            quiniela.getParticipantesActuales() >= quiniela.getMaxParticipantes()) {
+        if (quiniela.getMaxParticipantes() != null &&
+                quiniela.getParticipantesActuales() >= quiniela.getMaxParticipantes()) {
             throw new RuntimeException("Se ha alcanzado el límite máximo de participantes");
         }
 
@@ -340,13 +432,12 @@ public class QuinielaService implements IQuinielaService {
 
         BigDecimal bonusConfianza = BigDecimal.ZERO;
         for (PrediccionEvento prediccion : predicciones) {
-            if (prediccion.getEventoDeportivo().getResultado() != null && 
-                prediccion.getEventoDeportivo().getResultado().equals(prediccion.getPrediccion())) {
-                
+            if (prediccion.getEventoDeportivo().getResultado() != null &&
+                    prediccion.getEventoDeportivo().getResultado().equals(prediccion.getPrediccion())) {
+
                 if (prediccion.getConfianza() != null) {
                     bonusConfianza = bonusConfianza.add(
-                        new BigDecimal(prediccion.getConfianza()).multiply(new BigDecimal("0.5"))
-                    );
+                            new BigDecimal(prediccion.getConfianza()).multiply(new BigDecimal("0.5")));
                 }
             }
         }
@@ -367,7 +458,7 @@ public class QuinielaService implements IQuinielaService {
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         BigDecimal comisionCreador = poolTotal.multiply(quiniela.getPorcentajeCreador())
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        
+
         BigDecimal poolParaPremios = poolTotal.subtract(comisionCasa).subtract(comisionCreador);
 
         // Aplicar distribución según tipo
@@ -390,7 +481,7 @@ public class QuinielaService implements IQuinielaService {
         participacionRepository.save(ganador);
 
         // Procesar pago del premio
-        walletService.procesarPagoPremio(ganador.getUsuario(), pool, 
+        walletService.procesarPagoPremio(ganador.getUsuario(), pool,
                 "Premio quiniela: " + ganador.getQuiniela().getNombre());
     }
 
@@ -398,21 +489,21 @@ public class QuinielaService implements IQuinielaService {
         if (participaciones.size() >= 1) {
             BigDecimal premio1 = pool.multiply(new BigDecimal("0.60"));
             participaciones.get(0).setPremioGanado(premio1);
-            walletService.procesarPagoPremio(participaciones.get(0).getUsuario(), premio1, 
+            walletService.procesarPagoPremio(participaciones.get(0).getUsuario(), premio1,
                     "Primer lugar - " + participaciones.get(0).getQuiniela().getNombre());
         }
-        
+
         if (participaciones.size() >= 2) {
             BigDecimal premio2 = pool.multiply(new BigDecimal("0.25"));
             participaciones.get(1).setPremioGanado(premio2);
-            walletService.procesarPagoPremio(participaciones.get(1).getUsuario(), premio2, 
+            walletService.procesarPagoPremio(participaciones.get(1).getUsuario(), premio2,
                     "Segundo lugar - " + participaciones.get(1).getQuiniela().getNombre());
         }
-        
+
         if (participaciones.size() >= 3) {
             BigDecimal premio3 = pool.multiply(new BigDecimal("0.15"));
             participaciones.get(2).setPremioGanado(premio3);
-            walletService.procesarPagoPremio(participaciones.get(2).getUsuario(), premio3, 
+            walletService.procesarPagoPremio(participaciones.get(2).getUsuario(), premio3,
                     "Tercer lugar - " + participaciones.get(2).getQuiniela().getNombre());
         }
 
@@ -425,13 +516,13 @@ public class QuinielaService implements IQuinielaService {
                 new BigDecimal("0.25"), // 2do lugar: 25%
                 new BigDecimal("0.15"), // 3er lugar: 15%
                 new BigDecimal("0.12"), // 4to lugar: 12%
-                new BigDecimal("0.08")  // 5to lugar: 8%
+                new BigDecimal("0.08") // 5to lugar: 8%
         };
 
         for (int i = 0; i < Math.min(5, participaciones.size()); i++) {
             BigDecimal premio = pool.multiply(porcentajes[i]);
             participaciones.get(i).setPremioGanado(premio);
-            walletService.procesarPagoPremio(participaciones.get(i).getUsuario(), premio, 
+            walletService.procesarPagoPremio(participaciones.get(i).getUsuario(), premio,
                     "Premio posición " + (i + 1) + " - " + participaciones.get(i).getQuiniela().getNombre());
         }
 
@@ -450,24 +541,23 @@ public class QuinielaService implements IQuinielaService {
                 .sorted(Collections.reverseOrder())
                 .toList();
 
-        BigDecimal poolRestante = pool;
         BigDecimal[] porcentajesPorGrupo = {
                 new BigDecimal("0.50"), // Máximo aciertos: 50%
                 new BigDecimal("0.30"), // Segundo grupo: 30%
-                new BigDecimal("0.20")  // Tercer grupo: 20%
+                new BigDecimal("0.20") // Tercer grupo: 20%
         };
 
         for (int i = 0; i < Math.min(3, aciertosSorted.size()); i++) {
             Integer aciertos = aciertosSorted.get(i);
             List<QuinielaParticipacion> grupo = gruposPorAciertos.get(aciertos);
-            
+
             BigDecimal premioGrupo = pool.multiply(porcentajesPorGrupo[i]);
             BigDecimal premioIndividual = premioGrupo.divide(
                     new BigDecimal(grupo.size()), 2, RoundingMode.HALF_UP);
 
             for (QuinielaParticipacion participacion : grupo) {
                 participacion.setPremioGanado(premioIndividual);
-                walletService.procesarPagoPremio(participacion.getUsuario(), premioIndividual, 
+                walletService.procesarPagoPremio(participacion.getUsuario(), premioIndividual,
                         "Premio por " + aciertos + " aciertos - " + participacion.getQuiniela().getNombre());
             }
 
@@ -477,15 +567,122 @@ public class QuinielaService implements IQuinielaService {
 
     private void procesarComisiones(Quiniela quiniela, BigDecimal comisionCasa, BigDecimal comisionCreador) {
         // Comisión de la casa (se puede procesar internamente)
-        log.info("Comisión de la casa: {} para quiniela {}", comisionCasa, quiniela.getId());
 
         // Comisión del creador
         if (comisionCreador.compareTo(BigDecimal.ZERO) > 0) {
             Usuario creador = usuarioRepository.findById(quiniela.getCreadorId()).orElse(null);
             if (creador != null) {
-                walletService.procesarPagoPremio(creador, comisionCreador, 
+                walletService.procesarPagoPremio(creador, comisionCreador,
                         "Comisión por crear quiniela: " + quiniela.getNombre());
             }
         }
+    }
+
+    /**
+     * Procesar eventos para una quiniela
+     */
+    private void procesarEventosQuiniela(Quiniela quiniela, List<EventoQuinielaRequest> eventosRequest, String tipoPrediccionNombre) {
+        int orden = 1;
+
+        // Buscar el tipo de predicción una sola vez para toda la quiniela
+        TipoPrediccion tipoPrediccionQuiniela = null;
+        if (tipoPrediccionNombre != null && !tipoPrediccionNombre.isEmpty()) {
+            tipoPrediccionQuiniela = tipoPrediccionRepository.findByNombre(tipoPrediccionNombre)
+                    .orElseThrow(() -> new RuntimeException("Tipo de predicción no encontrado: " + tipoPrediccionNombre));
+        } else {
+            // Tipo por defecto si no se especifica
+            tipoPrediccionQuiniela = tipoPrediccionRepository.findByNombre("RESULTADO")
+                    .orElseThrow(() -> new RuntimeException("Tipo de predicción por defecto 'RESULTADO' no encontrado"));
+        }
+
+        for (EventoQuinielaRequest eventoRequest : eventosRequest) {
+            // Crear o buscar el evento deportivo
+            EventoDeportivo eventoDeportivo;
+
+            if (eventoRequest.getId() != null) {
+                // Usar evento existente
+                eventoDeportivo = eventoRepository.findById(eventoRequest.getId())
+                        .orElseThrow(
+                                () -> new RuntimeException("Evento deportivo no encontrado: " + eventoRequest.getId()));
+            } else {
+                // Crear nuevo evento deportivo
+                eventoDeportivo = new EventoDeportivo();
+                eventoDeportivo.setNombreEvento(eventoRequest.getNombreEvento());
+                eventoDeportivo.setEquipoLocal(eventoRequest.getEquipoLocal());
+                eventoDeportivo.setEquipoVisitante(eventoRequest.getEquipoVisitante());
+                eventoDeportivo.setFechaEvento(eventoRequest.getFechaEvento());
+                eventoDeportivo.setEstado("programado");
+                eventoDeportivo.setDescripcion(eventoRequest.getDescripcion());
+                eventoDeportivo.setEventoIdExterno(UUID.randomUUID().toString()); // ID único temporal
+
+                eventoDeportivo = eventoRepository.save(eventoDeportivo);
+            }
+
+            // Crear QuinielaEvento con el tipo de predicción de la quiniela
+            QuinielaEvento quinielaEvento = new QuinielaEvento();
+            quinielaEvento.setQuiniela(quiniela);
+            quinielaEvento.setEventoDeportivo(eventoDeportivo);
+            quinielaEvento.setOrdenEnQuiniela(orden++);
+            quinielaEvento.setEsObligatorio(eventoRequest.getEsObligatorio());
+            quinielaEvento.setMultiplicadorPuntos(eventoRequest.getMultiplicadorPuntos());
+            quinielaEvento.setPuntosPorAcierto(eventoRequest.getPuntosPorAcierto());
+            quinielaEvento.setTipoPrediccion(tipoPrediccionQuiniela); // Usar el tipo de predicción de la quiniela
+
+            quinielaEventoRepository.save(quinielaEvento);
+        }
+    }
+
+    /**
+     * Verificar si un usuario puede participar en una quiniela
+     */
+    public boolean puedeParticipar(Long quinielaId, Long usuarioId) {
+        try {
+            Quiniela quiniela = quinielaRepository.findById(quinielaId)
+                    .orElseThrow(() -> new RuntimeException("Quiniela no encontrada"));
+
+            Usuario usuario = usuarioRepository.findById(usuarioId)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+            // Verificar que el usuario no esté ya participando
+            if (participacionRepository.existsByQuinielaAndUsuario(quiniela, usuario)) {
+                return false;
+            }
+
+            // Usar la validación existente
+            validarParticipacion(quiniela, usuario);
+
+            return true;
+        } catch (Exception e) {
+            // Si cualquier validación falla, el usuario no puede participar
+            return false;
+        }
+    }
+
+    /**
+     * Obtener participaciones de un usuario
+     */
+    @Override
+    public Page<QuinielaParticipacion> obtenerParticipacionesUsuario(Long usuarioId, Pageable pageable) {
+        return participacionRepository.findByUsuario_IdUsuarioOrderByFechaParticipacionDesc(usuarioId, pageable);
+    }
+
+    /**
+     * Obtener participaciones de un usuario con relaciones cargadas
+     */
+    public List<QuinielaParticipacion> obtenerParticipacionesUsuarioConRelaciones(Long usuarioId) {
+        return participacionRepository.findByUsuarioIdWithQuiniela(usuarioId);
+    }
+
+    /**
+     * Obtener eventos de una quiniela
+     */
+    @Override
+    public List<QuinielaEvento> obtenerEventosQuiniela(Long quinielaId) {
+        // Verificar que la quiniela existe
+        if (!quinielaRepository.existsById(quinielaId)) {
+            throw new RuntimeException("Quiniela no encontrada");
+        }
+
+        return quinielaEventoRepository.findByQuiniela_IdOrderByOrdenEnQuiniela(quinielaId);
     }
 }

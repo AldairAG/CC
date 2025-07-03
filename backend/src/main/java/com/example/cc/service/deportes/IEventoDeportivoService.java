@@ -1,9 +1,12 @@
 package com.example.cc.service.deportes;
 
 import com.example.cc.entities.EventoDeportivo;
+import com.example.cc.entities.Deporte;
+import com.example.cc.entities.Liga;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interfaz para el servicio de eventos deportivos
@@ -29,16 +32,53 @@ public interface IEventoDeportivoService {
     List<EventoDeportivo> getEventosPorFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin);
 
     /**
-     * Obtener eventos por deporte
-     * @param deporte Nombre del deporte
+     * Obtener eventos por deporte (usando entidad)
+     * @param deporte Entidad deporte
      * @return Lista de eventos del deporte
      */
-    List<EventoDeportivo> getEventosPorDeporte(String deporte);
+    List<EventoDeportivo> getEventosPorDeporte(Deporte deporte);
 
     /**
-     * Obtener eventos por liga
-     * @param liga Nombre de la liga
+     * Obtener eventos por deporte (usando nombre - compatibilidad)
+     * @param nombreDeporte Nombre del deporte
+     * @return Lista de eventos del deporte
+     */
+    List<EventoDeportivo> getEventosPorDeporteNombre(String nombreDeporte);
+
+    /**
+     * Obtener eventos por liga (usando entidad)
+     * @param liga Entidad liga
      * @return Lista de eventos de la liga
      */
-    List<EventoDeportivo> getEventosPorLiga(String liga);
+    List<EventoDeportivo> getEventosPorLiga(Liga liga);
+
+    /**
+     * Obtener eventos por liga (usando nombre - compatibilidad)
+     * @param nombreLiga Nombre de la liga
+     * @return Lista de eventos de la liga
+     */
+    List<EventoDeportivo> getEventosPorLigaNombre(String nombreLiga);
+
+    /**
+     * Buscar evento por nombre y fecha específica
+     * @param nombreEvento Nombre del evento
+     * @param fechaInicio Fecha de inicio del día
+     * @param fechaFin Fecha de fin del día
+     * @param equipoLocal Equipo local (opcional)
+     * @param equipoVisitante Equipo visitante (opcional)
+     * @return Evento encontrado
+     */
+    Optional<EventoDeportivo> buscarPorNombreYFecha(String nombreEvento, LocalDateTime fechaInicio,
+                                                   LocalDateTime fechaFin, String equipoLocal, String equipoVisitante);
+
+    /**
+     * Buscar eventos por fecha específica
+     * @param fechaInicio Fecha de inicio del día
+     * @param fechaFin Fecha de fin del día
+     * @param deporte Deporte (opcional)
+     * @param liga Liga (opcional)
+     * @return Lista de eventos
+     */
+    List<EventoDeportivo> buscarPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin,
+                                        String deporte, String liga);
 }

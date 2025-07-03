@@ -7,11 +7,14 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "eventos_deportivos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class EventoDeportivo {
 
     @Id
@@ -24,11 +27,17 @@ public class EventoDeportivo {
     @Column(name = "nombre_evento", nullable = false)
     private String nombreEvento;
 
-    @Column(name = "liga")
-    private String liga;
+    // Relación con liga
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "liga_id", nullable = false)
+    @JsonIgnoreProperties({"eventos", "deporte"})
+    private Liga liga;
 
-    @Column(name = "deporte")
-    private String deporte;
+    // Relación con deporte
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deporte_id", nullable = false)
+    @JsonIgnoreProperties({"ligas", "eventos"})
+    private Deporte deporte;
 
     @Column(name = "equipo_local")
     private String equipoLocal;

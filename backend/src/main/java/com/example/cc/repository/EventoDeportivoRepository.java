@@ -1,6 +1,8 @@
 package com.example.cc.repository;
 
 import com.example.cc.entities.EventoDeportivo;
+import com.example.cc.entities.Deporte;
+import com.example.cc.entities.Liga;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,12 +35,34 @@ public interface EventoDeportivoRepository extends JpaRepository<EventoDeportivo
     /**
      * Obtener eventos por deporte
      */
-    List<EventoDeportivo> findByDeporteOrderByFechaEventoAsc(String deporte);
+    List<EventoDeportivo> findByDeporteOrderByFechaEventoAsc(Deporte deporte);
 
     /**
      * Obtener eventos por liga
      */
-    List<EventoDeportivo> findByLigaOrderByFechaEventoAsc(String liga);
+    List<EventoDeportivo> findByLigaOrderByFechaEventoAsc(Liga liga);
+
+    /**
+     * Obtener eventos por deporte y estado
+     */
+    List<EventoDeportivo> findByDeporteAndEstadoOrderByFechaEventoAsc(Deporte deporte, String estado);
+
+    /**
+     * Obtener eventos por liga y estado
+     */
+    List<EventoDeportivo> findByLigaAndEstadoOrderByFechaEventoAsc(Liga liga, String estado);
+
+    /**
+     * Obtener eventos por nombre de deporte (para compatibilidad)
+     */
+    @Query("SELECT e FROM EventoDeportivo e WHERE e.deporte.nombre = :nombreDeporte ORDER BY e.fechaEvento ASC")
+    List<EventoDeportivo> findByDeporteNombreOrderByFechaEventoAsc(@Param("nombreDeporte") String nombreDeporte);
+
+    /**
+     * Obtener eventos por nombre de liga (para compatibilidad)
+     */
+    @Query("SELECT e FROM EventoDeportivo e WHERE e.liga.nombre = :nombreLiga ORDER BY e.fechaEvento ASC")
+    List<EventoDeportivo> findByLigaNombreOrderByFechaEventoAsc(@Param("nombreLiga") String nombreLiga);
 
     /**
      * Obtener eventos por estado

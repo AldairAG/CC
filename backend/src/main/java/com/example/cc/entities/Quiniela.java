@@ -9,11 +9,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "quinielas")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Quiniela {
 
     @Id
@@ -52,12 +57,15 @@ public class Quiniela {
     @Column(name = "participantes_actuales", nullable = false)
     private Integer participantesActuales = 0;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "fecha_inicio", nullable = false)
     private LocalDateTime fechaInicio;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "fecha_cierre", nullable = false)
     private LocalDateTime fechaCierre;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "fecha_resultados")
     private LocalDateTime fechaResultados;
 
@@ -92,17 +100,21 @@ public class Quiniela {
     @Column(name = "requiere_min_participantes")
     private Integer requiereMinParticipantes;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
-
+ 
     // Relaciones
     @OneToMany(mappedBy = "quiniela", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<QuinielaParticipacion> participaciones;
 
     @OneToMany(mappedBy = "quiniela", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<QuinielaEvento> eventos;
 
     @PrePersist

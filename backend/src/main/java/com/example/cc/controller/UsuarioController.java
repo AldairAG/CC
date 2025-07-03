@@ -91,6 +91,7 @@ public class UsuarioController {
                 credentials.getEmail(),
                 credentials.getPassword()
             );
+            System.out.println("Login successful for user: " + loginResponse.getUsuario().getEmail());
             return ResponseEntity.ok(loginResponse);
         } catch (RuntimeException e) {
             LoginResponse errorResponse = LoginResponse.builder()

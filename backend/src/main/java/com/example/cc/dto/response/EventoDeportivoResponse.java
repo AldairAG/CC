@@ -1,5 +1,7 @@
 package com.example.cc.dto.response;
 
+import com.example.cc.entities.Deporte;
+import com.example.cc.entities.Liga;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,8 +17,8 @@ public class EventoDeportivoResponse {
     private Long id;
     private String eventoIdExterno;
     private String nombreEvento;
-    private String liga;
-    private String deporte;
+    private Liga liga;
+    private Deporte deporte;
     private String equipoLocal;
     private String equipoVisitante;
     

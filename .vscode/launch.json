@@ -1,14 +1,36 @@
 {
-    "configurations": [
-        {
-            "type": "java",
-            "name": "Spring Boot-CcApplication<cc>",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "mainClass": "com.example.cc.CcApplication",
-            "projectName": "cc",
-            "args": "",
-            "envFile": "${workspaceFolder}/.env"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    
+    // Configuración 1: Depurar backend Spring Boot
+    {
+      "type": "java",
+      "name": "Debug Spring Boot App",
+      "request": "launch",
+      "mainClass": "com.example.cc.CcApplication",
+      "projectName": "cc",
+      "cwd": "${workspaceFolder}/backend", // Carpeta donde está tu app Java
+      "envFile": "${workspaceFolder}/.env",
+      "args": ""
+    },
+
+    // Configuración 2: Depurar frontend React + Vite
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug React App (Vite)",
+      "url": "http://localhost:5173", // Puerto por defecto de Vite
+      "webRoot": "${workspaceFolder}/frontend", // Carpeta del frontend
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/src/*"
+      },
+      "runtimeArgs": [
+        "--remote-debugging-port=9222",
+        "--disable-session-crashed-bubble",
+        "--disable-infobars",
+        "--no-first-run",
+        "--no-default-browser-check"
+      ]
+    }
+  ]
 }

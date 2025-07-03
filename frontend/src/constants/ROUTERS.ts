@@ -7,6 +7,9 @@ export const USER_ROUTES = {
     CREAR_QUINIELA: '/c/crear-quiniela',
     ARMAR_QUINIELA: '/c/armar-quiniela',
     QUINIELA: '/c/quiniela/:id',
+    QUINIELAS: '/c/quinielas',
+    MIS_PARTICIPACIONES: '/c/mis-participaciones',
+    GESTIONAR_QUINIELA: '/c/gestionar-quiniela/:id',
     CARRITO: '/c/carrito',
     DEPOSITAR: '/c/depositar',
     RETIRAR: '/c/retirar',
@@ -14,6 +17,10 @@ export const USER_ROUTES = {
     CREAR_WALLET: '/c/crear-wallet',
     USER_PROFILE: '/c/user-profile',
     CRYPTO_WALLET: '/c/crypto-wallet',
+    APUESTAS_DEPORTIVAS: '/c/apuestas-deportivas',
+    APUESTAS_DETAIL: '/c/apuestas-deportivas/:fecha/:nombreEvento',
+    APUESTAS_POR_DEPORTE: '/c/apuestas-deportivas/:deporte',
+    MIS_APUESTAS: '/c/mis-apuestas',
 } as const;
 
 export const ADMIN_ROUTES = {

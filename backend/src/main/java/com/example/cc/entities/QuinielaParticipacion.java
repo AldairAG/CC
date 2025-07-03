@@ -10,11 +10,16 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "quiniela_participaciones")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class QuinielaParticipacion {
 
     @Id
@@ -23,10 +28,12 @@ public class QuinielaParticipacion {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quiniela_id", nullable = false)
+    @JsonIgnore
     private Quiniela quiniela;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
+    @JsonIgnore
     private Usuario usuario;
 
     @Column(name = "fecha_participacion", nullable = false)
@@ -83,6 +90,7 @@ public class QuinielaParticipacion {
 
     // Relaciones
     @OneToMany(mappedBy = "participacion", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<PrediccionEvento> predicciones;
 
     @PrePersist
@@ -119,6 +127,18 @@ public class QuinielaParticipacion {
                     .mapToInt(PrediccionEvento::getPuntosObtenidos)
                     .sum());
         }
+    }
+
+    // Método getter para exponer quinielaId en JSON sin exponer toda la entidad Quiniela
+    @JsonProperty("quinielaId")
+    public Long getQuinielaId() {
+        return quiniela != null ? quiniela.getId() : null;
+    }
+
+    // Método getter para exponer usuarioId en JSON sin exponer toda la entidad Usuario
+    @JsonProperty("usuarioId") 
+    public Long getUsuarioId() {
+        return usuario != null ? usuario.getIdUsuario() : null;
     }
 
     // Enums

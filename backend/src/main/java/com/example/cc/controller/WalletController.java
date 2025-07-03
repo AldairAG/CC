@@ -9,7 +9,7 @@ import com.example.cc.service.wallet.WalletService;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/wallet")
+@RequestMapping("/cc/wallet")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class WalletController {

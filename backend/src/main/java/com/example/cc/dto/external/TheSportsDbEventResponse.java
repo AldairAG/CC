@@ -55,5 +55,11 @@ public class TheSportsDbEventResponse {
         
         @JsonProperty("strDescriptionEN")
         private String strDescriptionEN; // Descripción en inglés
+        
+        @JsonProperty("intHomeScore")
+        private String intHomeScore; // Marcador equipo local
+        
+        @JsonProperty("intAwayScore")
+        private String intAwayScore; // Marcador equipo visitante
     }
 }

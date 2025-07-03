@@ -24,6 +24,7 @@ public class EventoDeportivoScheduler {
      * - * cualquier día de la semana
      */
     //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
+    //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
     @Scheduled(cron = "0 0 0 * * *", zone = "America/Mexico_City")
     public void sincronizarEventosDeportivos() {
         log.info("=== INICIANDO SINCRONIZACIÓN PROGRAMADA DE EVENTOS DEPORTIVOS ===");
@@ -32,7 +33,7 @@ public class EventoDeportivoScheduler {
             long startTime = System.currentTimeMillis();
             
             // Ejecutar sincronización
-            eventoDeportivoService.sincronizarEventosDeportivos();
+           eventoDeportivoService.sincronizarEventosDeportivos();
             
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;

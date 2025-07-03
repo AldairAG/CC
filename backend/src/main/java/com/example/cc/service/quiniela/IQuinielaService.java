@@ -25,10 +25,12 @@ public interface IQuinielaService {
 
     /**
      * Activar una quiniela para participación
+     * @deprecated Las quinielas ahora se crean directamente activas. Este método se mantiene por compatibilidad.
      * @param quinielaId ID de la quiniela
      * @param usuarioId ID del usuario que activa
      * @return Quiniela activada
      */
+    @Deprecated
     Quiniela activarQuiniela(Long quinielaId, Long usuarioId);
 
     /**
@@ -66,4 +68,56 @@ public interface IQuinielaService {
      * @return Lista del ranking
      */
     List<RankingParticipacionDto> obtenerRanking(Long quinielaId);
+
+    /**
+     * Obtener una quiniela por su ID
+     * @param quinielaId ID de la quiniela
+     * @return Quiniela encontrada
+     */
+    Quiniela obtenerQuinielaPorId(Long quinielaId);
+
+    /**
+     * Verificar si un usuario puede participar en una quiniela
+     * @param quinielaId ID de la quiniela
+     * @param usuarioId ID del usuario
+     * @return true si puede participar, false en caso contrario
+     */
+    boolean puedeParticipar(Long quinielaId, Long usuarioId);
+
+    /**
+     * Obtener participaciones de un usuario
+     * @param usuarioId ID del usuario
+     * @param pageable Configuración de paginación
+     * @return Página de participaciones del usuario
+     */
+    Page<QuinielaParticipacion> obtenerParticipacionesUsuario(Long usuarioId, Pageable pageable);
+
+    /**
+     * Obtener participaciones de un usuario con relaciones cargadas
+     * @param usuarioId ID del usuario
+     * @return Lista de participaciones con quiniela y usuario cargados
+     */
+    List<QuinielaParticipacion> obtenerParticipacionesUsuarioConRelaciones(Long usuarioId);
+
+    /**
+     * Obtener eventos de una quiniela
+     * @param quinielaId ID de la quiniela
+     * @return Lista de eventos de la quiniela
+     */
+    List<com.example.cc.entities.QuinielaEvento> obtenerEventosQuiniela(Long quinielaId);
+
+    /**
+     * Obtener predicciones por ID de participación
+     * @param participacionId ID de la participación
+     * @return Lista de predicciones
+     */
+    List<PrediccionEvento> obtenerPrediccionesPorParticipacion(Long participacionId);
+
+    /**
+     * Obtener predicciones de un usuario para una quiniela específica
+     * @param usuarioId ID del usuario
+     * @param quinielaId ID de la quiniela
+     * @return Lista de predicciones del usuario para la quiniela
+     */
+    List<PrediccionEvento> obtenerPrediccionesUsuarioPorQuiniela(Long usuarioId, Long quinielaId);
 }

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin/quinielas")
+@RequestMapping("/cc/admin/quinielas")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class QuinielaAdminController {
