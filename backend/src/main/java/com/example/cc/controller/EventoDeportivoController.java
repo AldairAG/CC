@@ -261,10 +261,10 @@ public class EventoDeportivoController {
     /**
      * Buscar evento por nombre y fecha específica
      */
-    @GetMapping("/buscar-por-nombre-fecha")
+    @GetMapping("/buscar-por-nombre-fecha/{nombreEvento}/{fecha}")
     public ResponseEntity<EventoDeportivo> obtenerEventoPorNombreYFecha(
-            @RequestParam String nombreEvento,
-            @RequestParam String fecha,
+            @PathVariable String nombreEvento,
+            @PathVariable String fecha,
             @RequestParam(required = false) String equipoLocal,
             @RequestParam(required = false) String equipoVisitante) {
         

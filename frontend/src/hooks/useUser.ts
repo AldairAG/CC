@@ -173,6 +173,24 @@ export const useUser = () => {
     }
   }
 
+  /**
+   * Actualiza los datos del usuario actual desde el servidor
+   */
+  const refreshUser = async (): Promise<boolean> => {
+    try {
+      if (!user?.idUsuario) {
+        return false;
+      }
+      
+      const updatedUser = await UserService.getUsuarioById(user.idUsuario);
+      setUserData(updatedUser, token);
+      return true;
+    } catch (error: any) {
+      console.error('Error refreshing user data:', error);
+      return false;
+    }
+  };
+
   return {
     // Estado
     user,
@@ -196,7 +214,10 @@ export const useUser = () => {
     getAllUsers,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+
+    // Refrescar usuario
+    refreshUser
   };
 };
 

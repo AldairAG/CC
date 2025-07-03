@@ -39,6 +39,34 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false, // Desactiva la verificación de serialización (necesario para Redux-Persist)
+      immutableCheck: {
+        // Configurar ImmutableStateInvariantMiddleware
+        warnAfter: 100, // Aumentar threshold de 32ms a 100ms
+        ignoredActions: [
+          // Ignorar acciones que manejan grandes cantidades de datos
+          'evento/setEventos',
+          'evento/setEventosProximos', 
+          'evento/setEventosDisponibles',
+          'theSportsDB/setEventos',
+          'apuesta/setApuestas',
+          'quiniela/setQuinielas'
+        ],
+        ignoredActionsPaths: [
+          // Ignorar paths específicos en las acciones
+          'payload.eventos',
+          'payload.data.eventos',
+          'payload.participaciones'
+        ],
+        ignoredPaths: [
+          // Ignorar paths del estado que pueden ser grandes
+          'evento.eventos',
+          'evento.eventosProximos',
+          'evento.eventosDisponibles',
+          'theSportsDB.eventos',
+          'apuesta.apuestas',
+          'quiniela.quinielas'
+        ]
+      }
     }),
 });
 

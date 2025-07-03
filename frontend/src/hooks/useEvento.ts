@@ -393,8 +393,6 @@ export const useEvento = () => {
     const cargarEventoPorNombreYFecha = useCallback(async (
         nombreEvento: string, 
         fecha: string,
-        equipoLocal?: string,
-        equipoVisitante?: string
     ) => {
         try {
             dispatch(setLoading(true));
@@ -402,8 +400,6 @@ export const useEvento = () => {
             const evento = await EventoService.obtenerEventoPorNombreYFecha(
                 nombreEvento, 
                 fecha, 
-                equipoLocal, 
-                equipoVisitante
             );
             
             if (evento) {

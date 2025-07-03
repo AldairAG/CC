@@ -2,7 +2,9 @@ package com.example.cc.repository;
 
 import com.example.cc.entities.CuotaEvento;
 import com.example.cc.entities.EventoDeportivo;
+import com.example.cc.entities.TipoResultado;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,11 +34,12 @@ public interface CuotaEventoRepository extends JpaRepository<CuotaEvento, Long> 
     /**
      * Buscar cuota específica por evento y tipo resultado
      */
-    Optional<CuotaEvento> findByEventoDeportivoAndTipoResultado(EventoDeportivo eventoDeportivo, CuotaEvento.TipoResultado tipoResultado);
+    Optional<CuotaEvento> findByEventoDeportivoAndTipoResultado(EventoDeportivo eventoDeportivo, TipoResultado tipoResultado);
 
     /**
      * Actualizar estado de cuotas por evento deportivo
      */
+    @Modifying
     @Query("UPDATE CuotaEvento c SET c.estado = :estado WHERE c.eventoDeportivo.id = :eventoId")
     void updateEstadoByEventoId(@Param("eventoId") Long eventoId, @Param("estado") String estado);
 }

@@ -6,13 +6,22 @@ import {
     BanknotesIcon,
     CogIcon,
     BellIcon,
-    CalendarDaysIcon
+    CalendarDaysIcon,
+    ShieldCheckIcon
 } from "@heroicons/react/24/outline";
 import { ADMIN_ROUTES } from "../constants/ROUTERS";
-import { Link, Route, Switch } from "react-router-dom";
+import { Link, Route, Switch, useLocation } from "react-router-dom";
 
 // Importar componentes de administración existentes
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminUsers from "../pages/admin/AdminUsers";
+import AdminBets from "../pages/admin/AdminBets";
+import AdminQuinielas from "../pages/admin/AdminQuinielas";
+import AdminCrypto from "../pages/admin/AdminCrypto";
+import AdminConfig from "../pages/admin/AdminConfig";
+import AdminEvents from "../pages/admin/AdminEvents";
+import AdminNotificaciones from "../pages/admin/AdminNotificaciones";
+import AdminRoles from "../pages/admin/AdminRoles";
 
 const routes = [
     {
@@ -51,6 +60,11 @@ const routes = [
         icon: BellIcon,
     },
     {
+        href: ADMIN_ROUTES.ADMIN_ROLES,
+        label: "Roles",
+        icon: ShieldCheckIcon,
+    },
+    {
         href: ADMIN_ROUTES.ADMIN_CONFIG,
         label: "Configuración",
         icon: CogIcon,
@@ -58,6 +72,8 @@ const routes = [
 ]
 
 const AdminLayout = () => {
+    const location = useLocation();
+    
     return (
         <div className="min-h-screen bg-gray-50">
             <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -76,7 +92,7 @@ const AdminLayout = () => {
                                         <Link
                                             to={route.href}
                                             className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                                                ${window.location.pathname === route.href 
+                                                ${location.pathname === route.href 
                                                     ? "bg-blue-100 text-blue-700 border border-blue-200" 
                                                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                                                 }`}
@@ -109,7 +125,7 @@ const AdminLayout = () => {
                                 key={route.href}
                                 to={route.href}
                                 className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium
-                                    ${window.location.pathname === route.href 
+                                    ${location.pathname === route.href 
                                         ? "bg-blue-100 text-blue-700" 
                                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                                     }`}
@@ -126,6 +142,14 @@ const AdminLayout = () => {
                 <Switch>
                     <Route exact path={ADMIN_ROUTES.ADMIN_LAYOUT} component={AdminDashboard} />
                     <Route path={ADMIN_ROUTES.ADMIN_DASHBOARD} component={AdminDashboard} />
+                    <Route path={ADMIN_ROUTES.ADMIN_USERS} component={AdminUsers} />
+                    <Route path={ADMIN_ROUTES.ADMIN_APUESTAS} component={AdminBets} />
+                    <Route path={ADMIN_ROUTES.ADMIN_QUINIELAS} component={AdminQuinielas} />
+                    <Route path={ADMIN_ROUTES.ADMIN_EVENTOS} component={AdminEvents} />
+                    <Route path={ADMIN_ROUTES.ADMIN_CRYPTO} component={AdminCrypto} />
+                    <Route path={ADMIN_ROUTES.ADMIN_NOTIFICACIONES} component={AdminNotificaciones} />
+                    <Route path={ADMIN_ROUTES.ADMIN_ROLES} component={AdminRoles} />
+                    <Route path={ADMIN_ROUTES.ADMIN_CONFIG} component={AdminConfig} />
                 </Switch>
             </main>
         </div>

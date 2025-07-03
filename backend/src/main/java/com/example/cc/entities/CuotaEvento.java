@@ -54,8 +54,4 @@ public class CuotaEvento {
     protected void onUpdate() {
         fechaActualizacion = LocalDateTime.now();
     }
-
-    public enum TipoResultado {
-        LOCAL, VISITANTE, EMPATE
-    }
 }

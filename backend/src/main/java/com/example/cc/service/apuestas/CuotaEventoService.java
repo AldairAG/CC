@@ -2,6 +2,7 @@ package com.example.cc.service.apuestas;
 
 import com.example.cc.entities.CuotaEvento;
 import com.example.cc.entities.EventoDeportivo;
+import com.example.cc.entities.TipoResultado;
 import com.example.cc.repository.CuotaEventoRepository;
 import com.example.cc.repository.EventoDeportivoRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,19 +49,19 @@ public class CuotaEventoService {
         // Generar cuotas para los tres posibles resultados (LOCAL, VISITANTE, EMPATE)
         CuotaEvento cuotaLocal = new CuotaEvento();
         cuotaLocal.setEventoDeportivo(evento);
-        cuotaLocal.setTipoResultado(CuotaEvento.TipoResultado.LOCAL);
+        cuotaLocal.setTipoResultado(TipoResultado.LOCAL);
         cuotaLocal.setValorCuota(generarCuotaAleatoria(1.5, 3.5));
         cuotaLocal.setEstado("ACTIVA");
 
         CuotaEvento cuotaVisitante = new CuotaEvento();
         cuotaVisitante.setEventoDeportivo(evento);
-        cuotaVisitante.setTipoResultado(CuotaEvento.TipoResultado.VISITANTE);
+        cuotaVisitante.setTipoResultado(TipoResultado.VISITANTE);
         cuotaVisitante.setValorCuota(generarCuotaAleatoria(1.8, 4.0));
         cuotaVisitante.setEstado("ACTIVA");
 
         CuotaEvento cuotaEmpate = new CuotaEvento();
         cuotaEmpate.setEventoDeportivo(evento);
-        cuotaEmpate.setTipoResultado(CuotaEvento.TipoResultado.EMPATE);
+        cuotaEmpate.setTipoResultado(TipoResultado.EMPATE);
         cuotaEmpate.setValorCuota(generarCuotaAleatoria(2.0, 4.5));
         cuotaEmpate.setEstado("ACTIVA");
 
@@ -79,9 +80,9 @@ public class CuotaEventoService {
         EventoDeportivo evento = eventoDeportivoRepository.findById(eventoId)
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado con ID: " + eventoId));
 
-        Optional<CuotaEvento> cuotaLocalOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, CuotaEvento.TipoResultado.LOCAL);
-        Optional<CuotaEvento> cuotaVisitanteOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, CuotaEvento.TipoResultado.VISITANTE);
-        Optional<CuotaEvento> cuotaEmpateOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, CuotaEvento.TipoResultado.EMPATE);
+        Optional<CuotaEvento> cuotaLocalOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, TipoResultado.LOCAL);
+        Optional<CuotaEvento> cuotaVisitanteOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, TipoResultado.VISITANTE);
+        Optional<CuotaEvento> cuotaEmpateOpt = cuotaEventoRepository.findByEventoDeportivoAndTipoResultado(evento, TipoResultado.EMPATE);
 
         if (cuotaLocalOpt.isPresent()) {
             CuotaEvento cuota = cuotaLocalOpt.get();

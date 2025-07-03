@@ -36,5 +36,6 @@ export const ADMIN_ROUTES = {
     ADMIN_CRYPTO: '/admin/crypto',
     ADMIN_EVENTOS: '/admin/eventos',
     ADMIN_NOTIFICACIONES: '/admin/notificaciones',
+    ADMIN_ROLES: '/admin/roles',
     ADMIN_CONFIG: '/admin/configuracion',
 }

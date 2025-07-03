@@ -8,9 +8,11 @@ import TwoFactorAuth from '../../features/user/TwoFactorAuth';
 import DocumentUploadComponent from '../../features/user/DocumentUpload';
 import GameHistory from '../../features/user/GameHistory';
 import TechnicalSupport from '../../features/user/TechnicalSupport';
+import CryptoToFiatConverter from '../../components/crypto/CryptoToFiatConverter';
 
 const tabs = [
     { id: 'profile', label: 'Editar Perfil', icon: '👤' },
+    { id: 'wallet', label: 'Billetera', icon: '💰' },
     { id: 'password', label: 'Cambiar Contraseña', icon: '🔒' },
     { id: 'tsv', label: 'Autenticación 2FA', icon: '🔐' },
     { id: 'documents', label: 'Documentos', icon: '📄' },
@@ -42,20 +44,12 @@ const UserProfileContent = () => {
         clearError
     } = useUserProfile();
 
-    // Método de ejemplo para obtener perfil por ID
-    const handleGetUserProfile = async (userId: number) => {
-        const profile = await getUserProfile(userId);
-        if (profile) {
-            console.log('Perfil obtenido:', profile);
-        }
-    };
-
     // Load initial data when component mounts
     useEffect(() => {
         const loadInitialData = async () => {
             if (user?.idUsuario) {
                 try {
-                    handleGetUserProfile(Number(user.idUsuario));
+                    await getUserProfile(Number(user.idUsuario));
                     console.log('Loading initial profile data for user:', user.idUsuario);
                 } catch (error) {
                     console.error('Error loading initial profile data:', error);
@@ -64,7 +58,7 @@ const UserProfileContent = () => {
         };
 
         loadInitialData();
-    }, [user?.idUsuario]);
+    }, [user?.idUsuario, getUserProfile]);
 
     // Clear error after 5 seconds
     useEffect(() => {
@@ -128,6 +122,12 @@ const UserProfileContent = () => {
                         {/* Quick Actions */}
                         <div className="flex space-x-2">
                             <button
+                                onClick={() => setActiveTab('wallet')}
+                                className="px-3 py-2 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                            >
+                                💰 Billetera
+                            </button>
+                            <button
                                 onClick={() => setActiveTab('documents')}
                                 className="px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                             >
@@ -140,7 +140,7 @@ const UserProfileContent = () => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('support')}
-                                className="px-3 py-2 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                className="px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                             >
                                 🎧 Soporte
                                 {getNotificationCount('support') > 0 && (
@@ -217,6 +217,20 @@ const UserProfileContent = () => {
                                 <>
                                     <TabsContent value="profile" className="mt-0">
                                         <EditProfile />
+                                    </TabsContent>
+
+                                    <TabsContent value="wallet" className="mt-0">
+                                        <div className="space-y-6">
+                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                                                <h3 className="text-lg font-semibold text-gray-800 mb-4">💰 Gestión de Billetera</h3>
+                                                <p className="text-gray-600 mb-4">
+                                                    Convierte tus criptomonedas a saldo del casino para empezar a jugar.
+                                                </p>
+                                                <div className="bg-white rounded-lg p-1">
+                                                    <CryptoToFiatConverter />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </TabsContent>
 
                                     <TabsContent value="password" className="mt-0">

@@ -24,8 +24,8 @@ export const EventoService = {
         
         if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
         if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-        if (filtros.deporte) params.append('deporte', filtros.deporte);
-        if (filtros.liga) params.append('liga', filtros.liga);
+        if (filtros.deporte) params.append('deporteNombre', filtros.deporte);
+        if (filtros.liga) params.append('ligaNombre', filtros.liga);
         if (filtros.estado) params.append('estado', filtros.estado);
 
         const response = await apiClient.get<EventoDeportivoType[]>(`${BASE_URL}?${params.toString()}`);
@@ -100,6 +100,7 @@ export const EventoService = {
 
     /**
      * Buscar eventos por texto libre
+     * ⚠️ NOTA: Este endpoint no existe en el controlador actual
      * @param query Texto de búsqueda
      * @param filtros Filtros adicionales opcionales
      * @returns Lista de eventos que coinciden con la búsqueda
@@ -110,8 +111,8 @@ export const EventoService = {
         
         if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
         if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-        if (filtros.deporte) params.append('deporte', filtros.deporte);
-        if (filtros.liga) params.append('liga', filtros.liga);
+        if (filtros.deporte) params.append('deporteNombre', filtros.deporte);
+        if (filtros.liga) params.append('ligaNombre', filtros.liga);
         if (filtros.estado) params.append('estado', filtros.estado);
 
         const response = await apiClient.get<EventoDeportivoType[]>(`${BASE_URL}/buscar?${params.toString()}`);
@@ -329,19 +330,9 @@ export const EventoService = {
     obtenerEventoPorNombreYFecha: async (
         nombreEvento: string, 
         fecha: string,
-        equipoLocal?: string,
-        equipoVisitante?: string
     ): Promise<EventoDeportivoType | null> => {
-        const params = new URLSearchParams({
-            nombreEvento,
-            fecha
-        });
-
-        if (equipoLocal) params.append('equipoLocal', equipoLocal);
-        if (equipoVisitante) params.append('equipoVisitante', equipoVisitante);
-
         try {
-            const response = await apiClient.get<EventoDeportivoType>(`${BASE_URL}/buscar-por-nombre-fecha?${params.toString()}`);
+            const response = await apiClient.get<EventoDeportivoType>(`${BASE_URL}/buscar-por-nombre-fecha/${encodeURIComponent(nombreEvento)}/${fecha}`);
             return response.data;
         } catch {
             return null;

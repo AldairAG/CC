@@ -80,4 +80,16 @@ public interface EventoDeportivoRepository extends JpaRepository<EventoDeportivo
      */
     @Query("DELETE FROM EventoDeportivo e WHERE e.fechaEvento < :fechaLimite")
     void deleteEventosAntiguos(@Param("fechaLimite") LocalDateTime fechaLimite);
+
+    /**
+     * Obtener eventos activos por estados múltiples
+     */
+    @Query("SELECT e FROM EventoDeportivo e WHERE e.estado IN :estados AND e.fechaEvento > :fechaMinima ORDER BY e.fechaEvento ASC")
+    List<EventoDeportivo> findByEstadoInAndFechaEventoAfter(@Param("estados") List<String> estados, @Param("fechaMinima") LocalDateTime fechaMinima);
+
+    /**
+     * Obtener eventos próximos en las siguientes 24 horas
+     */
+    @Query("SELECT e FROM EventoDeportivo e WHERE e.fechaEvento BETWEEN :fechaInicio AND :fechaFin AND e.estado IN ('programado', 'en_vivo') ORDER BY e.fechaEvento ASC")
+    List<EventoDeportivo> findEventosProximos24Horas(@Param("fechaInicio") LocalDateTime fechaInicio, @Param("fechaFin") LocalDateTime fechaFin);
 }
