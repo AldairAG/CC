@@ -183,7 +183,7 @@ public class DataLoader implements CommandLineRunner {
      * Sincroniza los deportes de TheSportsDB con la base de datos local
      */
     private void sincronizarDeportes() {
-        Boolean isEnabled = true; // Cambiar a false para desactivar la sincronización
+        Boolean isEnabled = false; // Cambiar a false para desactivar la sincronización
         if (!isEnabled) {
             log.info("Sincronización de deportes desactivada");
             return;
@@ -305,7 +305,7 @@ public class DataLoader implements CommandLineRunner {
      * Sincroniza las ligas de TheSportsDB con la base de datos local
      */
     private void sincronizarLigas() {
-        Boolean isEnabled = true; // Cambiar a false para desactivar la sincronización
+        Boolean isEnabled = false; // Cambiar a false para desactivar la sincronización
         if (!isEnabled) {
             log.info("Sincronización de ligas desactivada");
             return;

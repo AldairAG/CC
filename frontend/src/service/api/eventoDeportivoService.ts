@@ -104,6 +104,12 @@ export const eventoUtils = {
     return eventos.filter(evento => evento.liga.nombre === ligaNombre);
   },
 
+  // Filtrar eventos por deporte y filtrar eventos programados o en vivo
+  filtrarPorLigaEventos: async (idDeporte: number): Promise<LigaType[]> => {
+    const response = await backendClient.get<LigaType[]>(`/deportes/${idDeporte}/true`);
+    return response.data;
+  },
+
   // Filtrar eventos por estado
   filtrarPorEstado: (eventos: EventoDeportivoType[], estado: string): EventoDeportivoType[] => {
     return eventos.filter(evento => evento.estado === estado);

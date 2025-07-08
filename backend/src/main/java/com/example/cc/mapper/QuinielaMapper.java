@@ -1,6 +1,6 @@
 package com.example.cc.mapper;
 
-import com.example.cc.dto.QuinielaResponseDto;
+import com.example.cc.dto.response.QuinielaResponseDto;
 import com.example.cc.entities.Quiniela;
 import org.springframework.stereotype.Component;
 

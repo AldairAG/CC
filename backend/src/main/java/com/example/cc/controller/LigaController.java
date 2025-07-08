@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/cc/ligas")
@@ -98,12 +99,19 @@ public class LigaController {
     /**
      * Obtener ligas por deporte
      */
-    @GetMapping("/deporte/{deporteId}")
-    public ResponseEntity<List<Liga>> getLigasByDeporte(@PathVariable Long deporteId) {
+    @GetMapping("/deporte/{deporteId}/{filtro}")
+    public ResponseEntity<List<Liga>> getLigasByDeporte(@PathVariable Long deporteId, @PathVariable Boolean filtro) {
         try {
             return deporteService.getDeporteById(deporteId)
                 .map(deporte -> {
                     List<Liga> ligas = ligaService.getLigasByDeporte(deporte);
+                    if (filtro) {
+                        ligas = ligas.stream()
+                            .filter(liga -> liga.getEventos().stream()
+                            .anyMatch(evento -> evento.getEstado() != null && 
+                                (evento.getEstado().equals("programado") || evento.getEstado().equals("en_vivo"))))
+                            .collect(Collectors.toList());
+                    }
                     return ResponseEntity.ok(ligas);
                 })
                 .orElse(ResponseEntity.notFound().build());

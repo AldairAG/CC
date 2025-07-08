@@ -13,7 +13,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TheSportsDbSportResponse {
 
-    @JsonProperty("sports")
+    @JsonProperty("all")
     private List<SportData> sports;
 
     @Data

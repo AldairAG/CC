@@ -1,4 +1,4 @@
-package com.example.cc.dto;
+package com.example.cc.dto.request;
 
 import com.example.cc.entities.Quiniela;
 import lombok.Data;

@@ -396,7 +396,6 @@ export const useEvento = () => {
     ) => {
         try {
             dispatch(setLoading(true));
-            
             const evento = await EventoService.obtenerEventoPorNombreYFecha(
                 nombreEvento, 
                 fecha, 

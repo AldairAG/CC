@@ -1,9 +1,9 @@
 package com.example.cc.controller;
 
-import com.example.cc.dto.CrearQuinielaRequest;
-import com.example.cc.dto.PrediccionRequest;
-import com.example.cc.dto.QuinielaResponseDto;
 import com.example.cc.dto.RankingParticipacionDto;
+import com.example.cc.dto.request.CrearQuinielaRequest;
+import com.example.cc.dto.request.PrediccionRequest;
+import com.example.cc.dto.response.QuinielaResponseDto;
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.QuinielaParticipacion;
 import com.example.cc.entities.QuinielaEvento;

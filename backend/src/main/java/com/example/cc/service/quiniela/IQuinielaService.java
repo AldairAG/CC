@@ -1,8 +1,8 @@
 package com.example.cc.service.quiniela;
 
-import com.example.cc.dto.CrearQuinielaRequest;
-import com.example.cc.dto.PrediccionRequest;
 import com.example.cc.dto.RankingParticipacionDto;
+import com.example.cc.dto.request.CrearQuinielaRequest;
+import com.example.cc.dto.request.PrediccionRequest;
 import com.example.cc.entities.PrediccionEvento;
 import com.example.cc.entities.Quiniela;
 import com.example.cc.entities.QuinielaParticipacion;

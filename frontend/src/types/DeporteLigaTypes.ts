@@ -1,5 +1,7 @@
 // Tipos para las nuevas entidades Deporte y Liga
 
+import type { EventoDeportivoType } from "./EventoDeportivoTypes";
+
 export interface DeporteType {
     id: number;
     nombre: string;
@@ -24,6 +26,8 @@ export interface LigaType {
     fechaActualizacion: string; // ISO string
     // Relación con deporte
     deporte: DeporteType;
+
+    eventos?: EventoDeportivoType[]; // Eventos asociados a la liga
 }
 
 // Versiones extendidas con relaciones (para cuando se incluyan en las respuestas)

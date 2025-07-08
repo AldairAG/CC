@@ -1,6 +1,7 @@
 package com.example.cc.scheduler;
 
 import com.example.cc.service.deportes.EventoDeportivoService;
+import com.example.cc.service.external.ITheSportsDbService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,19 +13,11 @@ import org.springframework.stereotype.Component;
 public class EventoDeportivoScheduler {
 
     private final EventoDeportivoService eventoDeportivoService;
+    private final ITheSportsDbService theSportsDbService;
 
     /**
      * Ejecutar sincronización de eventos deportivos todos los días a las 12:00 AM (medianoche)
-     * Cron expression: "0 0 0 * * *" = segundo minuto hora día mes día_semana
-     * - 0 segundos
-     * - 0 minutos  
-     * - 0 horas (medianoche)
-     * - * cualquier día del mes
-     * - * cualquier mes  
-     * - * cualquier día de la semana
      */
-    //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
-    //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
     @Scheduled(cron = "0 0 0 * * *", zone = "America/Mexico_City")
     public void sincronizarEventosDeportivos() {
         log.info("=== INICIANDO SINCRONIZACIÓN PROGRAMADA DE EVENTOS DEPORTIVOS ===");
@@ -33,7 +26,7 @@ public class EventoDeportivoScheduler {
             long startTime = System.currentTimeMillis();
             
             // Ejecutar sincronización
-           eventoDeportivoService.sincronizarEventosDeportivos();
+            eventoDeportivoService.sincronizarEventosDeportivos();
             
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
@@ -44,10 +37,36 @@ public class EventoDeportivoScheduler {
             log.error("=== ERROR EN SINCRONIZACIÓN PROGRAMADA: {} ===", e.getMessage(), e);
         }
     }
+ 
+    /**
+     * Actualizar livescores de eventos del día actual cada 2 minutos
+     */
+    @Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
+    public void actualizarLivescoresEventosHoy() {
+        log.info("🔴 === INICIANDO ACTUALIZACIÓN DE LIVESCORES (cada 2 min) ===");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // Obtener y actualizar livescores actuales del día
+            int eventosActualizados = theSportsDbService.obtenerYGuardarLivescoresActuales().size();
+            
+            // También actualizar específicamente los eventos en vivo
+            //int eventosEnVivo = theSportsDbService.obtenerLivescoresEventosEnVivo().size();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            log.info("✅ === LIVESCORES ACTUALIZADOS: {} eventos del día ({}ms) ===", 
+                    eventosActualizados, duration);
+            
+        } catch (Exception e) {
+            log.error("❌ === ERROR AL ACTUALIZAR LIVESCORES: {} ===", e.getMessage(), e);
+        }
+    }
 
     /**
      * Ejecutar limpieza de eventos antiguos cada domingo a las 2:00 AM
-     * Cron expression: "0 0 2 * * SUN"
      */
     @Scheduled(cron = "0 0 2 * * SUN", zone = "America/Mexico_City")
     public void limpiarEventosAntiguos() {
@@ -64,7 +83,6 @@ public class EventoDeportivoScheduler {
 
     /**
      * Tarea de prueba para verificar que el scheduler funciona (cada 30 minutos)
-     * Puedes comentar o eliminar esta tarea una vez que confirmes que funciona
      */
     @Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
     public void tareaVerificacion() {
@@ -72,11 +90,18 @@ public class EventoDeportivoScheduler {
     }
 
     /**
-     * Método manual para forzar sincronización (útil para pruebas)
-     * Puedes llamar este método desde un controlador si necesitas sincronización manual
+     * Método manual para forzar sincronización
      */
     public void forzarSincronizacion() {
         log.info("=== FORZANDO SINCRONIZACIÓN MANUAL ===");
-        sincronizarEventosDeportivos();
+        //sincronizarEventosDeportivos();
+    }
+
+    /**
+     * Método manual para forzar actualización de livescores
+     */
+    public void forzarActualizacionLivescores() {
+        log.info("=== FORZANDO ACTUALIZACIÓN DE LIVESCORES ===");
+        //actualizarLivescoresEventosHoy();
     }
 }

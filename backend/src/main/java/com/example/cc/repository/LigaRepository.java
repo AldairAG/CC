@@ -14,6 +14,10 @@ import java.util.Optional;
 public interface LigaRepository extends JpaRepository<Liga, Long> {
 
     /**
+     * Buscar todas las ligas
+     */
+
+    /**
      * Buscar liga por nombre
      */
     Optional<Liga> findByNombre(String nombre);

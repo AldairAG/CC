@@ -20,7 +20,7 @@ interface BettingMarket {
 }
 
 const ApuestaDetailsPage = () => {
-  const { eventoNombre, fecha } = useParams<{ eventoNombre: string; fecha: string }>();
+  const { nombreEvento, fecha } = useParams<{ nombreEvento: string; fecha: string }>();
   const navigate = useHistory();
   
   const { 
@@ -235,15 +235,15 @@ const ApuestaDetailsPage = () => {
   ];
 
   useEffect(() => {
-    if (eventoNombre && fecha) {
-      const decodedNombre = decodeURIComponent(eventoNombre);
+    if (nombreEvento && fecha) {
+      const decodedNombre = decodeURIComponent(nombreEvento);
       cargarEventoPorNombreYFecha(decodedNombre, fecha);
     }
 
     return () => {
       limpiarEventoActual();
     };
-  }, [eventoNombre, fecha, cargarEventoPorNombreYFecha, limpiarEventoActual]);
+  }, [nombreEvento, fecha, cargarEventoPorNombreYFecha, limpiarEventoActual]);
 
   useEffect(() => {
     if (eventoActual?.id) {

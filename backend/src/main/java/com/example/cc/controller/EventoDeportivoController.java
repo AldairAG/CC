@@ -30,6 +30,7 @@ public class EventoDeportivoController {
     private final IDeporteService deporteService;
     private final ILigaService ligaService;
     private final EventoDeportivoScheduler eventoScheduler;
+    private final com.example.cc.service.external.ITheSportsDbService theSportsDbService;
 
     /**
      * Obtener eventos por rango de fechas
@@ -269,7 +270,7 @@ public class EventoDeportivoController {
             @RequestParam(required = false) String equipoVisitante) {
         
         try {
-            LocalDateTime fechaEvento = LocalDateTime.parse(fecha + "T00:00:00");
+            LocalDateTime fechaEvento = LocalDateTime.parse(fecha);
             LocalDateTime fechaFin = fechaEvento.plusDays(1);
             
             Optional<EventoDeportivo> evento = eventoDeportivoService.buscarPorNombreYFecha(
@@ -306,6 +307,75 @@ public class EventoDeportivoController {
         } catch (Exception e) {
             log.error("Error al obtener eventos por fecha: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ===== ENDPOINTS PARA LIVESCORES =====
+
+    /**
+     * Obtener livescores actuales de todos los eventos del día
+     */
+    @GetMapping("/livescores/actuales")
+    public ResponseEntity<List<EventoDeportivo>> obtenerLivescoresActuales() {
+        try {
+            log.info("🔴 Solicitud de livescores actuales recibida");
+            List<EventoDeportivo> eventosConLivescores = theSportsDbService.obtenerYGuardarLivescoresActuales();
+            
+            log.info("✅ Devueltos {} eventos con livescores actuales", eventosConLivescores.size());
+            return ResponseEntity.ok(eventosConLivescores);
+            
+        } catch (Exception e) {
+            log.error("❌ Error al obtener livescores actuales: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(List.of()); // Retornar lista vacía en caso de error
+        }
+    }
+
+    /**
+     * Obtener livescores específicos para eventos en vivo
+     */
+    @GetMapping("/livescores/en-vivo")
+    public ResponseEntity<List<EventoDeportivo>> obtenerLivescoresEnVivo() {
+        try {
+            log.info("🔴 Solicitud de livescores en vivo recibida");
+            List<EventoDeportivo> eventosEnVivo = theSportsDbService.obtenerLivescoresEventosEnVivo();
+            
+            log.info("✅ Devueltos {} eventos en vivo con livescores", eventosEnVivo.size());
+            return ResponseEntity.ok(eventosEnVivo);
+            
+        } catch (Exception e) {
+            log.error("❌ Error al obtener livescores en vivo: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(List.of()); // Retornar lista vacía en caso de error
+        }
+    }
+
+    /**
+     * Forzar actualización de livescores (para uso administrativo)
+     */
+    @PostMapping("/livescores/actualizar")
+    public ResponseEntity<Map<String, Object>> actualizarLivescores() {
+        try {
+            log.info("🔄 Iniciando actualización forzada de livescores...");
+            
+            // Obtener livescores actuales y en vivo
+            List<EventoDeportivo> livescoresActuales = theSportsDbService.obtenerYGuardarLivescoresActuales();
+            List<EventoDeportivo> livescoresEnVivo = theSportsDbService.obtenerLivescoresEventosEnVivo();
+            
+            Map<String, Object> resultado = Map.of(
+                "livescores_actuales", livescoresActuales.size(),
+                "livescores_en_vivo", livescoresEnVivo.size(),
+                "total_eventos_actualizados", livescoresActuales.size() + livescoresEnVivo.size(),
+                "timestamp", LocalDateTime.now()
+            );
+            
+            log.info("✅ Actualización de livescores completada: {}", resultado);
+            return ResponseEntity.ok(resultado);
+            
+        } catch (Exception e) {
+            log.error("❌ Error al actualizar livescores: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", e.getMessage(), "timestamp", LocalDateTime.now()));
         }
     }
 }
