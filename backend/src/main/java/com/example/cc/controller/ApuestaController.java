@@ -1,5 +1,8 @@
 package com.example.cc.controller;
 
+import com.example.cc.dto.apuesta.ApuestaMapper;
+import com.example.cc.dto.apuesta.ApuestaResponseDTO;
+import com.example.cc.dto.apuesta.CrearApuestaRequestDTO;
 import com.example.cc.entities.Apuesta;
 import com.example.cc.service.apuestas.ApuestaService;
 import lombok.RequiredArgsConstructor;
@@ -11,48 +14,57 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/cc/apuestas")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
+@Validated
 public class ApuestaController {
 
     private final ApuestaService apuestaService;
+    private final ApuestaMapper apuestaMapper;
 
     /**
      * Crear una nueva apuesta
      */
-    @PostMapping
-    @PreAuthorize("hasRole('CLIENTE')")
-    public ResponseEntity<?> crearApuesta(@RequestBody Map<String, Object> requestData) {
+    //@PreAuthorize("hasRole('CLIENTE')")
+    @PostMapping("/{usuarioId}")
+    public ResponseEntity<?> crearApuesta(@Valid @RequestBody CrearApuestaRequestDTO request,
+        @PathVariable Long usuarioId) {
         try {
             // Obtener el ID del usuario autenticado
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            Long usuarioId = Long.parseLong(auth.getName());
+            /*Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName()); */
             
-            // Extraer datos de la solicitud
-            Long eventoId = Long.parseLong(requestData.get("eventoId").toString());
-            Long cuotaId = Long.parseLong(requestData.get("cuotaId").toString());
-            BigDecimal montoApostado = new BigDecimal(requestData.get("montoApostado").toString());
-            
-            // Validar monto mínimo
-            if (montoApostado.compareTo(new BigDecimal("10.00")) < 0) {
-                return ResponseEntity.badRequest().body("El monto mínimo de apuesta es $10.00");
+            // Validar que el monto sea válido (ya se valida con las anotaciones, pero agregamos verificación extra)
+            if (!request.isMontoValido()) {
+                return ResponseEntity.badRequest()
+                    .body("El monto de apuesta debe estar entre $10.00 y $10,000.00");
             }
             
-            // Crear la apuesta
-            Apuesta nuevaApuesta = apuestaService.crearApuesta(usuarioId, eventoId, cuotaId, montoApostado);
-            return ResponseEntity.ok(nuevaApuesta);
+            // Crear la apuesta usando el DTO
+            Apuesta nuevaApuesta = apuestaService.crearApuesta(
+                usuarioId, 
+                request.getEventoId(), 
+                request.getCuotaId(), 
+                request.getMontoApostadoEscalado()
+            );
+            
+            // Convertir a DTO de respuesta
+            ApuestaResponseDTO response = apuestaMapper.toResponseDTO(nuevaApuesta);
+            
+            log.info("Apuesta creada exitosamente con ID: {}", nuevaApuesta.getId());
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            log.error("Error al crear apuesta: {}", e.getMessage());
+            log.error("Error al crear apuesta para usuario {}: {}", 
+                SecurityContextHolder.getContext().getAuthentication().getName(), 
+                e.getMessage(), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

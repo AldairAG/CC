@@ -16,7 +16,21 @@ const CarritoApuestasSidebar = () => {
   } = useCarritoApuestas();
 
   const handleSlipAmountChange = (id: string, amount: string) => {
-    const numAmount = parseFloat(amount) || 0;
+    // Permitir strings vacíos y convertir a número
+    let numAmount = 0;
+    
+    if (amount !== '') {
+      const parsed = parseFloat(amount);
+      
+      if (!isNaN(parsed) && parsed >= 0) {
+        numAmount = parsed;
+      } else {
+        // Si no es un número válido, no hacer nada (mantener el valor actual)
+        return;
+      }
+    }
+    
+    // Actualizar el monto (ahora permitimos valores temporales menores al mínimo)
     actualizarMontoSlip(id, numAmount);
   };
 
@@ -144,11 +158,15 @@ const CarritoApuestasSidebar = () => {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={estadisticas.totalApostado || ''}
+                  value={estadisticas.totalApostado === 0 ? '' : estadisticas.totalApostado.toString()}
                   onChange={(e) => {
-                    const amount = parseFloat(e.target.value) || 0;
-                    const amountPerSlip = amount / slips.length;
-                    slips.forEach(slip => actualizarMontoSlip(slip.id, amountPerSlip));
+                    const inputValue = e.target.value;
+                    const amount = parseFloat(inputValue) || 0;
+                    
+                    if (slips.length > 0) {
+                      const amountPerSlip = amount / slips.length;
+                      slips.forEach(slip => actualizarMontoSlip(slip.id, amountPerSlip));
+                    }
                   }}
                   className="w-full px-3 py-2 border border-primary-600/30 rounded-lg bg-dark-700 text-white placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                   placeholder="0.00"
@@ -215,11 +233,20 @@ const CarritoApuestasSidebar = () => {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={slip.montoApostado || ''}
+                      value={slip.montoApostado === 0 ? '' : slip.montoApostado.toString()}
                       onChange={(e) => handleSlipAmountChange(slip.id, e.target.value)}
-                      className="w-full px-3 py-2 border border-primary-600/30 rounded-lg bg-dark-700 text-white placeholder-gray-400 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                      placeholder="0.00"
+                      className={`w-full px-3 py-2 border rounded-lg bg-dark-700 text-white placeholder-gray-400 text-sm focus:ring-1 transition-colors ${
+                        slip.montoApostado > 0 && slip.montoApostado < validaciones.montoMinimo
+                          ? 'border-yellow-500 focus:border-yellow-400 focus:ring-yellow-400'
+                          : 'border-primary-600/30 focus:border-primary-500 focus:ring-primary-500'
+                      }`}
+                      placeholder={`Mínimo ${formatCurrency(validaciones.montoMinimo)}`}
                     />
+                    {slip.montoApostado > 0 && slip.montoApostado < validaciones.montoMinimo && (
+                      <div className="text-xs text-yellow-400 mt-1">
+                        ⚠️ Monto mínimo: {formatCurrency(validaciones.montoMinimo)}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex justify-between text-xs">
@@ -290,6 +317,12 @@ const CarritoApuestasSidebar = () => {
             {validaciones.tieneSlipsSinMonto && (
               <div className="text-xs text-yellow-400 bg-yellow-900/20 rounded p-2">
                 ⚠️ Todas las apuestas deben tener un monto mayor a 0
+              </div>
+            )}
+            
+            {validaciones.tieneSlipsConMontoInsuficiente && (
+              <div className="text-xs text-yellow-400 bg-yellow-900/20 rounded p-2">
+                ⚠️ Algunas apuestas tienen un monto menor al mínimo de {formatCurrency(validaciones.montoMinimo)}
               </div>
             )}
           </div>

@@ -3,7 +3,11 @@ import { useHistory } from 'react-router-dom';
 import { useDeporte } from '../../hooks/useDeporte';
 import { USER_ROUTES } from '../../constants/ROUTERS';
 
-const DeportesDisponibles = () => {
+interface DeportesDisponiblesProps {
+    onItemClick?: () => void;
+}
+
+const DeportesDisponibles = ({ onItemClick }: DeportesDisponiblesProps) => {
     const navigate = useHistory();
     const { loading, error, cargarDeportesActivos, getDeportesActivos } = useDeporte();
 
@@ -15,15 +19,16 @@ const DeportesDisponibles = () => {
 
     // Función para navegar a la página de apuestas por deporte
     const navigateToDeporte = (nombreDeporte: string) => {
-        
         navigate.push(`${USER_ROUTES.APUESTAS_POR_DEPORTE.replace(':deporte',nombreDeporte)}`);
+        onItemClick?.(); // Cerrar sidebar en móviles
     };
 
     if (loading) {
         return (
-            <aside className="bg-dark-800 rounded-lg p-4 shadow-casino border border-primary-600/30">
-                <h3 className="text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
-                    🏆 Deportes Disponibles
+            <aside className="bg-dark-800 rounded-lg p-3 sm:p-4 shadow-casino border border-primary-600/30">
+                <h3 className="text-base sm:text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
+                    🏆 <span className="hidden sm:inline">Deportes Disponibles</span>
+                    <span className="sm:hidden">Deportes</span>
                 </h3>
                 <div className="flex items-center justify-center py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
@@ -34,11 +39,12 @@ const DeportesDisponibles = () => {
 
     if (error) {
         return (
-            <aside className="bg-dark-800 rounded-lg p-4 shadow-casino border border-primary-600/30">
-                <h3 className="text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
-                    🏆 Deportes Disponibles
+            <aside className="bg-dark-800 rounded-lg p-3 sm:p-4 shadow-casino border border-primary-600/30">
+                <h3 className="text-base sm:text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
+                    🏆 <span className="hidden sm:inline">Deportes Disponibles</span>
+                    <span className="sm:hidden">Deportes</span>
                 </h3>
-                <div className="text-red-400 text-sm p-2 bg-red-900/20 rounded">
+                <div className="text-red-400 text-xs sm:text-sm p-2 bg-red-900/20 rounded">
                     Error al cargar deportes
                 </div>
             </aside>
@@ -63,13 +69,14 @@ const DeportesDisponibles = () => {
     };
 
     return (
-        <aside className="bg-dark-800 rounded-lg p-4 shadow-casino border border-primary-600/30">
-            <h3 className="text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
-                🏆 Deportes Disponibles
+        <aside className="bg-dark-800 rounded-lg p-3 sm:p-4 shadow-casino border border-primary-600/30">
+            <h3 className="text-base sm:text-lg font-bold text-primary-400 mb-3 flex items-center gap-2">
+                🏆 <span className="hidden sm:inline">Deportes Disponibles</span>
+                <span className="sm:hidden">Deportes</span>
             </h3>
             <div className="space-y-2">
                 {deportesActivos.length === 0 ? (
-                    <div className="text-gray-400 text-sm p-2 text-center">
+                    <div className="text-gray-400 text-xs sm:text-sm p-2 text-center">
                         No hay deportes disponibles
                     </div>
                 ) : (
@@ -77,27 +84,27 @@ const DeportesDisponibles = () => {
                         <div
                             key={deporte.id}
                             onClick={() => navigateToDeporte(deporte.nombre)}
-                            className="flex items-center gap-3 p-2 rounded-lg bg-dark-700/50 hover:bg-primary-600/20 transition-all duration-200 cursor-pointer group hover:scale-105 border border-transparent hover:border-primary-500/30"
+                            className="flex items-center gap-2 sm:gap-3 p-2 rounded-lg bg-dark-700/50 hover:bg-primary-600/20 transition-all duration-200 cursor-pointer group hover:scale-105 active:scale-95 border border-transparent hover:border-primary-500/30"
                             style={{ borderLeft: `3px solid ${deporte.colorPrimario || '#10b981'}` }}
                             title={`Ver apuestas de ${deporte.nombre}`}
                         >
-                            <span className="text-xl">
+                            <span className="text-lg sm:text-xl flex-shrink-0">
                                 {deporte.icono || getDeporteIcon(deporte.nombre)}
                             </span>
                             <div className="flex-1 min-w-0">
-                                <p className="text-white font-medium text-sm group-hover:text-primary-300 transition-colors truncate">
+                                <p className="text-white font-medium text-xs sm:text-sm group-hover:text-primary-300 transition-colors truncate">
                                     {deporte.nombre}
                                 </p>
                                 {deporte.descripcion && (
-                                    <p className="text-gray-400 text-xs truncate">
+                                    <p className="text-gray-400 text-xs truncate hidden sm:block">
                                         {deporte.descripcion}
                                     </p>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full opacity-80"></div>
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full opacity-80"></div>
                                 <svg 
-                                    className="w-4 h-4 text-gray-400 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100" 
+                                    className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 group-hover:text-primary-400 transition-colors opacity-0 group-hover:opacity-100" 
                                     fill="none" 
                                     stroke="currentColor" 
                                     viewBox="0 0 24 24"
@@ -114,7 +121,7 @@ const DeportesDisponibles = () => {
                     <p className="text-xs text-gray-400 text-center mb-1">
                         {deportesActivos.length} deporte{deportesActivos.length !== 1 ? 's' : ''} activo{deportesActivos.length !== 1 ? 's' : ''}
                     </p>
-                    <p className="text-xs text-gray-500 text-center">
+                    <p className="text-xs text-gray-500 text-center hidden sm:block">
                         💡 Haz clic en cualquier deporte para ver apuestas
                     </p>
                 </div>

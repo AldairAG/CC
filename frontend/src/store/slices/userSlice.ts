@@ -14,10 +14,10 @@ const initialState: AuthState = {
   userList: [],
 };
 
-interface Role {
+/* interface Role {
   nombreRol: string;
   idRol: number;
-}
+} */
 
 /**
  * Función para extraer los roles del token JWT
@@ -31,7 +31,7 @@ export const getRoleFromToken = (token: string): string[] => {
     console.log('Payload del token:', payload.roles);
 
     // Extraer solo la propiedad nombreRol de cada rol
-    const rol = payload.roles.map((role: Role) => role.nombreRol);
+    const rol = payload.roles.map((role: string) => role);
 
     return rol || [];
   } catch (error) {

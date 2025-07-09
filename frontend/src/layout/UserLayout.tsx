@@ -60,12 +60,20 @@ const UserLayout = () => {
                     {/* Botón hamburguesa para móviles */}
                     <button
                         onClick={toggleSidebar}
-                        className="lg:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors"
-                        aria-label="Abrir menú"
+                        className={`lg:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors relative ${
+                            isSidebarOpen ? 'bg-primary-600/30' : ''
+                        }`}
+                        aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            {isSidebarOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
                         </svg>
+                        {/* Indicador de notificación */}
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full opacity-80 lg:hidden"></div>
                     </button>
 
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-500 animate-glow">
@@ -76,12 +84,16 @@ const UserLayout = () => {
                         {/* Botón carrito para móviles */}
                         <button
                             onClick={toggleCart}
-                            className="xl:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors relative"
-                            aria-label="Abrir carrito"
+                            className={`xl:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors relative ${
+                                isCartOpen ? 'bg-primary-600/30' : ''
+                            }`}
+                            aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h7" />
                             </svg>
+                            {/* Indicador de items en carrito */}
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full opacity-80 xl:hidden"></div>
                         </button>
                         
                         <UserProfileButton />
@@ -125,43 +137,101 @@ const UserLayout = () => {
             </header>
             
             <div className="flex min-h-screen bg-casino-gradient">
+                {/* Overlay para móviles cuando el sidebar está abierto */}
+                {isSidebarOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Sidebar izquierdo con ligas mexicanas y deportes */}
-                <div className="hidden lg:block w-80 p-4 overflow-y-auto">
-                    <LigasMexicanas />
-                    <DeportesDisponibles />
+                <div className={`
+                    fixed lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
+                    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                    lg:block w-80 h-full lg:h-auto bg-casino-gradient lg:bg-transparent p-4 overflow-y-auto z-50
+                    top-0 left-0 lg:top-auto lg:left-auto lg:z-auto
+                    border-r lg:border-r-0 border-primary-600/30
+                `}>
+                    {/* Header del sidebar móvil */}
+                    <div className="lg:hidden flex items-center justify-between mb-4 pb-4 border-b border-primary-600/30">
+                        <h2 className="text-xl font-bold text-primary-400">Menú</h2>
+                        <button
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors"
+                            aria-label="Cerrar menú"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <LigasMexicanas onItemClick={() => setIsSidebarOpen(false)} />
+                    <DeportesDisponibles onItemClick={() => setIsSidebarOpen(false)} />
                 </div>
                 
                 {/* Contenido principal */}
-                <div className="flex-1 flex justify-center">
-                    <Switch>
-                        <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
-                        <Route path={USER_ROUTES.HOME} component={Dashboard} />
-                        
-                        {/* Rutas principales de quinielas */}
-                        <Route path={USER_ROUTES.QUINIELAS} component={QuinielasPage} />
-                        <Route path={USER_ROUTES.MIS_PARTICIPACIONES} component={MisParticipacionesPage} />
-                        <Route path={USER_ROUTES.GESTIONAR_QUINIELA} component={GestionarQuinielaPage} />
-                        
-                        {/* Rutas específicas de apuestas */}
-                        <Route path={USER_ROUTES.APUESTAS_DETAIL} component={ApuestaDetailsPage} />
-                        <Route path={USER_ROUTES.APUESTAS_POR_DEPORTE} component={ApuestasPorDeportePage} />
-                        <Route path={USER_ROUTES.APUESTAS_DEPORTIVAS} component={ApuestasDeportivasPage} />
+                <div className="flex-1 flex justify-center px-4 lg:px-0 pt-4 lg:pt-0">
+                    <div className="w-full max-w-6xl">
+                        <Switch>
+                            <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
+                            <Route path={USER_ROUTES.HOME} component={Dashboard} />
+                            
+                            {/* Rutas principales de quinielas */}
+                            <Route path={USER_ROUTES.QUINIELAS} component={QuinielasPage} />
+                            <Route path={USER_ROUTES.MIS_PARTICIPACIONES} component={MisParticipacionesPage} />
+                            <Route path={USER_ROUTES.GESTIONAR_QUINIELA} component={GestionarQuinielaPage} />
+                            
+                            {/* Rutas específicas de apuestas */}
+                            <Route path={USER_ROUTES.APUESTAS_DETAIL} component={ApuestaDetailsPage} />
+                            <Route path={USER_ROUTES.APUESTAS_POR_DEPORTE} component={ApuestasPorDeportePage} />
+                            <Route path={USER_ROUTES.APUESTAS_DEPORTIVAS} component={ApuestasDeportivasPage} />
 
-                        {/* Rutas específicas de quinielas */}
-                        <Route path={USER_ROUTES.QUINIELA} component={QuinielaDetailPage} />
-                        <Route path={USER_ROUTES.CREAR_QUINIELA} component={CrearQuinielaPage} />
-                        
-                        {/* Rutas legacy para compatibilidad */}
-                        <Route path={USER_ROUTES.QUINIELAS_LIST} component={QuinielasListPage} />
-                        <Route path={USER_ROUTES.QUINIELAS_CREADAS} component={MisParticipacionesPage} />
-                        <Route path={USER_ROUTES.ARMAR_QUINIELA} component={CrearQuinielaPage} />
-                    </Switch>
+                            {/* Rutas específicas de quinielas */}
+                            <Route path={USER_ROUTES.QUINIELA} component={QuinielaDetailPage} />
+                            <Route path={USER_ROUTES.CREAR_QUINIELA} component={CrearQuinielaPage} />
+                            
+                            {/* Rutas legacy para compatibilidad */}
+                            <Route path={USER_ROUTES.QUINIELAS_LIST} component={QuinielasListPage} />
+                            <Route path={USER_ROUTES.QUINIELAS_CREADAS} component={MisParticipacionesPage} />
+                            <Route path={USER_ROUTES.ARMAR_QUINIELA} component={CrearQuinielaPage} />
+                        </Switch>
+                    </div>
                 </div>
 
                 {/* Sidebar derecho con carrito de apuestas */}
-                <div className="hidden xl:block w-80 p-4 overflow-y-auto">
+                <div className={`
+                    fixed xl:relative xl:translate-x-0 transition-transform duration-300 ease-in-out
+                    ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}
+                    xl:block w-80 h-full xl:h-auto bg-casino-gradient xl:bg-transparent p-4 overflow-y-auto z-50
+                    top-0 right-0 xl:top-auto xl:right-auto xl:z-auto
+                    border-l xl:border-l-0 border-primary-600/30
+                `}>
+                    {/* Header del carrito móvil */}
+                    <div className="xl:hidden flex items-center justify-between mb-4 pb-4 border-b border-primary-600/30">
+                        <h2 className="text-xl font-bold text-primary-400">Carrito de Apuestas</h2>
+                        <button
+                            onClick={() => setIsCartOpen(false)}
+                            className="p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors"
+                            aria-label="Cerrar carrito"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
                     <CarritoApuestasSidebar />
                 </div>
+
+                {/* Overlay para el carrito en móviles */}
+                {isCartOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/50 z-40 xl:hidden"
+                        onClick={() => setIsCartOpen(false)}
+                    />
+                )}
             </div>
 
             {/* Carrito flotante para móviles */}

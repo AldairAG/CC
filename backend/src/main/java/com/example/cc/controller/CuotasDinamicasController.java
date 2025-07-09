@@ -21,7 +21,6 @@ import java.util.Map;
 @RequestMapping("/cc/cuotas-dinamicas")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class CuotasDinamicasController {
 
     private final CuotasDinamicasService cuotasDinamicasService;

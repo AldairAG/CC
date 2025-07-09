@@ -653,14 +653,13 @@ public class TheSportsDbService implements ITheSportsDbService {
                 log.warn("⚠️ No se encontraron livescores");
             }
 
-        }catch(
+        } catch (
 
-    RestClientException e)
-    {
-        log.error("❌ Error al obtener livescores: {}", e.getMessage(), e);
-    }
+        RestClientException e) {
+            log.error("❌ Error al obtener livescores: {}", e.getMessage(), e);
+        }
 
-    return liveScores;
+        return liveScores;
     }
 
     /**
@@ -682,14 +681,27 @@ public class TheSportsDbService implements ITheSportsDbService {
             List<LiveScoreResponse.LiveScore> liveScores = getLiveScores();
 
             // Obtener también eventos de ayer por si hay partidos que se extendieron
-            /*
-             * LocalDate yesterday = LocalDate.now().minusDays(1);
-             * LocalDateTime startOfYesterday = yesterday.atStartOfDay();
-             * LocalDateTime endOfYesterday = yesterday.atTime(23, 59, 59);
-             * List<EventoDeportivo> eventosAyer =
-             * eventoRepository.findByFechaEventoBetween(startOfYesterday, endOfYesterday);
-             * eventosDelDia.addAll(eventosAyer);
-             */
+            LocalDate yesterday = LocalDate.now().minusDays(1);
+            LocalDateTime startOfYesterday = yesterday.atStartOfDay();
+            LocalDateTime endOfYesterday = yesterday.atTime(23, 59, 59);
+            List<EventoDeportivo> eventosAyer = eventoRepository.findByFechaEventoBetween(startOfYesterday,
+                    endOfYesterday);
+            eventosDelDia.addAll(eventosAyer);
+
+            // Actualizar eventos pasados que no están finalizados
+            LocalDateTime ahora = LocalDateTime.now();
+            for (EventoDeportivo evento : eventosDelDia) {
+                if (evento.getFechaEvento().isBefore(ahora) &&
+                        !"finalizado".equals(evento.getEstado()) &&
+                        !"cancelado".equals(evento.getEstado())) {
+
+                    log.info("Actualizando evento pasado a finalizado: {} - Fecha: {}",
+                            evento.getNombreEvento(), evento.getFechaEvento());
+
+                    evento.setEstado("finalizado");
+                    eventoRepository.save(evento);
+                }
+            }
 
             // Para cada evento, obtener livescore actualizado desde TheSportsDB
             for (EventoDeportivo evento : eventosDelDia) {

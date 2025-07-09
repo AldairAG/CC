@@ -75,6 +75,7 @@ import {
     EstadoApuesta,
     type TipoApuesta
 } from '../types/ApuestaType';
+import useUser from './useUser';
 
 /**
  * Hook personalizado `useApuestasDeportivas` para gestionar el estado de las apuestas deportivas y todas sus operaciones.
@@ -101,6 +102,7 @@ import {
  */
 export const useApuestasDeportivas = () => {
     const dispatch = useDispatch();
+    const {user}=useUser();
 
     // ===== SELECTORES DEL ESTADO =====
     const misApuestas = useSelector(apuestaSelector.misApuestas);
@@ -394,7 +396,7 @@ export const useApuestasDeportivas = () => {
     const createApuesta = useCallback(async (datosApuesta: CrearApuestaRequestType): Promise<ApuestaType | null> => {
         dispatch(setCreandoApuestaLoading(true));
         try {
-            const response = await ApuestaService.crearApuesta(datosApuesta);
+            const response = await ApuestaService.crearApuesta(datosApuesta,user?.idUsuario || 0);
             dispatch(apuestaCreadaExitosamente(response));
 
             return response;

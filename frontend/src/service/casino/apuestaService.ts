@@ -11,7 +11,7 @@ import type {
 } from "../../types/ApuestaType";
 import { apiClient } from "./ApiCliente";
 
-const BASE_URL = '/cc/apuestas';
+const BASE_URL = '/apuestas';
 
 export const ApuestaService = {
     /**
@@ -19,8 +19,8 @@ export const ApuestaService = {
      * @param apuesta Datos de la apuesta a crear
      * @returns La apuesta creada
      */
-    crearApuesta: async (apuesta: CrearApuestaRequestType): Promise<ApuestaType> => {
-        const response = await apiClient.post<ApuestaType>(BASE_URL, apuesta);
+    crearApuesta: async (apuesta: CrearApuestaRequestType,usuarioId:number): Promise<ApuestaType> => {
+        const response = await apiClient.post<ApuestaType>(`${BASE_URL}/${usuarioId}`, apuesta);
         return response.data;
     },
 

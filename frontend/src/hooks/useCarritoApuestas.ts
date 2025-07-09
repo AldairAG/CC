@@ -143,6 +143,9 @@ export const useCarritoApuestas = () => {
   // Procesar apuestas
   const procesarApuestas = useCallback(async () => {
     if (validaciones.carritoVacio) {
+      //bugs: no se puede appostar multiples,las apuestas no tienen datos exactos de modo de juego,etc.
+      //no se pueden guardar apuestas en modo simple mas de una vez
+      //requiere un mejor dise;o 
       toast.error('No hay apuestas en el carrito');
       return false;
     }

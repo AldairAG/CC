@@ -127,11 +127,9 @@ export const carritoApuestasSlice = createSlice({
     actualizarMontoSlip: (state, action: PayloadAction<{ id: string; nuevoMonto: number }>) => {
       const { id, nuevoMonto } = action.payload;
       
-      // Validar monto
+      // Validar monto básico (solo no negativos y no mayor al máximo)
       if (nuevoMonto < 0) return;
-      if (nuevoMonto > 0 && (nuevoMonto < state.montoMinimo || nuevoMonto > state.montoMaximo)) {
-        return;
-      }
+      if (nuevoMonto > state.montoMaximo) return;
 
       const slip = state.slips.find(s => s.id === id);
       if (slip) {
@@ -306,15 +304,22 @@ export const selectEstadisticasCarrito = createSelector(
 );
 
 export const selectValidacionesCarrito = createSelector(
-  [selectSlips, selectEstadisticasCarrito],
-  (slips, estadisticas) => {
+  [selectSlips, selectEstadisticasCarrito, (state: RootState) => state.carritoApuestas.montoMinimo],
+  (slips, estadisticas, montoMinimo) => {
+    const slipsSinMonto = slips.filter((slip: BettingSlip) => slip.montoApostado <= 0);
+    const slipsConMontoInsuficiente = slips.filter((slip: BettingSlip) => slip.montoApostado > 0 && slip.montoApostado < montoMinimo);
+    
     return {
       carritoVacio: slips.length === 0,
-      tieneSlipsSinMonto: slips.some((slip: BettingSlip) => slip.montoApostado <= 0),
+      tieneSlipsSinMonto: slipsSinMonto.length > 0,
+      tieneSlipsConMontoInsuficiente: slipsConMontoInsuficiente.length > 0,
       montoTotalValido: estadisticas.totalApostado > 0,
-      puedeApostar: slips.length > 0 && !slips.some((slip: BettingSlip) => slip.montoApostado <= 0),
+      puedeApostar: slips.length > 0 && 
+                   slipsSinMonto.length === 0 && 
+                   slipsConMontoInsuficiente.length === 0,
       maximoSlipsAlcanzado: slips.length >= 10, // Límite configurable
-      tieneErrores: slips.some((slip: BettingSlip) => slip.cuota < 1.01 || slip.cuota > 50)
+      tieneErrores: slips.some((slip: BettingSlip) => slip.cuota < 1.01 || slip.cuota > 50),
+      montoMinimo
     };
   }
 );

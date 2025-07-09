@@ -73,9 +73,9 @@ export const useUser = () => {
 
         const rol=getRoleFromToken(response.token)
 
-        if (rol.includes("CLIENTE")) {
+        if (rol.includes("ROLE_CLIENTE")) {
           navigateTo(USER_ROUTES.HOME);
-        } else if (rol.includes("ADMIN")) {
+        } else if (rol.includes("ROLE_ADMIN")) {
           //navigateTo(USER_ROUTES.HOME);
           navigateTo(ADMIN_ROUTES.ADMIN_LAYOUT);
         }
