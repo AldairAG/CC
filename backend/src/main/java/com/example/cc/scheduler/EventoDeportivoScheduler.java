@@ -19,6 +19,7 @@ public class EventoDeportivoScheduler {
      * Ejecutar sincronización de eventos deportivos todos los días a las 12:00 AM (medianoche)
      */
     @Scheduled(cron = "0 0 0 * * *", zone = "America/Mexico_City")
+    //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
     public void sincronizarEventosDeportivos() {
         log.info("=== INICIANDO SINCRONIZACIÓN PROGRAMADA DE EVENTOS DEPORTIVOS ===");
         

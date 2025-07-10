@@ -81,4 +81,17 @@ public interface IEventoDeportivoService {
      */
     List<EventoDeportivo> buscarPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin,
                                         String deporte, String liga);
+
+    /**
+     * Obtener evento por ID
+     * @param id ID del evento
+     * @return Evento encontrado
+     */
+    Optional<EventoDeportivo> getEventoById(Long id);
+
+    /**
+     * Obtener todos los eventos
+     * @return Lista de todos los eventos
+     */
+    List<EventoDeportivo> getAllEventos();
 }

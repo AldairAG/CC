@@ -11,10 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class CuotaEventoService {
 
     private final CuotaEventoRepository cuotaEventoRepository;
     private final EventoDeportivoRepository eventoDeportivoRepository;
-    private final Random random = new Random();
+    private final CuotaGeneratorService cuotaGeneratorService;
 
     /**
      * Obtener cuotas para un evento deportivo
@@ -33,7 +34,28 @@ public class CuotaEventoService {
     }
 
     /**
-     * Generar cuotas para un evento deportivo
+     * Obtener cuotas para un evento deportivo filtradas por mercado
+     */
+    public List<CuotaEvento> getCuotasByEventoIdAndMercado(Long eventoId, String mercado) {
+        List<CuotaEvento> todasLasCuotas = cuotaEventoRepository.findActiveByEventoId(eventoId);
+        return todasLasCuotas.stream()
+                .filter(cuota -> cuota.getTipoResultado().getMercado().equals(mercado))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener cuotas agrupadas por mercado para un evento
+     */
+    public Map<String, List<CuotaEvento>> getCuotasAgrupadasPorMercado(Long eventoId) {
+        List<CuotaEvento> todasLasCuotas = cuotaEventoRepository.findActiveByEventoId(eventoId);
+        return todasLasCuotas.stream()
+                .collect(Collectors.groupingBy(
+                    cuota -> cuota.getTipoResultado().getMercado()
+                ));
+    }
+
+    /**
+     * Generar cuotas para un evento deportivo - TODOS LOS MERCADOS
      */
     @Transactional
     public List<CuotaEvento> generarCuotasParaEvento(Long eventoId) {
@@ -43,33 +65,30 @@ public class CuotaEventoService {
         // Verificar si ya existen cuotas para este evento
         List<CuotaEvento> cuotasExistentes = cuotaEventoRepository.findByEventoDeportivo(evento);
         if (!cuotasExistentes.isEmpty()) {
+            log.info("Ya existen {} cuotas para evento: {}", cuotasExistentes.size(), evento.getNombreEvento());
             return cuotasExistentes;
         }
 
-        // Generar cuotas para los tres posibles resultados (LOCAL, VISITANTE, EMPATE)
-        CuotaEvento cuotaLocal = new CuotaEvento();
-        cuotaLocal.setEventoDeportivo(evento);
-        cuotaLocal.setTipoResultado(TipoResultado.LOCAL);
-        cuotaLocal.setValorCuota(generarCuotaAleatoria(1.5, 3.5));
-        cuotaLocal.setEstado("ACTIVA");
+        // Generar cuotas para TODOS los tipos de resultado disponibles
+        List<CuotaEvento> cuotasNuevas = new ArrayList<>();
+        List<TipoResultado> todosLosTipos = cuotaGeneratorService.getAllTiposResultado();
+        
+        for (TipoResultado tipoResultado : todosLosTipos) {
+            CuotaEvento cuota = new CuotaEvento();
+            cuota.setEventoDeportivo(evento);
+            cuota.setTipoResultado(tipoResultado);
+            cuota.setValorCuota(cuotaGeneratorService.generarCuotaParaTipo(tipoResultado));
+            cuota.setEstado("ACTIVA");
+            cuotasNuevas.add(cuota);
+        }
 
-        CuotaEvento cuotaVisitante = new CuotaEvento();
-        cuotaVisitante.setEventoDeportivo(evento);
-        cuotaVisitante.setTipoResultado(TipoResultado.VISITANTE);
-        cuotaVisitante.setValorCuota(generarCuotaAleatoria(1.8, 4.0));
-        cuotaVisitante.setEstado("ACTIVA");
+        // Guardar todas las cuotas
+        cuotaEventoRepository.saveAll(cuotasNuevas);
+        log.info("Generadas {} cuotas para evento: {} - Mercados: {}", 
+                cuotasNuevas.size(), evento.getNombreEvento(), 
+                cuotasNuevas.stream().map(c -> c.getTipoResultado().getMercado()).distinct().count());
 
-        CuotaEvento cuotaEmpate = new CuotaEvento();
-        cuotaEmpate.setEventoDeportivo(evento);
-        cuotaEmpate.setTipoResultado(TipoResultado.EMPATE);
-        cuotaEmpate.setValorCuota(generarCuotaAleatoria(2.0, 4.5));
-        cuotaEmpate.setEstado("ACTIVA");
-
-        // Guardar las cuotas
-        cuotaEventoRepository.saveAll(List.of(cuotaLocal, cuotaVisitante, cuotaEmpate));
-        log.info("Cuotas generadas para evento: {}", evento.getNombreEvento());
-
-        return List.of(cuotaLocal, cuotaVisitante, cuotaEmpate);
+        return cuotasNuevas;
     }
 
     /**
@@ -115,10 +134,32 @@ public class CuotaEventoService {
     }
 
     /**
-     * Genera una cuota aleatoria dentro de un rango, redondeada a dos decimales
+     * Generar cuotas básicas para un evento deportivo (solo 1X2)
+     * Método legacy para compatibilidad
      */
-    private BigDecimal generarCuotaAleatoria(double min, double max) {
-        double valor = min + (random.nextDouble() * (max - min));
-        return BigDecimal.valueOf(valor).setScale(2, RoundingMode.HALF_UP);
+    @Transactional
+    public List<CuotaEvento> generarCuotasBasicasParaEvento(Long eventoId) {
+        EventoDeportivo evento = eventoDeportivoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado con ID: " + eventoId));
+
+        // Generar solo cuotas básicas (1X2)
+        List<CuotaEvento> cuotasBasicas = new ArrayList<>();
+        
+        // Crear cuotas para LOCAL, VISITANTE, EMPATE
+        TipoResultado[] tiposBasicos = {TipoResultado.LOCAL, TipoResultado.VISITANTE, TipoResultado.EMPATE};
+        
+        for (TipoResultado tipo : tiposBasicos) {
+            CuotaEvento cuota = new CuotaEvento();
+            cuota.setEventoDeportivo(evento);
+            cuota.setTipoResultado(tipo);
+            cuota.setValorCuota(cuotaGeneratorService.generarCuotaParaTipo(tipo));
+            cuota.setEstado("ACTIVA");
+            cuotasBasicas.add(cuota);
+        }
+
+        cuotaEventoRepository.saveAll(cuotasBasicas);
+        log.info("Cuotas básicas generadas para evento: {}", evento.getNombreEvento());
+
+        return cuotasBasicas;
     }
 }

@@ -4,6 +4,7 @@ import com.example.cc.entities.EventoDeportivo;
 import com.example.cc.entities.Deporte;
 import com.example.cc.entities.Liga;
 import com.example.cc.service.deportes.IEventoDeportivoService;
+import com.example.cc.service.apuestas.CuotaEventoService;
 import com.example.cc.service.deportes.IDeporteService;
 import com.example.cc.service.deportes.ILigaService;
 import com.example.cc.scheduler.EventoDeportivoScheduler;
@@ -23,7 +24,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/cc/eventos-deportivos")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class EventoDeportivoController {
 
     private final IEventoDeportivoService eventoDeportivoService;
@@ -31,6 +31,7 @@ public class EventoDeportivoController {
     private final ILigaService ligaService;
     private final EventoDeportivoScheduler eventoScheduler;
     private final com.example.cc.service.external.ITheSportsDbService theSportsDbService;
+    private final CuotaEventoService cuotaEventoService;
 
     /**
      * Obtener eventos por rango de fechas
@@ -376,6 +377,82 @@ public class EventoDeportivoController {
             log.error("❌ Error al actualizar livescores: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", e.getMessage(), "timestamp", LocalDateTime.now()));
+        }
+    }
+
+    /**
+     * Generar cuotas completas para un evento específico
+     */
+    @PostMapping("/{eventoId}/generar-cuotas")
+    public ResponseEntity<Map<String, Object>> generarCuotasEvento(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            var cuotasGeneradas = cuotaEventoService.generarCuotasParaEvento(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Cuotas generadas exitosamente",
+                "eventoId", eventoId,
+                "nombreEvento", evento.getNombreEvento(),
+                "totalCuotas", cuotasGeneradas.size(),
+                "mercados", cuotasGeneradas.stream()
+                    .map(cuota -> cuota.getTipoResultado().getMercado())
+                    .distinct()
+                    .count()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al generar cuotas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al generar cuotas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Generar cuotas para todos los eventos que no tienen cuotas
+     */
+    @PostMapping("/generar-cuotas-faltantes")
+    public ResponseEntity<Map<String, Object>> generarCuotasFaltantes() {
+        try {
+            List<EventoDeportivo> todosLosEventos = eventoDeportivoService.getAllEventos();
+            int eventosConCuotas = 0;
+            int eventosConErrores = 0;
+            
+            for (EventoDeportivo evento : todosLosEventos) {
+                try {
+                    var cuotasExistentes = cuotaEventoService.getCuotasByEventoId(evento.getId());
+                    if (cuotasExistentes.isEmpty()) {
+                        cuotaEventoService.generarCuotasParaEvento(evento.getId());
+                        eventosConCuotas++;
+                        log.info("Cuotas generadas para evento: {}", evento.getNombreEvento());
+                    }
+                } catch (Exception e) {
+                    eventosConErrores++;
+                    log.error("Error generando cuotas para evento {}: {}", evento.getId(), e.getMessage());
+                }
+            }
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Proceso completado",
+                "totalEventos", todosLosEventos.size(),
+                "eventosConCuotasGeneradas", eventosConCuotas,
+                "eventosConErrores", eventosConErrores
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al generar cuotas faltantes: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al generar cuotas faltantes: " + e.getMessage()
+            ));
         }
     }
 }

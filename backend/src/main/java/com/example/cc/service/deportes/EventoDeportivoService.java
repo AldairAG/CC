@@ -5,6 +5,7 @@ import com.example.cc.entities.Deporte;
 import com.example.cc.entities.Liga;
 import com.example.cc.dto.external.TheSportsDbEventResponse;
 import com.example.cc.repository.EventoDeportivoRepository;
+import com.example.cc.service.apuestas.CuotaEventoService;
 import com.example.cc.service.external.TheSportsDbService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     private final TheSportsDbService theSportsDbService;
     private final IDeporteService deporteService;
     private final ILigaService ligaService;
+    private final CuotaEventoService cuotaEventoService;
 
     /**
      * Sincronizar eventos deportivos desde TheSportsDB
@@ -38,8 +40,10 @@ public class EventoDeportivoService implements IEventoDeportivoService {
         
         try {
             // Obtener eventos de TheSportsDB
-            List<TheSportsDbEventResponse.EventData> eventosExternos = theSportsDbService.getUpcomingEvents();
-            
+            List<TheSportsDbEventResponse.EventData> eventosExternos = null;
+
+            eventosExternos = theSportsDbService.getUpcomingEvents();
+               
             if (eventosExternos.isEmpty()) {
                 log.warn("No se obtuvieron eventos de TheSportsDB");
                 return;
@@ -64,8 +68,17 @@ public class EventoDeportivoService implements IEventoDeportivoService {
                         // Crear nuevo evento
                         EventoDeportivo nuevoEvento = crearEventoDesdeExterno(eventoExterno);
                         if (nuevoEvento != null) {
-                            eventoRepository.save(nuevoEvento);
+                            EventoDeportivo eventoGuardado = eventoRepository.save(nuevoEvento);
                             eventosNuevos++;
+                            
+                            // Generar cuotas automáticamente para el nuevo evento
+                            try {
+                                cuotaEventoService.generarCuotasParaEvento(eventoGuardado.getId());
+                                log.info("Cuotas generadas automáticamente para evento: {}", eventoGuardado.getNombreEvento());
+                            } catch (Exception e) {
+                                log.error("Error al generar cuotas automáticas para evento {}: {}", 
+                                         eventoGuardado.getId(), e.getMessage());
+                            }
                         }
                     }
                     
@@ -494,5 +507,21 @@ public class EventoDeportivoService implements IEventoDeportivoService {
             log.error("Error al buscar eventos por fecha: {}", e.getMessage(), e);
             return List.of();
         }
+    }
+
+    /**
+     * Obtener evento por ID
+     */
+    @Override
+    public Optional<EventoDeportivo> getEventoById(Long id) {
+        return eventoRepository.findById(id);
+    }
+
+    /**
+     * Obtener todos los eventos
+     */
+    @Override
+    public List<EventoDeportivo> getAllEventos() {
+        return eventoRepository.findAll();
     }
 }

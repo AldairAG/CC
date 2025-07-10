@@ -26,7 +26,7 @@ public class ApuestaScheduler {
      * Procesar apuestas pendientes de eventos finalizados
      * Se ejecuta cada 30 minutos
      */
-    @Scheduled(fixedRate = 1800000) // 30 minutos
+    //@Scheduled(fixedRate = 1800000) // 30 minutos
     public void procesarApuestasPendientes() {
         log.info("=== PROCESANDO APUESTAS PENDIENTES ===");
         
@@ -43,7 +43,7 @@ public class ApuestaScheduler {
      * Cerrar cuotas para eventos que están por comenzar
      * Se ejecuta cada 5 minutos
      */
-    @Scheduled(fixedRate = 300000) // 5 minutos
+    //@Scheduled(fixedRate = 300000) // 5 minutos
     public void cerrarCuotasEventosProximos() {
         log.info("=== CERRANDO CUOTAS DE EVENTOS PRÓXIMOS ===");
         
@@ -77,7 +77,7 @@ public class ApuestaScheduler {
      * Generar cuotas para eventos futuros
      * Se ejecuta cada 12 horas
      */
-    @Scheduled(fixedRate = 43200000) // 12 horas
+    //@Scheduled(fixedRate = 43200000) // 12 horas
     public void generarCuotasEventosFuturos() {
         log.info("=== GENERANDO CUOTAS PARA EVENTOS FUTUROS ===");
         

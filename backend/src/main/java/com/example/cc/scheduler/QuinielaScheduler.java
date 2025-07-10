@@ -35,7 +35,7 @@ public class QuinielaScheduler {
      * Cerrar quinielas que han llegado a su fecha de cierre
      * Se ejecuta cada 15 minutos
      */
-    @Scheduled(fixedRate = 900000) // 15 minutos
+    //@Scheduled(fixedRate = 900000) // 15 minutos
     public void cerrarQuinielasVencidas() {
         log.info("=== VERIFICANDO QUINIELAS PARA CERRAR ===");
         
@@ -65,7 +65,7 @@ public class QuinielaScheduler {
      * Procesar resultados de quinielas cerradas
      * Se ejecuta cada hora
      */
-    @Scheduled(fixedRate = 3600000) // 1 hora
+    //@Scheduled(fixedRate = 3600000) // 1 hora
     public void procesarResultadosQuinielas() {
         log.info("=== PROCESANDO RESULTADOS DE QUINIELAS ===");
         
@@ -100,7 +100,7 @@ public class QuinielaScheduler {
      * Limpiar quinielas canceladas o muy antiguas
      * Se ejecuta cada domingo a las 3:00 AM
      */
-    @Scheduled(cron = "0 0 3 * * SUN", zone = "America/Mexico_City")
+    //@Scheduled(cron = "0 0 3 * * SUN", zone = "America/Mexico_City")
     public void limpiarQuinielasAntiguas() {
         log.info("=== LIMPIANDO QUINIELAS ANTIGUAS ===");
         
@@ -129,7 +129,7 @@ public class QuinielaScheduler {
      * Notificar recordatorios de cierre próximo
      * Se ejecuta cada 30 minutos
      */
-    @Scheduled(fixedRate = 1800000) // 30 minutos
+    //@Scheduled(fixedRate = 1800000) // 30 minutos
     public void notificarCierreProximo() {
         try {
             LocalDateTime limite = LocalDateTime.now().plusHours(2); // 2 horas antes del cierre
@@ -156,7 +156,7 @@ public class QuinielaScheduler {
      * Actualizar resultados de eventos deportivos desde TheSportsDB y verificar predicciones
      * Se ejecuta cada 2 horas
      */
-    @Scheduled(fixedRate = 7200000) // 2 horas
+    //@Scheduled(fixedRate = 7200000) // 2 horas
     public void actualizarResultadosEventosYVerificarPredicciones() {
         log.info("=== ACTUALIZANDO RESULTADOS DE EVENTOS DEPORTIVOS ===");
         

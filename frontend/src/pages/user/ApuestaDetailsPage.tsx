@@ -514,8 +514,8 @@ const ApuestaDetailsPage = () => {
             <div className="text-center min-[768px]:text-right bg-slate-800/30 rounded-xl p-4 backdrop-blur-sm border border-slate-600/30 self-center min-[768px]:self-auto">
               <div className="text-xs text-slate-400 mb-1 font-medium">Estado</div>
               <div className={`font-black text-lg capitalize ${eventoActual.estado === 'en_vivo' ? 'text-red-400' :
-                  eventoActual.estado === 'programado' ? 'text-emerald-400' :
-                    'text-slate-300'
+                eventoActual.estado === 'programado' ? 'text-emerald-400' :
+                  'text-slate-300'
                 }`}>
                 {eventoActual.estado.replace('_', ' ')}
               </div>
@@ -533,8 +533,8 @@ const ApuestaDetailsPage = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`group whitespace-nowrap px-4 py-3 min-[768px]:px-6 text-sm font-semibold rounded-xl transition-all duration-300 flex-shrink-0 min-w-fit relative overflow-hidden touch-manipulation ${activeTab === tab.id
-                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-500/25 scale-105'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50 border border-slate-600/30 hover:border-amber-500/50 bg-slate-800/30 backdrop-blur-sm active:scale-95'
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg shadow-amber-500/25 scale-105'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50 border border-slate-600/30 hover:border-amber-500/50 bg-slate-800/30 backdrop-blur-sm active:scale-95'
                   }`}
                 style={{ scrollSnapAlign: 'start' }}
               >
@@ -544,8 +544,8 @@ const ApuestaDetailsPage = () => {
                   </span>
                   <span className="hidden min-[768px]:inline">{tab.name}</span>
                   <span className={`text-xs px-2 py-1 rounded-full font-bold ${activeTab === tab.id
-                      ? 'bg-white/20 text-white'
-                      : 'bg-amber-500/20 text-amber-400 group-hover:bg-amber-500/30'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-amber-500/20 text-amber-400 group-hover:bg-amber-500/30'
                     }`}>
                     {tab.count}
                   </span>
@@ -627,8 +627,8 @@ const ApuestaDetailsPage = () => {
                         onClick={() => handleBetClick(market.name, option.name, option.odds, option.isDisabled)}
                         disabled={option.isDisabled}
                         className={`group/option relative p-4 min-[768px]:p-5 rounded-xl text-left transition-all duration-300 min-w-0 overflow-hidden touch-manipulation ${option.isDisabled
-                            ? 'bg-slate-700/30 border border-slate-600/50 text-slate-500 cursor-not-allowed'
-                            : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/30 hover:border-amber-500/50 hover:from-amber-600/10 hover:to-orange-600/10 cursor-pointer active:scale-95 shadow-lg hover:shadow-amber-500/20'
+                          ? 'bg-slate-700/30 border border-slate-600/50 text-slate-500 cursor-not-allowed'
+                          : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/30 hover:border-amber-500/50 hover:from-amber-600/10 hover:to-orange-600/10 cursor-pointer active:scale-95 shadow-lg hover:shadow-amber-500/20'
                           }`}
                       >
                         {/* Efecto de resplandor en hover - solo pantallas grandes */}
@@ -761,8 +761,8 @@ const ApuestaDetailsPage = () => {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <div className={`w-3 h-3 rounded-full ${cuota.tipoResultado === 'LOCAL' ? 'bg-blue-500' :
-                                cuota.tipoResultado === 'VISITANTE' ? 'bg-red-500' :
-                                  'bg-gray-500'
+                              cuota.tipoResultado === 'VISITANTE' ? 'bg-red-500' :
+                                'bg-gray-500'
                               }`}></div>
                             <span className="text-sm font-semibold text-slate-300 truncate" title={equipoNombre}>
                               <span className="min-[480px]:hidden">
@@ -777,8 +777,8 @@ const ApuestaDetailsPage = () => {
                           {/* Indicador de tendencia */}
                           {tendencia && (
                             <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${tendencia.tendencia === 'SUBIENDO' ? 'bg-emerald-500/20 text-emerald-400' :
-                                tendencia.tendencia === 'BAJANDO' ? 'bg-red-500/20 text-red-400' :
-                                  'bg-slate-500/20 text-slate-400'
+                              tendencia.tendencia === 'BAJANDO' ? 'bg-red-500/20 text-red-400' :
+                                'bg-slate-500/20 text-slate-400'
                               }`}>
                               <span className="text-base">
                                 {tendencia.tendencia === 'SUBIENDO' ? '↗' :
@@ -797,7 +797,7 @@ const ApuestaDetailsPage = () => {
                         {/* Cuota principal */}
                         <div className="mb-3">
                           <div className="text-3xl min-[768px]:text-4xl font-black text-amber-400 group-hover:text-amber-300 transition-colors">
-                            {cuota.cuotaActual.toFixed(2)}
+                            {(cuota.cuotaActual || 0).toFixed(2)}
                           </div>
                           <div className="text-xs text-slate-400">
                             Retorno: +{((cuota.cuotaActual - 1) * 100).toFixed(0)}%

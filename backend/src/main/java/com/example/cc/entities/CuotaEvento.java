@@ -23,6 +23,9 @@ public class CuotaEvento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Integer version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evento_deportivo_id", nullable = false)
     @JsonIgnore

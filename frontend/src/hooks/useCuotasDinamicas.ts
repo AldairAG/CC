@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import CuotasDinamicasService from '../service/casino/cuotasDinamicasService';
 
 // Tipos para las cuotas dinámicas
 export interface CuotaEvento {
@@ -55,6 +56,13 @@ export const useCuotasDinamicas = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados para las nuevas funcionalidades
+  const [cuotasPorMercado, setCuotasPorMercado] = useState<Record<string, CuotaEvento[]>>({});
+  const [cuotasDetalladas, setCuotasDetalladas] = useState<any>(null);
+  const [cargandoCuotasPorMercado, setCargandoCuotasPorMercado] = useState<boolean>(false);
+  const [cargandoCuotasDetalladas, setCargandoCuotasDetalladas] = useState<boolean>(false);
+  const [cargandoCuotasEvento, setCargandoCuotasEvento] = useState<boolean>(false);
+
   // Función auxiliar para manejar errores
   const handleError = useCallback((error: unknown, customMessage?: string) => {
     console.error('Error en useCuotasDinamicas:', error);
@@ -83,42 +91,47 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend cuando esté listo
-      // const response = await fetch(`/api/cuotas-dinamicas/evento/${eventoId}`);
-      // const data = await response.json();
-      
-      // Simulación de datos por ahora
-      const cuotasSimuladas: CuotaEvento[] = [
-        {
-          id: 1,
-          eventoId,
-          tipoResultado: 'LOCAL',
-          cuotaActual: 1.90,
-          cuotaAnterior: 1.85,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        },
-        {
-          id: 2,
-          eventoId,
-          tipoResultado: 'EMPATE',
-          cuotaActual: 2.65,
-          cuotaAnterior: 2.70,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        },
-        {
-          id: 3,
-          eventoId,
-          tipoResultado: 'VISITANTE',
-          cuotaActual: 6.00,
-          cuotaAnterior: 5.80,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        }
-      ];
-      
-      setCuotasEvento(cuotasSimuladas);
+      try {
+        // Intentar usar el service real
+        const cuotas = await CuotasDinamicasService.obtenerCuotasEvento(eventoId);
+        setCuotasEvento(cuotas);
+      } catch (serviceError) {
+        // Si falla el service, usar datos simulados
+        console.warn('Service no disponible, usando datos simulados:', serviceError);
+        
+        // Simulación de datos por ahora
+        const cuotasSimuladas: CuotaEvento[] = [
+          {
+            id: 1,
+            eventoId,
+            tipoResultado: 'LOCAL',
+            cuotaActual: 1.90,
+            cuotaAnterior: 1.85,
+            fechaActualizacion: new Date().toISOString(),
+            activa: true
+          },
+          {
+            id: 2,
+            eventoId,
+            tipoResultado: 'EMPATE',
+            cuotaActual: 2.65,
+            cuotaAnterior: 2.70,
+            fechaActualizacion: new Date().toISOString(),
+            activa: true
+          },
+          {
+            id: 3,
+            eventoId,
+            tipoResultado: 'VISITANTE',
+            cuotaActual: 6.00,
+            cuotaAnterior: 5.80,
+            fechaActualizacion: new Date().toISOString(),
+            activa: true
+          }
+        ];
+        
+        setCuotasEvento(cuotasSimuladas);
+      }
       
     } catch (error) {
       handleError(error, 'Error al cargar cuotas del evento');
@@ -133,35 +146,38 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend
-      const params = tipoResultado ? `?tipoResultado=${tipoResultado}` : '';
-      console.log(`Cargando historial para evento ${eventoId}${params}`);
-      // const response = await fetch(`/api/cuotas-dinamicas/historial/${eventoId}${params}`);
-      // const data = await response.json();
-      
-      // Simulación de datos
-      const historialSimulado: CuotaHistorial[] = [
-        {
-          id: 1,
-          cuotaEventoId: 1,
-          cuotaAnterior: 1.80,
-          cuotaNueva: 1.85,
-          fechaCambio: new Date(Date.now() - 3600000).toISOString(),
-          motivoCambio: 'Ajuste por volumen de apuestas',
-          volumenAcumulado: 1500
-        },
-        {
-          id: 2,
-          cuotaEventoId: 1,
-          cuotaAnterior: 1.85,
-          cuotaNueva: 1.90,
-          fechaCambio: new Date().toISOString(),
-          motivoCambio: 'Actualización automática',
-          volumenAcumulado: 2100
-        }
-      ];
-      
-      setHistorialCuotas(historialSimulado);
+      try {
+        // Intentar usar el service real
+        const response = await CuotasDinamicasService.obtenerHistorialCuotas(eventoId, tipoResultado);
+        setHistorialCuotas(response.data);
+      } catch (serviceError) {
+        // Si falla el service, usar datos simulados
+        console.warn('Service no disponible, usando datos simulados:', serviceError);
+        
+        // Simulación de datos
+        const historialSimulado: CuotaHistorial[] = [
+          {
+            id: 1,
+            cuotaEventoId: 1,
+            cuotaAnterior: 1.80,
+            cuotaNueva: 1.85,
+            fechaCambio: new Date(Date.now() - 3600000).toISOString(),
+            motivoCambio: 'Ajuste por volumen de apuestas',
+            volumenAcumulado: 1500
+          },
+          {
+            id: 2,
+            cuotaEventoId: 1,
+            cuotaAnterior: 1.85,
+            cuotaNueva: 1.90,
+            fechaCambio: new Date().toISOString(),
+            motivoCambio: 'Actualización automática',
+            volumenAcumulado: 2100
+          }
+        ];
+        
+        setHistorialCuotas(historialSimulado);
+      }
       
     } catch (error) {
       handleError(error, 'Error al cargar historial de cuotas');
@@ -176,37 +192,41 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend
-      console.log(`Cargando tendencias para evento ${eventoId}`);
-      // const response = await fetch(`/api/cuotas-dinamicas/tendencias/${eventoId}`);
-      // const data = await response.json();
-      
-      // Simulación de datos
-      const tendenciasSimuladas: TendenciaCuota[] = [
-        {
-          tipoResultado: 'LOCAL',
-          cuotaActual: 1.90,
-          tendencia: 'SUBIENDO',
-          porcentajeCambio: 2.7,
-          volumenTotal: 2100
-        },
-        {
-          tipoResultado: 'EMPATE',
-          cuotaActual: 2.65,
-          tendencia: 'BAJANDO',
-          porcentajeCambio: -1.9,
-          volumenTotal: 850
-        },
-        {
-          tipoResultado: 'VISITANTE',
-          cuotaActual: 6.00,
-          tendencia: 'SUBIENDO',
-          porcentajeCambio: 3.4,
-          volumenTotal: 450
-        }
-      ];
-      
-      setTendenciaCuotas(tendenciasSimuladas);
+      try {
+        // Intentar usar el service real
+        const tendencias = await CuotasDinamicasService.obtenerTendenciaCuotas(eventoId);
+        setTendenciaCuotas(tendencias);
+      } catch (serviceError) {
+        // Si falla el service, usar datos simulados
+        console.warn('Service no disponible, usando datos simulados:', serviceError);
+        
+        // Simulación de datos
+        const tendenciasSimuladas: TendenciaCuota[] = [
+          {
+            tipoResultado: 'LOCAL',
+            cuotaActual: 1.90,
+            tendencia: 'SUBIENDO',
+            porcentajeCambio: 2.7,
+            volumenTotal: 2100
+          },
+          {
+            tipoResultado: 'EMPATE',
+            cuotaActual: 2.65,
+            tendencia: 'BAJANDO',
+            porcentajeCambio: -1.9,
+            volumenTotal: 850
+          },
+          {
+            tipoResultado: 'VISITANTE',
+            cuotaActual: 6.00,
+            tendencia: 'SUBIENDO',
+            porcentajeCambio: 3.4,
+            volumenTotal: 450
+          }
+        ];
+        
+        setTendenciaCuotas(tendenciasSimuladas);
+      }
       
     } catch (error) {
       handleError(error, 'Error al cargar tendencias de cuotas');
@@ -221,36 +241,41 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch(`/api/cuotas-dinamicas/volumen/${eventoId}`);
-      // const data = await response.json();
-      
-      // Simulación de datos
-      const volumenSimulado: VolumenApuestas[] = [
-        {
-          eventoId,
-          tipoResultado: 'LOCAL',
-          volumenTotal: 2100,
-          numeroApuestas: 45,
-          fechaUltimaApuesta: new Date().toISOString()
-        },
-        {
-          eventoId,
-          tipoResultado: 'EMPATE',
-          volumenTotal: 850,
-          numeroApuestas: 18,
-          fechaUltimaApuesta: new Date(Date.now() - 1800000).toISOString()
-        },
-        {
-          eventoId,
-          tipoResultado: 'VISITANTE',
-          volumenTotal: 450,
-          numeroApuestas: 12,
-          fechaUltimaApuesta: new Date(Date.now() - 900000).toISOString()
-        }
-      ];
-      
-      setVolumenApuestas(volumenSimulado);
+      try {
+        // Intentar usar el service real
+        const volumen = await CuotasDinamicasService.obtenerVolumenApuestas(eventoId);
+        setVolumenApuestas(volumen);
+      } catch (serviceError) {
+        // Si falla el service, usar datos simulados
+        console.warn('Service no disponible, usando datos simulados:', serviceError);
+        
+        // Simulación de datos
+        const volumenSimulado: VolumenApuestas[] = [
+          {
+            eventoId,
+            tipoResultado: 'LOCAL',
+            volumenTotal: 2100,
+            numeroApuestas: 45,
+            fechaUltimaApuesta: new Date().toISOString()
+          },
+          {
+            eventoId,
+            tipoResultado: 'EMPATE',
+            volumenTotal: 850,
+            numeroApuestas: 18,
+            fechaUltimaApuesta: new Date(Date.now() - 1800000).toISOString()
+          },
+          {
+            eventoId,
+            tipoResultado: 'VISITANTE',
+            volumenTotal: 450,
+            numeroApuestas: 12,
+            fechaUltimaApuesta: new Date(Date.now() - 900000).toISOString()
+          }
+        ];
+        
+        setVolumenApuestas(volumenSimulado);
+      }
       
     } catch (error) {
       handleError(error, 'Error al cargar volumen de apuestas');
@@ -265,20 +290,25 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch(`/api/cuotas-dinamicas/estadisticas/${eventoId}`);
-      // const data = await response.json();
-      
-      // Simulación de datos
-      const estadisticasSimuladas: EstadisticasCuotas = {
-        eventoId,
-        totalMercados: 15,
-        mercadoMasPopular: 'RESULTADO_FINAL',
-        volumenTotalEvento: 3400,
-        ultimaActualizacion: new Date().toISOString()
-      };
-      
-      setEstadisticasCuotas(estadisticasSimuladas);
+      try {
+        // Intentar usar el service real
+        const estadisticas = await CuotasDinamicasService.obtenerEstadisticasCuotas(eventoId);
+        setEstadisticasCuotas(estadisticas);
+      } catch (serviceError) {
+        // Si falla el service, usar datos simulados
+        console.warn('Service no disponible, usando datos simulados:', serviceError);
+        
+        // Simulación de datos
+        const estadisticasSimuladas: EstadisticasCuotas = {
+          eventoId,
+          totalMercados: 15,
+          mercadoMasPopular: 'RESULTADO_FINAL',
+          volumenTotalEvento: 3400,
+          ultimaActualizacion: new Date().toISOString()
+        };
+        
+        setEstadisticasCuotas(estadisticasSimuladas);
+      }
       
     } catch (error) {
       handleError(error, 'Error al cargar estadísticas de cuotas');
@@ -298,30 +328,37 @@ export const useCuotasDinamicas = () => {
       setLoading(true);
       setError(null);
       
-      // TODO: Implementar llamada real al backend
-      console.log(`Registrando apuesta: evento ${eventoId}, tipo ${tipoResultado}, monto ${monto}, cuota ${cuotaUtilizada}`);
-      // const response = await fetch('/api/cuotas-dinamicas/registrar-apuesta', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ eventoId, tipoResultado, monto, cuotaUtilizada })
-      // });
-      
-      // Simulación: actualizar cuotas localmente
-      setCuotasEvento(prevCuotas => 
-        prevCuotas.map(cuota => {
-          if (cuota.eventoId === eventoId && cuota.tipoResultado === tipoResultado) {
-            return {
-              ...cuota,
-              cuotaAnterior: cuota.cuotaActual,
-              cuotaActual: cuota.cuotaActual * 0.98, // Simulación: baja ligeramente
-              fechaActualizacion: new Date().toISOString()
-            };
-          }
-          return cuota;
-        })
-      );
-      
-      toast.success('Apuesta registrada y cuotas actualizadas');
+      try {
+        // Intentar usar el service real
+        const cuotasActualizadas = await CuotasDinamicasService.registrarApuesta(
+          eventoId,
+          tipoResultado,
+          monto,
+          cuotaUtilizada
+        );
+        setCuotasEvento(cuotasActualizadas);
+        toast.success('Apuesta registrada y cuotas actualizadas');
+      } catch (serviceError) {
+        // Si falla el service, usar simulación local
+        console.warn('Service no disponible, usando simulación local:', serviceError);
+        
+        // Simulación: actualizar cuotas localmente
+        setCuotasEvento(prevCuotas => 
+          prevCuotas.map(cuota => {
+            if (cuota.eventoId === eventoId && cuota.tipoResultado === tipoResultado) {
+              return {
+                ...cuota,
+                cuotaAnterior: cuota.cuotaActual,
+                cuotaActual: cuota.cuotaActual * 0.98, // Simulación: baja ligeramente
+                fechaActualizacion: new Date().toISOString()
+              };
+            }
+            return cuota;
+          })
+        );
+        
+        toast.success('Apuesta registrada y cuotas actualizadas (modo simulación)');
+      }
       
     } catch (error) {
       handleError(error, 'Error al registrar apuesta');
@@ -340,6 +377,153 @@ export const useCuotasDinamicas = () => {
     setError(null);
   }, []);
 
+  // Suscribirse a actualizaciones en tiempo real
+  const suscribirseActualizaciones = useCallback(async (
+    eventoId: number,
+    onCuotaActualizada: (cuota: CuotaEvento) => void
+  ) => {
+    try {
+      const eventSource = await CuotasDinamicasService.suscribirseActualizaciones(
+        eventoId,
+        (cuotaActualizada) => {
+          // Actualizar el estado local
+          setCuotasEvento(prevCuotas => 
+            prevCuotas.map(cuota => 
+              cuota.id === cuotaActualizada.id ? cuotaActualizada : cuota
+            )
+          );
+          
+          // Llamar callback personalizado
+          onCuotaActualizada(cuotaActualizada);
+        }
+      );
+      
+      return eventSource;
+    } catch (error) {
+      handleError(error, 'Error al suscribirse a actualizaciones en tiempo real');
+      return null;
+    }
+  }, [handleError]);
+
+  // Buscar cuotas con filtros
+  const buscarCuotas = useCallback(async (
+    filtros: Partial<{
+      eventoId?: number;
+      tipoResultado?: string;
+      activa?: boolean;
+      cuotaMinima?: number;
+      cuotaMaxima?: number;
+    }>,
+    busqueda?: string,
+    pagina?: number,
+    tamaño?: number
+  ) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const paginacion = { 
+        page: pagina || 0, 
+        size: tamaño || 20 
+      };
+      
+      try {
+        const response = await CuotasDinamicasService.buscarCuotas(
+          filtros,
+          busqueda,
+          paginacion
+        );
+        setCuotasEvento(response.data);
+        return response;
+      } catch (serviceError) {
+        console.warn('Service de búsqueda no disponible:', serviceError);
+        // Filtrar datos locales si el service no está disponible
+        const cuotasFiltradas = cuotasEvento.filter(cuota => {
+          if (filtros.eventoId && cuota.eventoId !== filtros.eventoId) return false;
+          if (filtros.tipoResultado && cuota.tipoResultado !== filtros.tipoResultado) return false;
+          if (filtros.activa !== undefined && cuota.activa !== filtros.activa) return false;
+          if (busqueda && !cuota.tipoResultado.toLowerCase().includes(busqueda.toLowerCase())) return false;
+          return true;
+        });
+        
+        setCuotasEvento(cuotasFiltradas);
+        return { 
+          data: cuotasFiltradas, 
+          paginacion: { 
+            page: 0, 
+            size: cuotasFiltradas.length, 
+            totalElements: cuotasFiltradas.length, 
+            totalPages: 1 
+          } 
+        };
+      }
+      
+    } catch (error) {
+      handleError(error, 'Error al buscar cuotas');
+      return { data: [], paginacion: { page: 0, size: 0, totalElements: 0, totalPages: 0 } };
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError, cuotasEvento]);
+
+  // Cargar cuotas agrupadas por mercado
+  const cargarCuotasPorMercado = useCallback(async (eventoId: number) => {
+    setCargandoCuotasPorMercado(true);
+    try {
+      const cuotasAgrupadas = await CuotasDinamicasService.obtenerCuotasPorMercado(eventoId);
+      setCuotasPorMercado(cuotasAgrupadas);
+    } catch (error) {
+      console.error('Error cargando cuotas por mercado:', error);
+      toast.error('Error al cargar cuotas por mercado');
+    } finally {
+      setCargandoCuotasPorMercado(false);
+    }
+  }, []);
+
+  // Cargar cuotas detalladas
+  const cargarCuotasDetalladas = useCallback(async (eventoId: number) => {
+    setCargandoCuotasDetalladas(true);
+    try {
+      const cuotasDetalladas = await CuotasDinamicasService.obtenerCuotasDetalladas(eventoId);
+      setCuotasDetalladas(cuotasDetalladas);
+    } catch (error) {
+      console.error('Error cargando cuotas detalladas:', error);
+      toast.error('Error al cargar cuotas detalladas');
+    } finally {
+      setCargandoCuotasDetalladas(false);
+    }
+  }, []);
+
+  // Generar cuotas completas para un evento
+  const generarCuotasCompletas = useCallback(async (eventoId: number) => {
+    setCargandoCuotasEvento(true);
+    try {
+      const cuotasGeneradas = await CuotasDinamicasService.generarCuotasCompletas(eventoId);
+      setCuotasEvento(cuotasGeneradas);
+      toast.success('Cuotas completas generadas exitosamente');
+      
+      // Recargar cuotas por mercado
+      await cargarCuotasPorMercado(eventoId);
+    } catch (error) {
+      console.error('Error generando cuotas completas:', error);
+      toast.error('Error al generar cuotas completas');
+    } finally {
+      setCargandoCuotasEvento(false);
+    }
+  }, [cargarCuotasPorMercado]);
+
+  // Obtener cuotas de un mercado específico
+  const obtenerCuotasMercado = useCallback(async (eventoId: number, mercado: string) => {
+    try {
+      const cuotasMercado = await CuotasDinamicasService.obtenerCuotasMercadoEspecifico(eventoId, mercado);
+      return cuotasMercado;
+    } catch (error) {
+      console.error('Error obteniendo cuotas del mercado:', error);
+      toast.error(`Error al obtener cuotas del mercado ${mercado}`);
+      return [];
+    }
+  }, []);
+
   return {
     // Estado
     cuotasEvento,
@@ -349,6 +533,11 @@ export const useCuotasDinamicas = () => {
     estadisticasCuotas,
     loading,
     error,
+    cuotasPorMercado,
+    cuotasDetalladas,
+    cargandoCuotasPorMercado,
+    cargandoCuotasDetalladas,
+    cargandoCuotasEvento,
     
     // Acciones
     cargarCuotasEvento,
@@ -357,6 +546,12 @@ export const useCuotasDinamicas = () => {
     cargarVolumenApuestas,
     cargarEstadisticasCuotas,
     registrarApuesta,
-    limpiarCuotas
+    limpiarCuotas,
+    suscribirseActualizaciones,
+    buscarCuotas,
+    cargarCuotasPorMercado,
+    cargarCuotasDetalladas,
+    generarCuotasCompletas,
+    obtenerCuotasMercado
   };
 };

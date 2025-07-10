@@ -1,5 +1,6 @@
 package com.example.cc.controller;
 
+import com.example.cc.dto.CuotasMercadoDTO;
 import com.example.cc.entities.CuotaEvento;
 import com.example.cc.entities.CuotaHistorial;
 import com.example.cc.entities.TipoResultado;
@@ -185,6 +186,64 @@ public class CuotasDinamicasController {
         }
     }
 
+    /**
+     * Obtener cuotas agrupadas por mercado para un evento
+     */
+    @GetMapping("/evento/{eventoId}/cuotas-por-mercado")
+    public ResponseEntity<Map<String, List<CuotaEvento>>> getCuotasPorMercado(@PathVariable Long eventoId) {
+        try {
+            Map<String, List<CuotaEvento>> cuotasAgrupadas = cuotaEventoService.getCuotasAgrupadasPorMercado(eventoId);
+            return ResponseEntity.ok(cuotasAgrupadas);
+        } catch (Exception e) {
+            log.error("Error obteniendo cuotas por mercado para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener cuotas para un mercado específico de un evento
+     */
+    @GetMapping("/evento/{eventoId}/mercado/{mercado}")
+    public ResponseEntity<List<CuotaEvento>> getCuotasPorMercadoEspecifico(
+            @PathVariable Long eventoId, 
+            @PathVariable String mercado) {
+        try {
+            List<CuotaEvento> cuotas = cuotaEventoService.getCuotasByEventoIdAndMercado(eventoId, mercado);
+            return ResponseEntity.ok(cuotas);
+        } catch (Exception e) {
+            log.error("Error obteniendo cuotas para mercado {} en evento {}: {}", mercado, eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Generar cuotas completas para un evento (todos los mercados)
+     */
+    @PostMapping("/evento/{eventoId}/generar-cuotas-completas")
+    public ResponseEntity<List<CuotaEvento>> generarCuotasCompletas(@PathVariable Long eventoId) {
+        try {
+            List<CuotaEvento> cuotasGeneradas = cuotaEventoService.generarCuotasParaEvento(eventoId);
+            return ResponseEntity.ok(cuotasGeneradas);
+        } catch (Exception e) {
+            log.error("Error generando cuotas completas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Generar solo cuotas básicas para un evento (1X2)
+     */
+    @PostMapping("/evento/{eventoId}/generar-cuotas-basicas")
+    public ResponseEntity<List<CuotaEvento>> generarCuotasBasicas(@PathVariable Long eventoId) {
+        try {
+            List<CuotaEvento> cuotasGeneradas = cuotaEventoService.generarCuotasBasicasParaEvento(eventoId);
+            return ResponseEntity.ok(cuotasGeneradas);
+        } catch (Exception e) {
+            log.error("Error generando cuotas básicas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
 
     /**
@@ -204,5 +263,33 @@ public class CuotasDinamicasController {
 
         public BigDecimal getMontoApuesta() { return montoApuesta; }
         public void setMontoApuesta(BigDecimal montoApuesta) { this.montoApuesta = montoApuesta; }
+    }
+
+    /**
+     * Obtener cuotas detalladas por mercado para un evento (con información adicional)
+     */
+    @GetMapping("/evento/{eventoId}/cuotas-detalladas")
+    public ResponseEntity<CuotasMercadoDTO> getCuotasDetalladas(@PathVariable Long eventoId) {
+        try {
+            Map<String, List<CuotaEvento>> cuotasAgrupadas = cuotaEventoService.getCuotasAgrupadasPorMercado(eventoId);
+            
+            // Obtener información del evento (asumiendo que tenemos el primer elemento)
+            if (cuotasAgrupadas.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            
+            CuotaEvento primeraCuota = cuotasAgrupadas.values().iterator().next().get(0);
+            String nombreEvento = primeraCuota.getEventoDeportivo().getNombreEvento();
+            String equipoLocal = primeraCuota.getEventoDeportivo().getEquipoLocal();
+            String equipoVisitante = primeraCuota.getEventoDeportivo().getEquipoVisitante();
+            
+            CuotasMercadoDTO response = CuotasMercadoDTO.fromCuotasMap(
+                    eventoId, nombreEvento, equipoLocal, equipoVisitante, cuotasAgrupadas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error obteniendo cuotas detalladas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

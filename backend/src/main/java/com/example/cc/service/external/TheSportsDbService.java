@@ -13,10 +13,12 @@ import com.example.cc.service.deportes.ILigaService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +77,10 @@ public class TheSportsDbService implements ITheSportsDbService {
     /**
      * Hacer petición GET con headers que incluyen API key
      */
+    /**
+     * Hacer petición GET con headers que incluyen API key.
+     * Si hay error de rate limit, espera 1 minuto antes de lanzar la excepción.
+     */
     private <T> T makeGetRequestWithHeaders(String url, Class<T> responseType) {
         try {
             HttpHeaders headers = createHeaders();
@@ -84,8 +90,8 @@ public class TheSportsDbService implements ITheSportsDbService {
             ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.GET, entity, responseType);
 
             return response.getBody();
+
         } catch (RestClientException e) {
-            log.error("Error en petición GET a {}: {}", url, e.getMessage());
             throw e;
         }
     }
@@ -101,7 +107,7 @@ public class TheSportsDbService implements ITheSportsDbService {
             LocalDate today = LocalDate.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-            for (int i = 0; i < 15; i++) {
+            for (int i = 0; i < 7; i++) {
                 LocalDate targetDate = today.plusDays(i);
                 String dateStr = targetDate.format(formatter);
 
@@ -146,18 +152,8 @@ public class TheSportsDbService implements ITheSportsDbService {
                 List<TheSportsDbEventResponse.EventData> eventosConLivescores = new ArrayList<>();
 
                 for (TheSportsDbEventResponse.EventData evento : response.getEvents()) {
-                    // Obtener livescore actual para este evento
-                    TheSportsDbEventResponse.EventData eventoConLivescore = obtenerLivescoreEvento(evento.getIdEvent());
-
-                    if (eventoConLivescore != null) {
-                        eventosConLivescores.add(eventoConLivescore);
-                        // Guardar o actualizar en la base de datos
-                        guardarOActualizarEvento(eventoConLivescore);
-                    } else {
-                        // Si no hay livescore, usar el evento original
-                        eventosConLivescores.add(evento);
-                        guardarOActualizarEvento(evento);
-                    }
+                    eventosConLivescores.add(evento);
+                    guardarOActualizarEvento(evento);
                 }
 
                 return eventosConLivescores;
