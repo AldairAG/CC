@@ -47,6 +47,10 @@ export interface EstadisticasCuotas {
   ultimaActualizacion: string;
 }
 
+export interface CuotasDetalladas {
+  [mercado: string]: CuotaEvento[];
+}
+
 export const useCuotasDinamicas = () => {
   const [cuotasEvento, setCuotasEvento] = useState<CuotaEvento[]>([]);
   const [historialCuotas, setHistorialCuotas] = useState<CuotaHistorial[]>([]);
@@ -58,17 +62,19 @@ export const useCuotasDinamicas = () => {
 
   // Estados para las nuevas funcionalidades
   const [cuotasPorMercado, setCuotasPorMercado] = useState<Record<string, CuotaEvento[]>>({});
-  const [cuotasDetalladas, setCuotasDetalladas] = useState<any>(null);
+  const [cuotasDetalladas, setCuotasDetalladas] = useState<CuotasDetalladas | null>(null);
   const [cargandoCuotasPorMercado, setCargandoCuotasPorMercado] = useState<boolean>(false);
   const [cargandoCuotasDetalladas, setCargandoCuotasDetalladas] = useState<boolean>(false);
   const [cargandoCuotasEvento, setCargandoCuotasEvento] = useState<boolean>(false);
+  const [cuotasCompletasDisponibles, setCuotasCompletasDisponibles] = useState<boolean>(false);
+  const [verificandoCuotasCompletas, setVerificandoCuotasCompletas] = useState<boolean>(false);
 
   // Función auxiliar para manejar errores
   const handleError = useCallback((error: unknown, customMessage?: string) => {
     console.error('Error en useCuotasDinamicas:', error);
-    
+
     let errorMessage = customMessage || 'Error desconocido';
-    
+
     if (error && typeof error === 'object') {
       if ('response' in error && error.response && typeof error.response === 'object') {
         if ('data' in error.response && error.response.data && typeof error.response.data === 'object') {
@@ -80,7 +86,7 @@ export const useCuotasDinamicas = () => {
         errorMessage = customMessage || error.message;
       }
     }
-    
+
     setError(errorMessage);
     toast.error(errorMessage);
   }, []);
@@ -90,15 +96,15 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const cuotas = await CuotasDinamicasService.obtenerCuotasEvento(eventoId);
         setCuotasEvento(cuotas);
       } catch (serviceError) {
-        // Si falla el service, usar datos simulados
-        console.warn('Service no disponible, usando datos simulados:', serviceError);
-        
+
+        console.log('Service no disponible, usando datos simulados:', serviceError);
+
         // Simulación de datos por ahora
         const cuotasSimuladas: CuotaEvento[] = [
           {
@@ -129,10 +135,10 @@ export const useCuotasDinamicas = () => {
             activa: true
           }
         ];
-        
+
         setCuotasEvento(cuotasSimuladas);
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al cargar cuotas del evento');
     } finally {
@@ -145,7 +151,7 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const response = await CuotasDinamicasService.obtenerHistorialCuotas(eventoId, tipoResultado);
@@ -153,7 +159,7 @@ export const useCuotasDinamicas = () => {
       } catch (serviceError) {
         // Si falla el service, usar datos simulados
         console.warn('Service no disponible, usando datos simulados:', serviceError);
-        
+
         // Simulación de datos
         const historialSimulado: CuotaHistorial[] = [
           {
@@ -175,10 +181,10 @@ export const useCuotasDinamicas = () => {
             volumenAcumulado: 2100
           }
         ];
-        
+
         setHistorialCuotas(historialSimulado);
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al cargar historial de cuotas');
     } finally {
@@ -191,7 +197,7 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const tendencias = await CuotasDinamicasService.obtenerTendenciaCuotas(eventoId);
@@ -199,7 +205,7 @@ export const useCuotasDinamicas = () => {
       } catch (serviceError) {
         // Si falla el service, usar datos simulados
         console.warn('Service no disponible, usando datos simulados:', serviceError);
-        
+
         // Simulación de datos
         const tendenciasSimuladas: TendenciaCuota[] = [
           {
@@ -224,10 +230,10 @@ export const useCuotasDinamicas = () => {
             volumenTotal: 450
           }
         ];
-        
+
         setTendenciaCuotas(tendenciasSimuladas);
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al cargar tendencias de cuotas');
     } finally {
@@ -240,7 +246,7 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const volumen = await CuotasDinamicasService.obtenerVolumenApuestas(eventoId);
@@ -248,7 +254,7 @@ export const useCuotasDinamicas = () => {
       } catch (serviceError) {
         // Si falla el service, usar datos simulados
         console.warn('Service no disponible, usando datos simulados:', serviceError);
-        
+
         // Simulación de datos
         const volumenSimulado: VolumenApuestas[] = [
           {
@@ -273,10 +279,10 @@ export const useCuotasDinamicas = () => {
             fechaUltimaApuesta: new Date(Date.now() - 900000).toISOString()
           }
         ];
-        
+
         setVolumenApuestas(volumenSimulado);
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al cargar volumen de apuestas');
     } finally {
@@ -289,7 +295,7 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const estadisticas = await CuotasDinamicasService.obtenerEstadisticasCuotas(eventoId);
@@ -297,7 +303,7 @@ export const useCuotasDinamicas = () => {
       } catch (serviceError) {
         // Si falla el service, usar datos simulados
         console.warn('Service no disponible, usando datos simulados:', serviceError);
-        
+
         // Simulación de datos
         const estadisticasSimuladas: EstadisticasCuotas = {
           eventoId,
@@ -306,10 +312,10 @@ export const useCuotasDinamicas = () => {
           volumenTotalEvento: 3400,
           ultimaActualizacion: new Date().toISOString()
         };
-        
+
         setEstadisticasCuotas(estadisticasSimuladas);
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al cargar estadísticas de cuotas');
     } finally {
@@ -327,7 +333,7 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       try {
         // Intentar usar el service real
         const cuotasActualizadas = await CuotasDinamicasService.registrarApuesta(
@@ -341,9 +347,9 @@ export const useCuotasDinamicas = () => {
       } catch (serviceError) {
         // Si falla el service, usar simulación local
         console.warn('Service no disponible, usando simulación local:', serviceError);
-        
+
         // Simulación: actualizar cuotas localmente
-        setCuotasEvento(prevCuotas => 
+        setCuotasEvento(prevCuotas =>
           prevCuotas.map(cuota => {
             if (cuota.eventoId === eventoId && cuota.tipoResultado === tipoResultado) {
               return {
@@ -356,10 +362,10 @@ export const useCuotasDinamicas = () => {
             return cuota;
           })
         );
-        
+
         toast.success('Apuesta registrada y cuotas actualizadas (modo simulación)');
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al registrar apuesta');
     } finally {
@@ -387,17 +393,17 @@ export const useCuotasDinamicas = () => {
         eventoId,
         (cuotaActualizada) => {
           // Actualizar el estado local
-          setCuotasEvento(prevCuotas => 
-            prevCuotas.map(cuota => 
+          setCuotasEvento(prevCuotas =>
+            prevCuotas.map(cuota =>
               cuota.id === cuotaActualizada.id ? cuotaActualizada : cuota
             )
           );
-          
+
           // Llamar callback personalizado
           onCuotaActualizada(cuotaActualizada);
         }
       );
-      
+
       return eventSource;
     } catch (error) {
       handleError(error, 'Error al suscribirse a actualizaciones en tiempo real');
@@ -421,12 +427,12 @@ export const useCuotasDinamicas = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const paginacion = { 
-        page: pagina || 0, 
-        size: tamaño || 20 
+
+      const paginacion = {
+        page: pagina || 0,
+        size: tamaño || 20
       };
-      
+
       try {
         const response = await CuotasDinamicasService.buscarCuotas(
           filtros,
@@ -445,19 +451,19 @@ export const useCuotasDinamicas = () => {
           if (busqueda && !cuota.tipoResultado.toLowerCase().includes(busqueda.toLowerCase())) return false;
           return true;
         });
-        
+
         setCuotasEvento(cuotasFiltradas);
-        return { 
-          data: cuotasFiltradas, 
-          paginacion: { 
-            page: 0, 
-            size: cuotasFiltradas.length, 
-            totalElements: cuotasFiltradas.length, 
-            totalPages: 1 
-          } 
+        return {
+          data: cuotasFiltradas,
+          paginacion: {
+            page: 0,
+            size: cuotasFiltradas.length,
+            totalElements: cuotasFiltradas.length,
+            totalPages: 1
+          }
         };
       }
-      
+
     } catch (error) {
       handleError(error, 'Error al buscar cuotas');
       return { data: [], paginacion: { page: 0, size: 0, totalElements: 0, totalPages: 0 } };
@@ -485,7 +491,7 @@ export const useCuotasDinamicas = () => {
     setCargandoCuotasDetalladas(true);
     try {
       const cuotasDetalladas = await CuotasDinamicasService.obtenerCuotasDetalladas(eventoId);
-      setCuotasDetalladas(cuotasDetalladas);
+      setCuotasDetalladas(cuotasDetalladas as unknown as CuotasDetalladas);
     } catch (error) {
       console.error('Error cargando cuotas detalladas:', error);
       toast.error('Error al cargar cuotas detalladas');
@@ -501,7 +507,7 @@ export const useCuotasDinamicas = () => {
       const cuotasGeneradas = await CuotasDinamicasService.generarCuotasCompletas(eventoId);
       setCuotasEvento(cuotasGeneradas);
       toast.success('Cuotas completas generadas exitosamente');
-      
+
       // Recargar cuotas por mercado
       await cargarCuotasPorMercado(eventoId);
     } catch (error) {
@@ -524,6 +530,72 @@ export const useCuotasDinamicas = () => {
     }
   }, []);
 
+  // Verificar si un evento tiene cuotas completas disponibles
+  const verificarCuotasCompletas = useCallback(async (eventoId: number) => {
+    setVerificandoCuotasCompletas(true);
+    try {
+      // Primero intentar verificar desde el backend
+      const response = await fetch(`/api/eventos/${eventoId}/cuotas/verificar-completas`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCuotasCompletasDisponibles(data.cuotasCompletas || false);
+        return data.cuotasCompletas || false;
+      } else {
+        // Si falla la verificación del backend, usar datos simulados
+        console.warn('Backend no disponible, usando verificación simulada');
+        const cuotasSimuladas = cuotasEvento.length > 0;
+        setCuotasCompletasDisponibles(cuotasSimuladas);
+        return cuotasSimuladas;
+      }
+    } catch (error) {
+      console.error('Error verificando cuotas completas:', error);
+      // Fallback: verificar si hay cuotas locales
+      const cuotasLocales = cuotasEvento.length > 0;
+      setCuotasCompletasDisponibles(cuotasLocales);
+      return cuotasLocales;
+    } finally {
+      setVerificandoCuotasCompletas(false);
+    }
+  }, [cuotasEvento]);
+
+  // Forzar verificación y creación de cuotas completas
+  const forzarVerificacionCuotas = useCallback(async (eventoId: number) => {
+    setVerificandoCuotasCompletas(true);
+    try {
+      const response = await fetch(`/api/eventos/${eventoId}/cuotas/verificar-y-crear`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCuotasCompletasDisponibles(data.cuotasCompletas || false);
+        toast.success('Cuotas verificadas y creadas exitosamente');
+        
+        // Recargar cuotas del evento
+        await cargarCuotasEvento(eventoId);
+        
+        return data.cuotasCompletas || false;
+      } else {
+        throw new Error('Error al verificar cuotas en el backend');
+      }
+    } catch (error) {
+      console.error('Error forzando verificación de cuotas:', error);
+      toast.error('Error al verificar cuotas. Intenta nuevamente.');
+      return false;
+    } finally {
+      setVerificandoCuotasCompletas(false);
+    }
+  }, [cargarCuotasEvento]);
+
   return {
     // Estado
     cuotasEvento,
@@ -538,7 +610,9 @@ export const useCuotasDinamicas = () => {
     cargandoCuotasPorMercado,
     cargandoCuotasDetalladas,
     cargandoCuotasEvento,
-    
+    cuotasCompletasDisponibles,
+    verificandoCuotasCompletas,
+
     // Acciones
     cargarCuotasEvento,
     cargarHistorialCuotas,
@@ -552,6 +626,8 @@ export const useCuotasDinamicas = () => {
     cargarCuotasPorMercado,
     cargarCuotasDetalladas,
     generarCuotasCompletas,
-    obtenerCuotasMercado
+    obtenerCuotasMercado,
+    verificarCuotasCompletas,
+    forzarVerificacionCuotas
   };
 };

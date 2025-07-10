@@ -4,6 +4,7 @@ import com.example.cc.entities.EventoDeportivo;
 import com.example.cc.entities.Deporte;
 import com.example.cc.entities.Liga;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -78,6 +79,7 @@ public interface EventoDeportivoRepository extends JpaRepository<EventoDeportivo
     /**
      * Eliminar eventos antiguos (más de 30 días)
      */
+    @Modifying
     @Query("DELETE FROM EventoDeportivo e WHERE e.fechaEvento < :fechaLimite")
     void deleteEventosAntiguos(@Param("fechaLimite") LocalDateTime fechaLimite);
 
@@ -92,4 +94,11 @@ public interface EventoDeportivoRepository extends JpaRepository<EventoDeportivo
      */
     @Query("SELECT e FROM EventoDeportivo e WHERE e.fechaEvento BETWEEN :fechaInicio AND :fechaFin AND e.estado IN ('programado', 'en_vivo') ORDER BY e.fechaEvento ASC")
     List<EventoDeportivo> findEventosProximos24Horas(@Param("fechaInicio") LocalDateTime fechaInicio, @Param("fechaFin") LocalDateTime fechaFin);
+
+    /**
+     * Cerrar eventos vencidos (actualizar estado a 'finalizado')
+     */
+    @Modifying
+    @Query("UPDATE EventoDeportivo e SET e.estado = 'finalizado', e.fechaActualizacion = :fechaActualizacion WHERE e.fechaEvento < :fechaActual AND e.estado IN ('programado', 'en_vivo')")
+    int cerrarEventosVencidos(@Param("fechaActual") LocalDateTime fechaActual, @Param("fechaActualizacion") LocalDateTime fechaActualizacion);
 }

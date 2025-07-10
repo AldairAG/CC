@@ -15,7 +15,6 @@ import java.util.List;
 @RequestMapping("/cc/deportes")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class DeporteController {
 
     private final IDeporteService deporteService;

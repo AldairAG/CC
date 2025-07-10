@@ -64,6 +64,15 @@ public class EventoDeportivoService implements IEventoDeportivoService {
                         eventoRepository.save(evento);
                         eventosActualizados++;
                         
+                        // Verificar y generar cuotas si no existen o están incompletas
+                        try {
+                            cuotaEventoService.generarCuotasParaEvento(evento.getId());
+                            log.debug("Cuotas verificadas/generadas para evento actualizado: {}", evento.getNombreEvento());
+                        } catch (Exception e) {
+                            log.error("Error al verificar/generar cuotas para evento actualizado {}: {}", 
+                                     evento.getId(), e.getMessage());
+                        }
+                        
                     } else {
                         // Crear nuevo evento
                         EventoDeportivo nuevoEvento = crearEventoDesdeExterno(eventoExterno);
@@ -101,6 +110,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Crear evento desde datos externos con validación completa
      */
+    @Transactional
     private EventoDeportivo crearEventoDesdeExterno(TheSportsDbEventResponse.EventData eventoExterno) {
         try {
             log.debug("Creando evento desde datos externos: {}", eventoExterno.getStrEvent());
@@ -158,6 +168,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Actualizar evento existente con validación completa
      */
+    @Transactional
     private void actualizarEvento(EventoDeportivo evento, TheSportsDbEventResponse.EventData eventoExterno) {
         log.debug("Actualizando evento existente: {}", eventoExterno.getStrEvent());
         
@@ -211,6 +222,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Parsear fecha y hora del evento
      */
+    @Transactional(readOnly = true)
     private LocalDateTime parsearFechaEvento(String fechaStr, String horaStr) {
         try {
             // Parsear fecha (formato: YYYY-MM-DD)
@@ -238,6 +250,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Mapear estado del evento
      */
+    @Transactional(readOnly = true)
     private String mapearEstado(String estadoExterno) {
         if (estadoExterno == null || estadoExterno.trim().isEmpty()) {
             return "programado";
@@ -277,8 +290,25 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     }
 
     /**
+     * Cerrar eventos vencidos (cuya fecha ya pasó)
+     */
+    @Transactional
+    public int cerrarEventosVencidos() {
+        try {
+            LocalDateTime fechaActual = LocalDateTime.now();
+            int eventosCerrados = eventoRepository.cerrarEventosVencidos(fechaActual, fechaActual);
+            log.info("Se cerraron {} eventos vencidos", eventosCerrados);
+            return eventosCerrados;
+        } catch (Exception e) {
+            log.error("Error al cerrar eventos vencidos: {}", e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
      * Obtener eventos por rango de fechas
      */
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> getEventosPorFechas(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         return eventoRepository.findByFechaEventoBetween(fechaInicio, fechaFin);
     }
@@ -286,6 +316,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Obtener eventos por deporte (usando entidad)
      */
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> getEventosPorDeporte(Deporte deporte) {
         return eventoRepository.findByDeporteOrderByFechaEventoAsc(deporte);
     }
@@ -293,6 +324,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Obtener eventos por deporte (usando nombre - compatibilidad)
      */
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> getEventosPorDeporteNombre(String nombreDeporte) {
         return eventoRepository.findByDeporteNombreOrderByFechaEventoAsc(nombreDeporte);
     }
@@ -307,6 +339,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Obtener eventos por liga (usando nombre - compatibilidad)
      */
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> getEventosPorLigaNombre(String nombreLiga) {
         return eventoRepository.findByLigaNombreOrderByFechaEventoAsc(nombreLiga);
     }
@@ -314,6 +347,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Obtener o crear deporte por nombre usando método seguro
      */
+    @Transactional
     private Deporte obtenerOCrearDeporte(String nombreDeporte) {
         if (nombreDeporte == null || nombreDeporte.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del deporte no puede estar vacío");
@@ -344,6 +378,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
     /**
      * Obtener o crear liga por nombre y deporte usando método seguro
      */
+    @Transactional
     private Liga obtenerOCrearLiga(String nombreLiga, String ligaIdExterno, Deporte deporte) {
         if (nombreLiga == null || nombreLiga.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la liga no puede estar vacío");
@@ -444,6 +479,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
      * Buscar evento por nombre y fecha específica
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<EventoDeportivo> buscarPorNombreYFecha(String nombreEvento, LocalDateTime fechaInicio, 
                                                           LocalDateTime fechaFin, String equipoLocal, String equipoVisitante) {
         try {
@@ -481,6 +517,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
      * Buscar eventos por fecha específica
      */
     @Override
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> buscarPorFecha(LocalDateTime fechaInicio, LocalDateTime fechaFin, 
                                                String deporte, String liga) {
         try {
@@ -513,6 +550,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
      * Obtener evento por ID
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<EventoDeportivo> getEventoById(Long id) {
         return eventoRepository.findById(id);
     }
@@ -521,6 +559,7 @@ public class EventoDeportivoService implements IEventoDeportivoService {
      * Obtener todos los eventos
      */
     @Override
+    @Transactional(readOnly = true)
     public List<EventoDeportivo> getAllEventos() {
         return eventoRepository.findAll();
     }

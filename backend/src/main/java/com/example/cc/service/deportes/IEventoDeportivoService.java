@@ -24,6 +24,12 @@ public interface IEventoDeportivoService {
     void limpiarEventosAntiguos();
 
     /**
+     * Cerrar eventos vencidos (cuya fecha ya pasó)
+     * @return Número de eventos cerrados
+     */
+    int cerrarEventosVencidos();
+
+    /**
      * Obtener eventos por rango de fechas
      * @param fechaInicio Fecha de inicio del rango
      * @param fechaFin Fecha de fin del rango

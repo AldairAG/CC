@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class CryptoService {
     
     private final CryptoTransactionRepository cryptoTransactionRepository;
@@ -39,6 +40,7 @@ public class CryptoService {
         CryptoTransaction.CryptoType.SOL, 1
     );
     
+    @Transactional(readOnly = true)
     public List<CryptoBalanceDTO> getUserCryptoBalances(Long userId) {
         List<CryptoWallet> wallets = cryptoWalletRepository.findByUserIdAndIsActiveTrue(userId);
         
@@ -210,6 +212,7 @@ public class CryptoService {
         }
     }
     
+    @Transactional(readOnly = true)
     public List<CryptoTransactionDTO> getUserCryptoTransactions(Long userId) {
         List<CryptoTransaction> transactions = cryptoTransactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
         

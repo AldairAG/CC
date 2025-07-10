@@ -455,4 +455,337 @@ public class EventoDeportivoController {
             ));
         }
     }
+
+    /**
+     * Verificar si un evento tiene cuotas completas
+     */
+    @GetMapping("/{eventoId}/verificar-cuotas")
+    public ResponseEntity<Map<String, Object>> verificarCuotasCompletas(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            boolean cuotasCompletas = theSportsDbService.verificarCuotasCompletas(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "eventoId", eventoId,
+                "nombreEvento", evento.getNombreEvento(),
+                "cuotasCompletas", cuotasCompletas,
+                "message", cuotasCompletas ? "El evento tiene cuotas completas" : "El evento tiene cuotas incompletas"
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al verificar cuotas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Determinar qué cuotas faltan para un evento
+     */
+    @GetMapping("/{eventoId}/cuotas-faltantes")
+    public ResponseEntity<Map<String, Object>> determinarCuotasFaltantes(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            var tiposFaltantes = theSportsDbService.determinarCuotasFaltantes(eventoId);
+            
+            // Agrupar por mercado para respuesta más organizada
+            Map<String, Long> cuotasFaltantesPorMercado = tiposFaltantes.stream()
+                    .collect(Collectors.groupingBy(
+                        tipo -> tipo.getMercado(),
+                        Collectors.counting()
+                    ));
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "eventoId", eventoId,
+                "nombreEvento", evento.getNombreEvento(),
+                "totalCuotasFaltantes", tiposFaltantes.size(),
+                "cuotasFaltantesPorMercado", cuotasFaltantesPorMercado,
+                "detallesTiposFaltantes", tiposFaltantes.stream().limit(10).map(Enum::name).collect(Collectors.toList())
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al determinar cuotas faltantes para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al determinar cuotas faltantes: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Crear cuotas faltantes para un evento específico
+     */
+    @PostMapping("/{eventoId}/crear-cuotas-faltantes")
+    public ResponseEntity<Map<String, Object>> crearCuotasFaltantes(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            boolean cuotasCreadas = theSportsDbService.crearCuotasFaltantes(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "eventoId", eventoId,
+                "nombreEvento", evento.getNombreEvento(),
+                "cuotasCreadas", cuotasCreadas,
+                "message", cuotasCreadas ? "Cuotas faltantes creadas exitosamente" : "No fue necesario crear cuotas adicionales"
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al crear cuotas faltantes para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al crear cuotas faltantes: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Verificar y crear cuotas para eventos activos (programados y en vivo)
+     */
+    @PostMapping("/verificar-cuotas-eventos-activos")
+    public ResponseEntity<Map<String, Object>> verificarCuotasEventosActivos() {
+        try {
+            var resumen = theSportsDbService.verificarCuotasEventosActivos();
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Verificación de cuotas completada",
+                "totalEventos", resumen.getTotalEventos(),
+                "eventosCompletos", resumen.getEventosCompletos(),
+                "eventosConCuotasCreadas", resumen.getEventosConCuotasCreadas(),
+                "eventosConErrores", resumen.getEventosConErrores(),
+                "resumen", resumen.toString()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas de eventos activos: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al verificar cuotas de eventos activos: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Verificar y crear cuotas para eventos por estados específicos
+     */
+    @PostMapping("/verificar-cuotas-por-estados")
+    public ResponseEntity<Map<String, Object>> verificarCuotasPorEstados(
+            @RequestBody Map<String, List<String>> requestBody) {
+        try {
+            List<String> estados = requestBody.get("estados");
+            if (estados == null || estados.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "Se requiere la lista de estados"
+                ));
+            }
+            
+            var resumen = theSportsDbService.verificarCuotasEventosPorEstados(estados);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Verificación de cuotas por estados completada",
+                "estadosVerificados", estados,
+                "totalEventos", resumen.getTotalEventos(),
+                "eventosCompletos", resumen.getEventosCompletos(),
+                "eventosConCuotasCreadas", resumen.getEventosConCuotasCreadas(),
+                "eventosConErrores", resumen.getEventosConErrores(),
+                "resumen", resumen.toString()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas por estados: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al verificar cuotas por estados: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Verificar cuotas para eventos próximos
+     */
+    @PostMapping("/verificar-cuotas-proximos")
+    public ResponseEntity<Map<String, Object>> verificarCuotasEventosProximos(
+            @RequestParam(defaultValue = "7") int diasAdelante) {
+        try {
+            var resumen = theSportsDbService.verificarCuotasEventosProximos(diasAdelante);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Verificación de cuotas para eventos próximos completada",
+                "diasAdelante", diasAdelante,
+                "totalEventos", resumen.getTotalEventos(),
+                "eventosCompletos", resumen.getEventosCompletos(),
+                "eventosConCuotasCreadas", resumen.getEventosConCuotasCreadas(),
+                "eventosConErrores", resumen.getEventosConErrores(),
+                "resumen", resumen.toString()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas de eventos próximos: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al verificar cuotas de eventos próximos: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Obtener estadísticas de cuotas para un evento específico
+     */
+    @GetMapping("/{eventoId}/estadisticas-cuotas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticasCuotas(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            var estadisticas = theSportsDbService.obtenerEstadisticasCuotasEvento(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Estadísticas de cuotas obtenidas exitosamente",
+                "datos", estadisticas
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al obtener estadísticas de cuotas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al obtener estadísticas de cuotas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Obtener verificación detallada de cuotas para un evento
+     */
+    @GetMapping("/{eventoId}/cuotas-detalladas")
+    public ResponseEntity<Map<String, Object>> obtenerCuotasDetalladas(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            var cuotasDetalladas = theSportsDbService.verificarCuotasDetalladasEvento(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Información detallada de cuotas obtenida exitosamente",
+                "datos", cuotasDetalladas
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al obtener cuotas detalladas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al obtener cuotas detalladas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Forzar creación de cuotas para un evento
+     */
+    @PostMapping("/{eventoId}/forzar-creacion-cuotas")
+    public ResponseEntity<Map<String, Object>> forzarCreacionCuotas(@PathVariable Long eventoId) {
+        try {
+            Optional<EventoDeportivo> eventoOpt = eventoDeportivoService.getEventoById(eventoId);
+            if (eventoOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            boolean cuotasCreadas = theSportsDbService.forzarCreacionCuotas(eventoId);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "eventoId", eventoId,
+                "nombreEvento", evento.getNombreEvento(),
+                "cuotasCreadas", cuotasCreadas,
+                "message", cuotasCreadas ? "Cuotas creadas exitosamente" : "No se pudieron crear cuotas"
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al forzar creación de cuotas para evento {}: {}", eventoId, e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al forzar creación de cuotas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Ejecutar manualmente la verificación de cuotas programada
+     */
+    @PostMapping("/ejecutar-verificacion-cuotas")
+    public ResponseEntity<Map<String, Object>> ejecutarVerificacionCuotas() {
+        try {
+            log.info("🎯 Ejecutando verificación manual de cuotas desde API");
+            
+            // Usar el scheduler para ejecutar la verificación
+            eventoScheduler.forzarVerificacionCuotas();
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Verificación de cuotas ejecutada exitosamente",
+                "timestamp", LocalDateTime.now()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al ejecutar verificación de cuotas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al ejecutar verificación de cuotas: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Ejecutar manualmente la verificación de cuotas para eventos próximos
+     */
+    @PostMapping("/ejecutar-verificacion-cuotas-proximos")
+    public ResponseEntity<Map<String, Object>> ejecutarVerificacionCuotasProximos() {
+        try {
+            log.info("📅 Ejecutando verificación manual de cuotas eventos próximos desde API");
+            
+            // Usar el scheduler para ejecutar la verificación
+            eventoScheduler.forzarVerificacionCuotasProximos();
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Verificación de cuotas eventos próximos ejecutada exitosamente",
+                "timestamp", LocalDateTime.now()
+            ));
+            
+        } catch (Exception e) {
+            log.error("Error al ejecutar verificación de cuotas próximos: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of(
+                "status", "error",
+                "message", "Error al ejecutar verificación de cuotas próximos: " + e.getMessage()
+            ));
+        }
+    }
 }

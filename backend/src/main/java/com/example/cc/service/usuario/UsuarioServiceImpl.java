@@ -134,7 +134,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponse authenticateUsuario(String email, String password) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findByEmail(email);
         if (!usuarioOpt.isPresent()) {

@@ -34,13 +34,19 @@ const ApuestaDetailsPage = () => {
   const {
     cuotasEvento,
     tendenciaCuotas,
-    cargarCuotasEvento
+    cargarCuotasEvento,
+    loading: loadingCuotas,
+    cuotasCompletasDisponibles,
+    verificandoCuotasCompletas,
+    verificarCuotasCompletas,
+    forzarVerificacionCuotas
   } = useCuotasDinamicas();
 
   const { agregarApuesta } = useCarritoApuestas();
 
   const [activeTab, setActiveTab] = useState('todas');
   const [expandedMarkets, setExpandedMarkets] = useState<Set<string>>(new Set(['resultado-final']));
+  const [cuotasDisponibles, setCuotasDisponibles] = useState(false);
 
   // Simular datos de mercados de apuestas basados en el ejemplo
   const [bettingMarkets] = useState<BettingMarket[]>([
@@ -248,8 +254,25 @@ const ApuestaDetailsPage = () => {
   useEffect(() => {
     if (eventoActual?.id) {
       cargarCuotasEvento(eventoActual.id);
+      // Verificar si el evento tiene cuotas completas disponibles
+      verificarCuotasCompletas(eventoActual.id);
     }
-  }, [eventoActual?.id, cargarCuotasEvento]);
+  }, [eventoActual?.id, cargarCuotasEvento, verificarCuotasCompletas]);
+
+  // Verificar si hay cuotas disponibles basándose en la verificación del backend
+  useEffect(() => {
+    setCuotasDisponibles(cuotasCompletasDisponibles && cuotasEvento.length > 0);
+  }, [cuotasCompletasDisponibles, cuotasEvento]);
+
+  // Función para manejar la verificación forzada de cuotas
+  const handleForzarVerificacionCuotas = async () => {
+    if (!eventoActual?.id) {
+      toast.error('No se pudo cargar la información del evento');
+      return;
+    }
+    
+    await forzarVerificacionCuotas(eventoActual.id);
+  };
 
   const toggleMarket = (marketId: string) => {
     setExpandedMarkets(prev => {
@@ -266,6 +289,12 @@ const ApuestaDetailsPage = () => {
   const handleBetClick = (marketName: string, optionName: string, odds: number, isDisabled?: boolean) => {
     if (isDisabled) {
       toast.warning('Esta opción no está disponible actualmente');
+      return;
+    }
+
+    // Verificar si hay cuotas disponibles del backend
+    if (!cuotasDisponibles || !cuotasCompletasDisponibles) {
+      toast.error('No hay cuotas disponibles para este evento. Por favor, intenta más tarde.');
       return;
     }
 
@@ -527,7 +556,17 @@ const ApuestaDetailsPage = () => {
       {/* Tabs de Mercados - Responsive con clases base */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-amber-500/20 sticky top-0 z-10 backdrop-blur-sm">
         <div className="w-full max-w-7xl mx-auto px-4">
-          <div className="space-x-2 overflow-x-auto py-4 scrollbar-hide scroll-smooth" style={{ scrollSnapType: 'x mandatory' }}>
+          {!cuotasDisponibles && !loadingCuotas ? (
+            <div className="py-4 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span className="text-sm font-semibold">Mercados no disponibles - Sin cuotas del servidor</span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-x-2 overflow-x-auto py-4 scrollbar-hide scroll-smooth" style={{ scrollSnapType: 'x mandatory' }}>
             {marketTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -561,11 +600,73 @@ const ApuestaDetailsPage = () => {
               </button>
             ))}
           </div>
+          )}
         </div>
       </div>
 
       {/* Mercados de Apuestas - Responsive con clases base */}
       <div className="w-full max-w-7xl mx-auto px-4 py-6 min-[768px]:py-8">
+        {/* Mensaje cuando no hay cuotas disponibles */}
+        {!cuotasDisponibles && !loadingCuotas && (
+          <div className="text-center bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-red-500/30 p-8 min-[768px]:p-12 mb-6">
+            <div className="w-20 h-20 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+              <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <div className="rounded-full bg-red-500/10 animate-ping" style={{
+                position: 'absolute',
+                inset: '0'
+              }}></div>
+            </div>
+            <h3 className="text-2xl min-[768px]:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-500 mb-4">
+              Cuotas no disponibles
+            </h3>
+            <p className="text-slate-300 mb-6 text-base leading-relaxed max-w-md mx-auto">
+              Las cuotas para este evento aún no están disponibles. Nuestro sistema está trabajando para generarlas.
+            </p>
+            <div className="flex flex-col min-[480px]:flex-row gap-3 justify-center items-center">
+              <button
+                onClick={() => {
+                  if (eventoActual?.id) {
+                    cargarCuotasEvento(eventoActual.id);
+                  }
+                }}
+                className="group bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-amber-500/25"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Recargar cuotas
+                </span>
+              </button>
+              <div className="text-sm text-slate-400 flex items-center gap-2">
+                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                <span>Se actualizan cada 2 minutos</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading de cuotas */}
+        {loadingCuotas && (
+          <div className="text-center bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-amber-500/30 p-8 min-[768px]:p-12 mb-6">
+            <div className="relative mx-auto mb-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-500/20 border-t-amber-500 mx-auto"></div>
+              <div className="rounded-full h-16 w-16 border-4 border-transparent border-t-orange-500 animate-spin mx-auto" style={{
+                position: 'absolute',
+                inset: '0',
+                animationDelay: '0.5s',
+                animationDuration: '1.5s'
+              }}></div>
+            </div>
+            <h3 className="text-xl font-bold text-amber-400 mb-2">Cargando cuotas</h3>
+            <p className="text-slate-300">Obteniendo las mejores cuotas para este evento...</p>
+          </div>
+        )}
+
+        {/* Mostrar mercados solo si hay cuotas disponibles o si se está cargando */}
+        {(cuotasDisponibles || loadingCuotas || verificandoCuotasCompletas) ? (
         <div className="space-y-6">
           {getFilteredMarkets().map((market) => (
             <div key={market.id} className="group bg-gradient-to-r from-slate-800/60 via-slate-800/80 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700/50 hover:border-amber-500/30 transition-all duration-300 overflow-hidden">
@@ -625,14 +726,14 @@ const ApuestaDetailsPage = () => {
                       <button
                         key={option.id}
                         onClick={() => handleBetClick(market.name, option.name, option.odds, option.isDisabled)}
-                        disabled={option.isDisabled}
-                        className={`group/option relative p-4 min-[768px]:p-5 rounded-xl text-left transition-all duration-300 min-w-0 overflow-hidden touch-manipulation ${option.isDisabled
+                        disabled={option.isDisabled || !cuotasDisponibles}
+                        className={`group/option relative p-4 min-[768px]:p-5 rounded-xl text-left transition-all duration-300 min-w-0 overflow-hidden touch-manipulation ${option.isDisabled || !cuotasDisponibles
                           ? 'bg-slate-700/30 border border-slate-600/50 text-slate-500 cursor-not-allowed'
                           : 'bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/30 hover:border-amber-500/50 hover:from-amber-600/10 hover:to-orange-600/10 cursor-pointer active:scale-95 shadow-lg hover:shadow-amber-500/20'
                           }`}
                       >
                         {/* Efecto de resplandor en hover - solo pantallas grandes */}
-                        {!option.isDisabled && (
+                        {!option.isDisabled && cuotasDisponibles && (
                           <div
                             className="transition-opacity duration-300 rounded-xl hidden min-[768px]:block"
                             style={{
@@ -647,7 +748,7 @@ const ApuestaDetailsPage = () => {
                         <div className="relative z-10">
                           <div className="flex items-start justify-between min-w-0 mb-2">
                             <div className="flex-1 min-w-0 pr-2">
-                              <div className={`font-semibold text-sm min-[768px]:text-base leading-tight ${option.isDisabled ? 'text-slate-500' : 'text-white group-hover/option:text-amber-100'
+                              <div className={`font-semibold text-sm min-[768px]:text-base leading-tight ${option.isDisabled || !cuotasDisponibles ? 'text-slate-500' : 'text-white group-hover/option:text-amber-100'
                                 }`} title={option.name}>
                                 <span className="min-[480px]:hidden">
                                   {option.name.length > 12 ? option.name.substring(0, 12) + '...' : option.name}
@@ -660,7 +761,7 @@ const ApuestaDetailsPage = () => {
 
                             {/* Indicador de estado */}
                             <div className="flex-shrink-0">
-                              {option.isDisabled ? (
+                              {option.isDisabled || !cuotasDisponibles ? (
                                 <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
                               ) : (
                                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -670,7 +771,7 @@ const ApuestaDetailsPage = () => {
 
                           <div className="flex items-end justify-between">
                             <div className="flex flex-col">
-                              <div className={`text-xl min-[768px]:text-2xl font-black ${option.isDisabled ? 'text-slate-500' : 'text-amber-400 group-hover/option:text-amber-300'
+                              <div className={`text-xl min-[768px]:text-2xl font-black ${option.isDisabled || !cuotasDisponibles ? 'text-slate-500' : 'text-amber-400 group-hover/option:text-amber-300'
                                 }`}>
                                 {option.odds.toFixed(2)}
                               </div>
@@ -680,10 +781,19 @@ const ApuestaDetailsPage = () => {
                             </div>
 
                             {/* Icono de apuesta */}
-                            {!option.isDisabled && (
+                            {!option.isDisabled && cuotasDisponibles && (
                               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20 group-hover/option:bg-amber-500/30 transition-colors">
                                 <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                              </div>
+                            )}
+
+                            {/* Icono deshabilitado */}
+                            {(option.isDisabled || !cuotasDisponibles) && (
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-600/20">
+                                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
                                 </svg>
                               </div>
                             )}
@@ -697,6 +807,41 @@ const ApuestaDetailsPage = () => {
             </div>
           ))}
         </div>
+        ) : (
+          /* Mensaje cuando no hay cuotas disponibles */
+          <div className="text-center py-12 bg-gradient-to-r from-slate-800/60 via-slate-800/80 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-slate-700/50">
+            <div className="w-20 h-20 bg-gradient-to-r from-slate-500/20 to-slate-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-300 mb-2">
+              No hay mercados disponibles
+            </h3>
+            <p className="text-slate-400 mb-6">
+              Este evento no tiene cuotas activas. Las apuestas están temporalmente deshabilitadas.
+            </p>
+            <button
+              onClick={handleForzarVerificacionCuotas}
+              disabled={verificandoCuotasCompletas}
+              className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-semibold rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+            >
+              {verificandoCuotasCompletas ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Verificando...</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Verificar cuotas</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Widget de Cuotas Dinámicas - Responsive con clases base */}
         {cuotasEvento.length > 0 && (

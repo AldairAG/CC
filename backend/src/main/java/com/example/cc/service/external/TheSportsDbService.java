@@ -10,15 +10,16 @@ import com.example.cc.entities.Liga;
 import com.example.cc.repository.EventoDeportivoRepository;
 import com.example.cc.service.deportes.IDeporteService;
 import com.example.cc.service.deportes.ILigaService;
+import com.example.cc.service.apuestas.CuotaEventoService;
+import com.example.cc.entities.CuotaEvento;
+import com.example.cc.entities.TipoResultado;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -29,9 +30,13 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,6 +46,7 @@ public class TheSportsDbService implements ITheSportsDbService {
     private final EventoDeportivoRepository eventoRepository;
     private final IDeporteService deporteService;
     private final ILigaService ligaService;
+    private final CuotaEventoService cuotaEventoService;
 
     @Value("${thesportsdb.api.base-url}")
     private String baseUrl;
@@ -54,11 +60,13 @@ public class TheSportsDbService implements ITheSportsDbService {
     public TheSportsDbService(RestTemplate restTemplate,
             EventoDeportivoRepository eventoRepository,
             IDeporteService deporteService,
-            ILigaService ligaService) {
+            ILigaService ligaService,
+            CuotaEventoService cuotaEventoService) {
         this.restTemplate = restTemplate;
         this.eventoRepository = eventoRepository;
         this.deporteService = deporteService;
         this.ligaService = ligaService;
+        this.cuotaEventoService = cuotaEventoService;
     }
 
     /**
@@ -345,6 +353,37 @@ public class TheSportsDbService implements ITheSportsDbService {
                         eventoGuardado.getNombreEvento(),
                         eventoGuardado.getMarcadorLocal(),
                         eventoGuardado.getMarcadorVisitante());
+            }
+
+            // Verificar y crear cuotas automáticamente para eventos programados o en vivo
+            if (eventoGuardado.getEstado().equals("programado") || eventoGuardado.getEstado().equals("en_vivo")) {
+                try {
+                    if (!verificarCuotasCompletas(eventoGuardado.getId())) {
+                        log.info("🎯 Verificando cuotas para evento: {}", eventoGuardado.getNombreEvento());
+                        List<TipoResultado> cuotasFaltantes = determinarCuotasFaltantes(eventoGuardado.getId());
+                        
+                        if (!cuotasFaltantes.isEmpty()) {
+                            log.info("🔧 Creando {} cuotas faltantes para evento: {}", 
+                                    cuotasFaltantes.size(), eventoGuardado.getNombreEvento());
+                            
+                            boolean cuotasCreadas = crearCuotasFaltantes(eventoGuardado.getId());
+                            
+                            if (cuotasCreadas) {
+                                log.info("✅ Cuotas creadas exitosamente para evento: {}", 
+                                        eventoGuardado.getNombreEvento());
+                            } else {
+                                log.warn("⚠️ No se pudieron crear cuotas para evento: {}", 
+                                        eventoGuardado.getNombreEvento());
+                            }
+                        } else {
+                            log.debug("✅ Evento {} ya tiene cuotas completas", eventoGuardado.getNombreEvento());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("❌ Error al verificar/crear cuotas para evento {}: {}", 
+                            eventoGuardado.getId(), e.getMessage());
+                    // No lanzar la excepción para no interrumpir el proceso principal
+                }
             }
 
         } catch (Exception e) {
@@ -1142,6 +1181,440 @@ public class TheSportsDbService implements ITheSportsDbService {
             return "VISITANTE";
         } else {
             return "EMPATE";
+        }
+    }
+
+    /**
+     * Verificar si un evento tiene todas sus cuotas completas
+     * @param eventoId ID del evento a verificar
+     * @return true si tiene todas las cuotas, false si faltan algunas
+     */
+    @Transactional(readOnly = true)
+    public boolean verificarCuotasCompletas(Long eventoId) {
+        try {
+            List<CuotaEvento> cuotasExistentes = cuotaEventoService.getCuotasByEventoId(eventoId);
+            
+            if (cuotasExistentes.isEmpty()) {
+                log.debug("Evento {} no tiene cuotas", eventoId);
+                return false;
+            }
+            
+            // Obtener todos los tipos de resultado requeridos
+            List<TipoResultado> todosLosTipos = Arrays.asList(TipoResultado.values());
+            List<TipoResultado> tiposExistentes = cuotasExistentes.stream()
+                    .map(CuotaEvento::getTipoResultado)
+                    .collect(Collectors.toList());
+            
+            // Verificar si existen cuotas para todos los tipos
+            boolean completas = tiposExistentes.containsAll(todosLosTipos);
+            
+            if (!completas) {
+                List<TipoResultado> tiposFaltantes = todosLosTipos.stream()
+                        .filter(tipo -> !tiposExistentes.contains(tipo))
+                        .collect(Collectors.toList());
+                        
+                log.info("Evento {} tiene cuotas incompletas. Faltan {} tipos: {}", 
+                        eventoId, tiposFaltantes.size(), 
+                        tiposFaltantes.stream().limit(5).map(Enum::name).collect(Collectors.joining(", ")));
+            }
+            
+            return completas;
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas para evento {}: {}", eventoId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Determinar qué tipos de cuotas faltan para un evento
+     * @param eventoId ID del evento a verificar
+     * @return Lista de tipos de resultado que faltan
+     */
+    @Transactional(readOnly = true)
+    public List<TipoResultado> determinarCuotasFaltantes(Long eventoId) {
+        try {
+            List<CuotaEvento> cuotasExistentes = cuotaEventoService.getCuotasByEventoId(eventoId);
+            List<TipoResultado> todosLosTipos = Arrays.asList(TipoResultado.values());
+            
+            if (cuotasExistentes.isEmpty()) {
+                log.info("Evento {} no tiene cuotas. Se requieren todas: {} tipos", 
+                        eventoId, todosLosTipos.size());
+                return todosLosTipos;
+            }
+            
+            List<TipoResultado> tiposExistentes = cuotasExistentes.stream()
+                    .map(CuotaEvento::getTipoResultado)
+                    .collect(Collectors.toList());
+            
+            List<TipoResultado> tiposFaltantes = todosLosTipos.stream()
+                    .filter(tipo -> !tiposExistentes.contains(tipo))
+                    .collect(Collectors.toList());
+            
+            if (!tiposFaltantes.isEmpty()) {
+                log.info("Evento {} requiere {} cuotas adicionales", eventoId, tiposFaltantes.size());
+                
+                // Agrupar por mercado para logging más legible
+                Map<String, Long> cuotasPorMercado = tiposFaltantes.stream()
+                        .collect(Collectors.groupingBy(
+                            TipoResultado::getMercado,
+                            Collectors.counting()
+                        ));
+                
+                log.debug("Cuotas faltantes por mercado: {}", cuotasPorMercado);
+            }
+            
+            return tiposFaltantes;
+            
+        } catch (Exception e) {
+            log.error("Error al determinar cuotas faltantes para evento {}: {}", eventoId, e.getMessage());
+            return Arrays.asList(TipoResultado.values()); // Retornar todas si hay error
+        }
+    }
+
+    /**
+     * Crear cuotas faltantes para un evento específico
+     * @param eventoId ID del evento
+     * @return true si se crearon cuotas, false si no fue necesario o hubo error
+     */
+    @Transactional
+    public boolean crearCuotasFaltantes(Long eventoId) {
+        try {
+            if (verificarCuotasCompletas(eventoId)) {
+                log.debug("Evento {} ya tiene cuotas completas", eventoId);
+                return false;
+            }
+            
+            // Usar el método existente del CuotaEventoService que ya maneja esto
+            List<CuotaEvento> cuotasGeneradas = cuotaEventoService.generarCuotasParaEvento(eventoId);
+            
+            if (!cuotasGeneradas.isEmpty()) {
+                log.info("Creadas/completadas cuotas para evento {}: {} cuotas total", 
+                        eventoId, cuotasGeneradas.size());
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            log.error("Error al crear cuotas faltantes para evento {}: {}", eventoId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Verificar y crear cuotas para múltiples eventos
+     * @param eventosIds Lista de IDs de eventos a verificar
+     * @return ResumenCuotasOperacion con estadísticas de la operación
+     */
+    @Transactional
+    public ResumenCuotasOperacion verificarYCrearCuotasMultiples(List<Long> eventosIds) {
+        ResumenCuotasOperacion resumen = new ResumenCuotasOperacion();
+        resumen.setTotalEventos(eventosIds.size());
+        
+        log.info("Iniciando verificación de cuotas para {} eventos", eventosIds.size());
+        
+        for (Long eventoId : eventosIds) {
+            try {
+                if (verificarCuotasCompletas(eventoId)) {
+                    resumen.incrementarEventosCompletos();
+                } else {
+                    if (crearCuotasFaltantes(eventoId)) {
+                        resumen.incrementarEventosConCuotasCreadas();
+                    } else {
+                        resumen.incrementarEventosConErrores();
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error procesando evento {}: {}", eventoId, e.getMessage());
+                resumen.incrementarEventosConErrores();
+            }
+        }
+        
+        log.info("Verificación completada - Eventos procesados: {}, Completos: {}, Cuotas creadas: {}, Errores: {}",
+                resumen.getTotalEventos(), resumen.getEventosCompletos(), 
+                resumen.getEventosConCuotasCreadas(), resumen.getEventosConErrores());
+        
+        return resumen;
+    }
+
+    /**
+     * Verificar cuotas para eventos "programados" y "en_vivo"
+     * @return ResumenCuotasOperacion con el resultado de la operación
+     */
+    @Transactional
+    public ResumenCuotasOperacion verificarCuotasEventosActivos() {
+        try {
+            // Obtener eventos programados y en vivo
+            List<EventoDeportivo> eventosProgramados = eventoRepository.findByEstadoOrderByFechaEventoAsc("programado");
+            List<EventoDeportivo> eventosEnVivo = eventoRepository.findByEstadoOrderByFechaEventoAsc("en_vivo");
+            
+            List<EventoDeportivo> eventosActivos = new ArrayList<>();
+            eventosActivos.addAll(eventosProgramados);
+            eventosActivos.addAll(eventosEnVivo);
+            
+            List<Long> eventosIds = eventosActivos.stream()
+                    .map(EventoDeportivo::getId)
+                    .collect(Collectors.toList());
+            
+            log.info("Verificando cuotas para {} eventos activos (programados y en vivo)", eventosIds.size());
+            
+            return verificarYCrearCuotasMultiples(eventosIds);
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas de eventos activos: {}", e.getMessage());
+            ResumenCuotasOperacion resumen = new ResumenCuotasOperacion();
+            resumen.setTotalEventos(0);
+            return resumen;
+        }
+    }
+
+    /**
+     * Verificar y crear cuotas para eventos por estados específicos
+     * @param estados Lista de estados a verificar (ej: ["programado", "en_vivo"])
+     * @return ResumenCuotasOperacion con estadísticas de la operación
+     */
+    @Transactional
+    public ResumenCuotasOperacion verificarCuotasEventosPorEstados(List<String> estados) {
+        try {
+            List<EventoDeportivo> eventosAVerificar = new ArrayList<>();
+            
+            for (String estado : estados) {
+                List<EventoDeportivo> eventosPorEstado = eventoRepository
+                        .findByEstadoOrderByFechaEventoAsc(estado);
+                eventosAVerificar.addAll(eventosPorEstado);
+            }
+            
+            List<Long> eventosIds = eventosAVerificar.stream()
+                    .map(EventoDeportivo::getId)
+                    .collect(Collectors.toList());
+            
+            log.info("Verificando cuotas para {} eventos con estados: {}", 
+                    eventosIds.size(), String.join(", ", estados));
+            
+            return verificarYCrearCuotasMultiples(eventosIds);
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas por estados {}: {}", estados, e.getMessage());
+            ResumenCuotasOperacion resumen = new ResumenCuotasOperacion();
+            resumen.setTotalEventos(0);
+            return resumen;
+        }
+    }
+
+    /**
+     * Verificar cuotas para eventos de hoy y los próximos días
+     * @param diasAdelante Número de días a verificar desde hoy
+     * @return ResumenCuotasOperacion con estadísticas de la operación
+     */
+    @Transactional
+    public ResumenCuotasOperacion verificarCuotasEventosProximos(int diasAdelante) {
+        try {
+            LocalDateTime fechaInicio = LocalDate.now().atStartOfDay();
+            LocalDateTime fechaFin = LocalDate.now().plusDays(diasAdelante).atTime(23, 59, 59);
+            
+            List<EventoDeportivo> eventosProximos = eventoRepository
+                    .findByFechaEventoBetween(fechaInicio, fechaFin)
+                    .stream()
+                    .filter(evento -> evento.getEstado().equals("programado") || 
+                                    evento.getEstado().equals("en_vivo"))
+                    .collect(Collectors.toList());
+            
+            List<Long> eventosIds = eventosProximos.stream()
+                    .map(EventoDeportivo::getId)
+                    .collect(Collectors.toList());
+            
+            log.info("Verificando cuotas para {} eventos próximos ({} días)", 
+                    eventosIds.size(), diasAdelante);
+            
+            return verificarYCrearCuotasMultiples(eventosIds);
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas de eventos próximos: {}", e.getMessage());
+            ResumenCuotasOperacion resumen = new ResumenCuotasOperacion();
+            resumen.setTotalEventos(0);
+            return resumen;
+        }
+    }
+
+    /**
+     * Obtener estadísticas de cuotas para un evento específico
+     * @param eventoId ID del evento
+     * @return Map con estadísticas de cuotas
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> obtenerEstadisticasCuotasEvento(Long eventoId) {
+        try {
+            List<CuotaEvento> cuotasExistentes = cuotaEventoService.getCuotasByEventoId(eventoId);
+            List<TipoResultado> todosLosTipos = Arrays.asList(TipoResultado.values());
+            List<TipoResultado> cuotasFaltantes = determinarCuotasFaltantes(eventoId);
+            
+            Map<String, Long> cuotasPorMercado = cuotasExistentes.stream()
+                    .collect(Collectors.groupingBy(
+                        cuota -> cuota.getTipoResultado().getMercado(),
+                        Collectors.counting()
+                    ));
+            
+            Map<String, Object> estadisticas = new HashMap<>();
+            estadisticas.put("eventoId", eventoId);
+            estadisticas.put("totalCuotasExistentes", cuotasExistentes.size());
+            estadisticas.put("totalTiposRequeridos", todosLosTipos.size());
+            estadisticas.put("totalCuotasFaltantes", cuotasFaltantes.size());
+            estadisticas.put("cuotasCompletas", cuotasFaltantes.isEmpty());
+            estadisticas.put("cuotasPorMercado", cuotasPorMercado);
+            estadisticas.put("porcentajeCompletitud", 
+                    (cuotasExistentes.size() * 100.0) / todosLosTipos.size());
+            
+            return estadisticas;
+            
+        } catch (Exception e) {
+            log.error("Error al obtener estadísticas de cuotas para evento {}: {}", 
+                    eventoId, e.getMessage());
+            return Map.of("error", "Error al obtener estadísticas: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Clase interna para resumir operaciones de cuotas
+     */
+    public static class ResumenCuotasOperacion {
+        private int totalEventos = 0;
+        private int eventosCompletos = 0;
+        private int eventosConCuotasCreadas = 0;
+        private int eventosConErrores = 0;
+        
+        // Getters y setters
+        public int getTotalEventos() { return totalEventos; }
+        public void setTotalEventos(int totalEventos) { this.totalEventos = totalEventos; }
+        
+        public int getEventosCompletos() { return eventosCompletos; }
+        public void incrementarEventosCompletos() { this.eventosCompletos++; }
+        
+        public int getEventosConCuotasCreadas() { return eventosConCuotasCreadas; }
+        public void incrementarEventosConCuotasCreadas() { this.eventosConCuotasCreadas++; }
+        
+        public int getEventosConErrores() { return eventosConErrores; }
+        public void incrementarEventosConErrores() { this.eventosConErrores++; }
+        
+        @Override
+        public String toString() {
+            return String.format("ResumenCuotas{total=%d, completos=%d, creadas=%d, errores=%d}", 
+                totalEventos, eventosCompletos, eventosConCuotasCreadas, eventosConErrores);
+        }
+    }
+
+    /**
+     * Verificar cuotas para un evento específico con detalles completos
+     * @param eventoId ID del evento
+     * @return Map con información detallada del estado de las cuotas
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> verificarCuotasDetalladasEvento(Long eventoId) {
+        try {
+            // Obtener información del evento
+            Optional<EventoDeportivo> eventoOpt = eventoRepository.findById(eventoId);
+            if (!eventoOpt.isPresent()) {
+                return Map.of("error", "Evento no encontrado");
+            }
+            
+            EventoDeportivo evento = eventoOpt.get();
+            List<CuotaEvento> cuotasExistentes = cuotaEventoService.getCuotasByEventoId(eventoId);
+            List<TipoResultado> todosLosTipos = Arrays.asList(TipoResultado.values());
+            List<TipoResultado> cuotasFaltantes = determinarCuotasFaltantes(eventoId);
+            
+            // Agrupar cuotas por mercado
+            Map<String, List<CuotaEvento>> cuotasPorMercado = cuotasExistentes.stream()
+                    .collect(Collectors.groupingBy(
+                        cuota -> cuota.getTipoResultado().getMercado()
+                    ));
+            
+            // Agrupar cuotas faltantes por mercado
+            Map<String, List<TipoResultado>> cuotasFaltantesPorMercado = cuotasFaltantes.stream()
+                    .collect(Collectors.groupingBy(TipoResultado::getMercado));
+            
+            // Calcular estadísticas por mercado
+            Map<String, Object> estadisticasPorMercado = new HashMap<>();
+            Set<String> todosMercados = Arrays.stream(TipoResultado.values())
+                    .map(TipoResultado::getMercado)
+                    .collect(Collectors.toSet());
+            
+            for (String mercado : todosMercados) {
+                Map<String, Object> estadisticasMercado = new HashMap<>();
+                
+                int cuotasExistentesEnMercado = cuotasPorMercado.getOrDefault(mercado, List.of()).size();
+                int cuotasFaltantesEnMercado = cuotasFaltantesPorMercado.getOrDefault(mercado, List.of()).size();
+                long totalCuotasEnMercado = Arrays.stream(TipoResultado.values())
+                        .filter(tipo -> tipo.getMercado().equals(mercado))
+                        .count();
+                
+                estadisticasMercado.put("existentes", cuotasExistentesEnMercado);
+                estadisticasMercado.put("faltantes", cuotasFaltantesEnMercado);
+                estadisticasMercado.put("total", totalCuotasEnMercado);
+                estadisticasMercado.put("porcentaje", 
+                        (cuotasExistentesEnMercado * 100.0) / totalCuotasEnMercado);
+                estadisticasMercado.put("completo", cuotasFaltantesEnMercado == 0);
+                
+                estadisticasPorMercado.put(mercado, estadisticasMercado);
+            }
+            
+            // Información del evento
+            Map<String, Object> infoEvento = new HashMap<>();
+            infoEvento.put("id", evento.getId());
+            infoEvento.put("nombre", evento.getNombreEvento());
+            infoEvento.put("equipoLocal", evento.getEquipoLocal());
+            infoEvento.put("equipoVisitante", evento.getEquipoVisitante());
+            infoEvento.put("estado", evento.getEstado());
+            infoEvento.put("fechaEvento", evento.getFechaEvento().toString());
+            infoEvento.put("deporte", evento.getDeporte() != null ? evento.getDeporte().getNombre() : "N/A");
+            infoEvento.put("liga", evento.getLiga() != null ? evento.getLiga().getNombre() : "N/A");
+            
+            // Resultado final
+            Map<String, Object> resultado = new HashMap<>();
+            resultado.put("evento", infoEvento);
+            resultado.put("totalCuotasExistentes", cuotasExistentes.size());
+            resultado.put("totalTiposRequeridos", todosLosTipos.size());
+            resultado.put("totalCuotasFaltantes", cuotasFaltantes.size());
+            resultado.put("cuotasCompletas", cuotasFaltantes.isEmpty());
+            resultado.put("porcentajeCompletitud", 
+                    (cuotasExistentes.size() * 100.0) / todosLosTipos.size());
+            resultado.put("estadisticasPorMercado", estadisticasPorMercado);
+            resultado.put("cuotasFaltantesPorMercado", cuotasFaltantesPorMercado);
+            resultado.put("fechaVerificacion", LocalDateTime.now().toString());
+            
+            return resultado;
+            
+        } catch (Exception e) {
+            log.error("Error al verificar cuotas detalladas para evento {}: {}", 
+                    eventoId, e.getMessage());
+            return Map.of("error", "Error al obtener información detallada: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Forzar creación de cuotas para un evento, incluso si ya existen
+     * @param eventoId ID del evento
+     * @return true si se crearon cuotas, false en caso contrario
+     */
+    @Transactional
+    public boolean forzarCreacionCuotas(Long eventoId) {
+        try {
+            log.info("🔥 Forzando creación de cuotas para evento: {}", eventoId);
+            
+            // Usar el servicio para generar cuotas (el servicio ya maneja duplicados)
+            List<CuotaEvento> cuotasGeneradas = cuotaEventoService.generarCuotasParaEvento(eventoId);
+            
+            if (!cuotasGeneradas.isEmpty()) {
+                log.info("✅ Cuotas forzadas creadas para evento {}: {} cuotas", 
+                        eventoId, cuotasGeneradas.size());
+                return true;
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            log.error("Error al forzar creación de cuotas para evento {}: {}", 
+                    eventoId, e.getMessage());
+            return false;
         }
     }
 }

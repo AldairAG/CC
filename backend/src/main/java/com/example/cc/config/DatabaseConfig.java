@@ -13,7 +13,8 @@ public class DatabaseConfig {
     @Bean
     public PlatformTransactionManager transactionManager() {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
-        transactionManager.setDefaultTimeout(30); // 30 segundos por defecto
+        // Configurar timeout más largo para transacciones de batch (5 minutos)
+        transactionManager.setDefaultTimeout(300);
         return transactionManager;
     }
 }

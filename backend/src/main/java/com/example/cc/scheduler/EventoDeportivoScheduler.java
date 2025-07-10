@@ -38,7 +38,7 @@ public class EventoDeportivoScheduler {
             log.error("=== ERROR EN SINCRONIZACIÓN PROGRAMADA: {} ===", e.getMessage(), e);
         }
     }
- 
+
     /**
      * Actualizar livescores de eventos del día actual cada 2 minutos
      */
@@ -67,6 +67,80 @@ public class EventoDeportivoScheduler {
     }
 
     /**
+     * Verificar y crear cuotas faltantes para eventos programados cada 2 minutos
+     * Es crítico que todos los eventos programados tengan cuotas completas
+     */
+    @Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
+    public void verificarCuotasEventosProgramados() {
+        log.info("🎯 === INICIANDO VERIFICACIÓN DE CUOTAS (cada 2 min) ===");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // Verificar cuotas para eventos programados y en vivo (ambos necesitan cuotas)
+            var resumen = theSportsDbService.verificarCuotasEventosPorEstados(
+                    java.util.List.of("programado", "en_vivo"));
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            log.info("✅ === VERIFICACIÓN DE CUOTAS COMPLETADA ({}ms) ===", duration);
+            log.info("📊 Total eventos procesados: {}", resumen.getTotalEventos());
+            log.info("💰 Eventos con cuotas completas: {}", resumen.getEventosCompletos());
+            log.info("🔧 Eventos con cuotas creadas: {}", resumen.getEventosConCuotasCreadas());
+            log.info("❌ Eventos con errores: {}", resumen.getEventosConErrores());
+            
+            // Log adicional si se crearon cuotas
+            if (resumen.getEventosConCuotasCreadas() > 0) {
+                log.info("🎉 IMPORTANTE: Se crearon cuotas para {} eventos (programados/en_vivo)", 
+                        resumen.getEventosConCuotasCreadas());
+            }
+            
+            // Log si todos los eventos ya tienen cuotas
+            if (resumen.getTotalEventos() > 0 && resumen.getEventosConCuotasCreadas() == 0) {
+                log.info("✨ Todos los eventos activos ya tienen cuotas completas");
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ === ERROR AL VERIFICAR CUOTAS: {} ===", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verificar cuotas para eventos próximos cada 30 minutos
+     * Esto asegura que eventos que vienen en los próximos días tengan cuotas preparadas
+     */
+    @Scheduled(cron = "0 */30 * * * *", zone = "America/Mexico_City")
+    public void verificarCuotasEventosProximos() {
+        log.info("📅 === INICIANDO VERIFICACIÓN DE CUOTAS EVENTOS PRÓXIMOS (cada 30 min) ===");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // Verificar cuotas para eventos de los próximos 3 días
+            var resumen = theSportsDbService.verificarCuotasEventosProximos(3);
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            log.info("✅ === VERIFICACIÓN EVENTOS PRÓXIMOS COMPLETADA ({}ms) ===", duration);
+            log.info("📊 Total eventos próximos (3 días): {}", resumen.getTotalEventos());
+            log.info("💰 Eventos con cuotas completas: {}", resumen.getEventosCompletos());
+            log.info("🔧 Eventos con cuotas creadas: {}", resumen.getEventosConCuotasCreadas());
+            log.info("❌ Eventos con errores: {}", resumen.getEventosConErrores());
+            
+            // Log especial para eventos próximos
+            if (resumen.getEventosConCuotasCreadas() > 0) {
+                log.info("🚀 Se prepararon cuotas para {} eventos próximos", 
+                        resumen.getEventosConCuotasCreadas());
+            }
+            
+        } catch (Exception e) {
+            log.error("❌ === ERROR AL VERIFICAR CUOTAS EVENTOS PRÓXIMOS: {} ===", e.getMessage(), e);
+        }
+    }
+
+    /**
      * Ejecutar limpieza de eventos antiguos cada domingo a las 2:00 AM
      */
     @Scheduled(cron = "0 0 2 * * SUN", zone = "America/Mexico_City")
@@ -83,6 +157,30 @@ public class EventoDeportivoScheduler {
     }
 
     /**
+     * Cerrar eventos cuya fecha ya pasó - se ejecuta cada hora
+     */
+    @Scheduled(cron = "0 0 * * * *", zone = "America/Mexico_City")
+    public void cerrarEventosVencidos() {
+        log.info("🔒 === INICIANDO CIERRE DE EVENTOS VENCIDOS ===");
+        
+        try {
+            long startTime = System.currentTimeMillis();
+            
+            // Cerrar eventos cuya fecha sea menor a la actual
+            int eventosCerrados = eventoDeportivoService.cerrarEventosVencidos();
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            log.info("✅ === EVENTOS CERRADOS: {} eventos vencidos ({}ms) ===", 
+                    eventosCerrados, duration);
+            
+        } catch (Exception e) {
+            log.error("❌ === ERROR AL CERRAR EVENTOS VENCIDOS: {} ===", e.getMessage(), e);
+        }
+    }
+
+    /**
      * Tarea de prueba para verificar que el scheduler funciona (cada 30 minutos)
      */
     @Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
@@ -95,7 +193,7 @@ public class EventoDeportivoScheduler {
      */
     public void forzarSincronizacion() {
         log.info("=== FORZANDO SINCRONIZACIÓN MANUAL ===");
-        //sincronizarEventosDeportivos();
+        sincronizarEventosDeportivos();
     }
 
     /**
@@ -103,6 +201,30 @@ public class EventoDeportivoScheduler {
      */
     public void forzarActualizacionLivescores() {
         log.info("=== FORZANDO ACTUALIZACIÓN DE LIVESCORES ===");
-        //actualizarLivescoresEventosHoy();
+        actualizarLivescoresEventosHoy();
+    }
+
+    /**
+     * Método manual para forzar verificación de cuotas
+     */
+    public void forzarVerificacionCuotas() {
+        log.info("=== FORZANDO VERIFICACIÓN DE CUOTAS ===");
+        verificarCuotasEventosProgramados();
+    }
+
+    /**
+     * Método manual para forzar verificación de cuotas de eventos próximos
+     */
+    public void forzarVerificacionCuotasProximos() {
+        log.info("=== FORZANDO VERIFICACIÓN DE CUOTAS EVENTOS PRÓXIMOS ===");
+        verificarCuotasEventosProximos();
+    }
+
+    /**
+     * Método manual para forzar cierre de eventos vencidos
+     */
+    public void forzarCierreEventosVencidos() {
+        log.info("=== FORZANDO CIERRE DE EVENTOS VENCIDOS ===");
+        cerrarEventosVencidos();
     }
 }

@@ -8,10 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,6 +27,7 @@ public class CuotasScheduledService {
      * Actualización automática de cuotas cada 15 minutos
      */
     @Scheduled(fixedRate = 900000) // 15 minutos en milisegundos
+    @Transactional
     public void actualizarCuotasAutomaticamente() {
         log.info("Iniciando actualización automática de cuotas");
         
@@ -74,6 +75,7 @@ public class CuotasScheduledService {
      * Actualización de probabilidades basada en feeds externos cada hora
      */
     @Scheduled(fixedRate = 3600000) // 1 hora en milisegundos
+    @Transactional
     public void actualizarCuotasPorFeedsExternos() {
         log.info("Iniciando actualización por feeds externos");
         
@@ -103,6 +105,7 @@ public class CuotasScheduledService {
      * Limpieza de datos históricos cada día a medianoche
      */
     @Scheduled(cron = "0 0 0 * * *") // Medianoche todos los días
+    @Transactional
     public void limpiezaDatosHistoricos() {
         log.info("Iniciando limpieza de datos históricos");
         
@@ -125,6 +128,7 @@ public class CuotasScheduledService {
      * Análisis de riesgo y alertas cada 30 minutos
      */
     @Scheduled(fixedRate = 1800000) // 30 minutos en milisegundos
+    @Transactional
     public void analisisRiesgoYAlertas() {
         log.info("Iniciando análisis de riesgo");
         

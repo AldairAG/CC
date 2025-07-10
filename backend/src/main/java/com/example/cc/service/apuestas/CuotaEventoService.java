@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class CuotaEventoService {
 
     private final CuotaEventoRepository cuotaEventoRepository;
@@ -29,6 +30,7 @@ public class CuotaEventoService {
     /**
      * Obtener cuotas para un evento deportivo
      */
+    @Transactional(readOnly = true)
     public List<CuotaEvento> getCuotasByEventoId(Long eventoId) {
         return cuotaEventoRepository.findActiveByEventoId(eventoId);
     }
@@ -36,6 +38,7 @@ public class CuotaEventoService {
     /**
      * Obtener cuotas para un evento deportivo filtradas por mercado
      */
+    @Transactional(readOnly = true)
     public List<CuotaEvento> getCuotasByEventoIdAndMercado(Long eventoId, String mercado) {
         List<CuotaEvento> todasLasCuotas = cuotaEventoRepository.findActiveByEventoId(eventoId);
         return todasLasCuotas.stream()
@@ -46,6 +49,7 @@ public class CuotaEventoService {
     /**
      * Obtener cuotas agrupadas por mercado para un evento
      */
+    @Transactional(readOnly = true)
     public Map<String, List<CuotaEvento>> getCuotasAgrupadasPorMercado(Long eventoId) {
         List<CuotaEvento> todasLasCuotas = cuotaEventoRepository.findActiveByEventoId(eventoId);
         return todasLasCuotas.stream()
@@ -64,14 +68,51 @@ public class CuotaEventoService {
 
         // Verificar si ya existen cuotas para este evento
         List<CuotaEvento> cuotasExistentes = cuotaEventoRepository.findByEventoDeportivo(evento);
+        List<TipoResultado> todosLosTipos = cuotaGeneratorService.getAllTiposResultado();
+        
+        // Verificar si existen cuotas para TODOS los tipos de resultado
         if (!cuotasExistentes.isEmpty()) {
-            log.info("Ya existen {} cuotas para evento: {}", cuotasExistentes.size(), evento.getNombreEvento());
-            return cuotasExistentes;
+            List<TipoResultado> tiposExistentes = cuotasExistentes.stream()
+                    .map(CuotaEvento::getTipoResultado)
+                    .collect(Collectors.toList());
+            
+            // Si ya existen cuotas para todos los tipos, retornar las existentes
+            if (tiposExistentes.containsAll(todosLosTipos)) {
+                log.info("Ya existen cuotas completas para evento: {} ({} tipos)", 
+                        evento.getNombreEvento(), cuotasExistentes.size());
+                return cuotasExistentes;
+            } else {
+                // Faltan algunos tipos de cuotas, generar solo las faltantes
+                List<TipoResultado> tiposFaltantes = todosLosTipos.stream()
+                        .filter(tipo -> !tiposExistentes.contains(tipo))
+                        .collect(Collectors.toList());
+                
+                log.info("Faltan {} tipos de cuotas para evento: {}. Generando faltantes...", 
+                        tiposFaltantes.size(), evento.getNombreEvento());
+                
+                // Generar solo las cuotas faltantes
+                List<CuotaEvento> cuotasFaltantes = new ArrayList<>();
+                for (TipoResultado tipoFaltante : tiposFaltantes) {
+                    CuotaEvento cuota = new CuotaEvento();
+                    cuota.setEventoDeportivo(evento);
+                    cuota.setTipoResultado(tipoFaltante);
+                    cuota.setValorCuota(cuotaGeneratorService.generarCuotaParaTipo(tipoFaltante));
+                    cuota.setEstado("ACTIVA");
+                    cuotasFaltantes.add(cuota);
+                }
+                
+                // Guardar las cuotas faltantes usando método optimizado
+                guardarCuotasEnLotesOptimizado(cuotasFaltantes, "Cuotas faltantes para evento: " + evento.getNombreEvento());
+                cuotasExistentes.addAll(cuotasFaltantes);
+                
+                log.info("Generadas {} cuotas faltantes. Total cuotas: {}", 
+                        cuotasFaltantes.size(), cuotasExistentes.size());
+                return cuotasExistentes;
+            }
         }
 
         // Generar cuotas para TODOS los tipos de resultado disponibles
         List<CuotaEvento> cuotasNuevas = new ArrayList<>();
-        List<TipoResultado> todosLosTipos = cuotaGeneratorService.getAllTiposResultado();
         
         for (TipoResultado tipoResultado : todosLosTipos) {
             CuotaEvento cuota = new CuotaEvento();
@@ -82,8 +123,8 @@ public class CuotaEventoService {
             cuotasNuevas.add(cuota);
         }
 
-        // Guardar todas las cuotas
-        cuotaEventoRepository.saveAll(cuotasNuevas);
+        // Guardar todas las cuotas usando método optimizado
+        guardarCuotasEnLotesOptimizado(cuotasNuevas, "Cuotas nuevas para evento: " + evento.getNombreEvento());
         log.info("Generadas {} cuotas para evento: {} - Mercados: {}", 
                 cuotasNuevas.size(), evento.getNombreEvento(), 
                 cuotasNuevas.stream().map(c -> c.getTipoResultado().getMercado()).distinct().count());
@@ -157,9 +198,63 @@ public class CuotaEventoService {
             cuotasBasicas.add(cuota);
         }
 
+        // Guardar cuotas básicas (siempre son pocas, no necesita lotes)
         cuotaEventoRepository.saveAll(cuotasBasicas);
+        cuotaEventoRepository.flush(); // Asegurar escritura inmediata
         log.info("Cuotas básicas generadas para evento: {}", evento.getNombreEvento());
 
         return cuotasBasicas;
+    }
+
+    /**
+     * Método optimizado para guardar cuotas en lotes con mejor rendimiento
+     */
+    @Transactional
+    private void guardarCuotasEnLotesOptimizado(List<CuotaEvento> cuotas, String contexto) {
+        if (cuotas.isEmpty()) {
+            return;
+        }
+        
+        try {
+            log.info("Guardando {} cuotas en lotes optimizados - {}", cuotas.size(), contexto);
+            
+            // Configurar tamaño de lote basado en el número de cuotas
+            int batchSize = cuotas.size() > 50 ? 15 : 25;
+            int totalBatches = (int) Math.ceil((double) cuotas.size() / batchSize);
+            
+            for (int i = 0; i < totalBatches; i++) {
+                int fromIndex = i * batchSize;
+                int toIndex = Math.min((i + 1) * batchSize, cuotas.size());
+                
+                List<CuotaEvento> lote = cuotas.subList(fromIndex, toIndex);
+                
+                // Guardar el lote
+                cuotaEventoRepository.saveAll(lote);
+                
+                // Forzar escritura y limpiar caché cada cierto número de lotes
+                if (i % 3 == 0 || i == totalBatches - 1) {
+                    cuotaEventoRepository.flush();
+                }
+                
+                // Pausa adaptativa basada en el tamaño del lote
+                if (i < totalBatches - 1) {
+                    Thread.sleep(cuotas.size() > 50 ? 20 : 10);
+                }
+                
+                log.debug("Lote {}/{} completado - {} cuotas", i + 1, totalBatches, lote.size());
+            }
+            
+            // Flush final para asegurar persistencia
+            cuotaEventoRepository.flush();
+            log.info("Guardado optimizado completado - {} cuotas en {} lotes", cuotas.size(), totalBatches);
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Proceso interrumpido durante guardado de cuotas: {}", e.getMessage());
+            throw new RuntimeException("Proceso interrumpido durante guardado de cuotas", e);
+        } catch (Exception e) {
+            log.error("Error durante guardado optimizado de cuotas - {}: {}", contexto, e.getMessage(), e);
+            throw new RuntimeException("Error al guardar cuotas: " + contexto, e);
+        }
     }
 }

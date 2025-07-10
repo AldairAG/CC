@@ -13,7 +13,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class DeporteService implements IDeporteService {
 
     private final DeporteRepository deporteRepository;
@@ -47,6 +46,7 @@ public class DeporteService implements IDeporteService {
     }
 
     @Override
+    @Transactional
     public Deporte createDeporte(Deporte deporte) {
         log.info("Creando nuevo deporte: {}", deporte.getNombre());
         
@@ -59,6 +59,7 @@ public class DeporteService implements IDeporteService {
     }
 
     @Override
+    @Transactional
     public Deporte updateDeporte(Long id, Deporte deporteActualizado) {
         log.info("Actualizando deporte con ID: {}", id);
         
@@ -75,6 +76,7 @@ public class DeporteService implements IDeporteService {
     }
 
     @Override
+    @Transactional
     public void deleteDeporte(Long id) {
         log.info("Desactivando deporte con ID: {}", id);
         
@@ -100,6 +102,7 @@ public class DeporteService implements IDeporteService {
     }
 
     @Override
+    @Transactional
     public Deporte createDeporteSafe(Deporte deporte) {
         log.info("Creando deporte de forma segura: {}", deporte.getNombre());
         
