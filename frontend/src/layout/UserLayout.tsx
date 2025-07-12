@@ -45,14 +45,14 @@ const UserLayout = () => {
     };
 
     return (
-        <main className="min-h-screen bg-casino-gradient">
-            <header className="w-full flex flex-col bg-dark-900 shadow-lg border-b-2 border-primary-500 relative z-50">
+        <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+            <header className="w-full flex flex-col bg-gradient-to-r from-gray-900/95 via-slate-900/95 to-gray-900/95 backdrop-blur-lg shadow-2xl border-b-2 border-gray-600/30 relative z-50">
                 <div className="h-16 sm:h-20 flex px-4 items-center justify-between py-4">
                     {/* Botón hamburguesa para móviles */}
                     <button
                         onClick={toggleSidebar}
-                        className={`lg:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors relative ${
-                            isSidebarOpen ? 'bg-primary-600/30' : ''
+                        className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
+                            isSidebarOpen ? 'bg-gray-700/50' : ''
                         }`}
                         aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
                     >
@@ -64,10 +64,10 @@ const UserLayout = () => {
                             )}
                         </svg>
                         {/* Indicador de notificación */}
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full opacity-80 lg:hidden"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full opacity-80 lg:hidden"></div>
                     </button>
 
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-500 animate-glow">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text animate-pulse">
                         24bet
                     </h1>
                     
@@ -75,8 +75,8 @@ const UserLayout = () => {
                         {/* Botón carrito para móviles */}
                         <button
                             onClick={toggleCart}
-                            className={`xl:hidden p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors relative ${
-                                isCartOpen ? 'bg-primary-600/30' : ''
+                            className={`xl:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
+                                isCartOpen ? 'bg-gray-700/50' : ''
                             }`}
                             aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
                         >
@@ -84,13 +84,13 @@ const UserLayout = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h7" />
                             </svg>
                             {/* Indicador de items en carrito */}
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full opacity-80 xl:hidden"></div>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-80 xl:hidden"></div>
                         </button>
                         
                         <UserProfileButton />
                         <button 
                             onClick={handleLogout}
-                            className="px-2 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-casino flex items-center gap-2 text-sm sm:text-base"
+                            className="px-2 sm:px-4 py-2 bg-gradient-to-r from-red-600/90 to-red-700/90 backdrop-blur-sm text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 shadow-lg flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95"
                             title="Cerrar sesión"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -101,12 +101,12 @@ const UserLayout = () => {
                     </div>
                 </div>
                 
-                <div className="flex bg-dark-800 items-center justify-center border-t border-primary-600/30 overflow-x-auto scrollbar-hide">
+                <div className="flex bg-gradient-to-r from-gray-800/50 to-slate-800/50 items-center justify-center border-t border-gray-600/20 overflow-x-auto scrollbar-hide">
                     <div className="flex min-w-max px-2 sm:px-4">
                         <span 
                             onClick={() => handleNavigate(USER_ROUTES.HOME)} 
-                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-primary-600/20 transition-all duration-300 border-primary-500 whitespace-nowrap text-sm sm:text-base ${
-                                isActiveRoute(USER_ROUTES.HOME) ? 'bg-primary-600/30 border-b-2 text-primary-300' : 'text-gray-300 hover:text-white'
+                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${
+                                isActiveRoute(USER_ROUTES.HOME) ? 'bg-gray-700/50 border-b-2 border-blue-400 text-blue-300' : 'text-gray-300 hover:text-white'
                             }`}
                         >
                             <span className="sm:hidden">🎰</span>
@@ -115,8 +115,8 @@ const UserLayout = () => {
                         
                         <span 
                             onClick={() => handleNavigate(USER_ROUTES.APUESTAS_DEPORTIVAS)} 
-                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-primary-600/20 transition-all duration-300 flex items-center space-x-1 border-primary-500 whitespace-nowrap text-sm sm:text-base ${
-                                isActiveRoute(USER_ROUTES.APUESTAS_DEPORTIVAS) ? 'bg-primary-600/30 border-b-2 text-primary-300' : 'text-gray-300 hover:text-white'
+                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 flex items-center space-x-1 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${
+                                isActiveRoute(USER_ROUTES.APUESTAS_DEPORTIVAS) ? 'bg-gray-700/50 border-b-2 border-purple-400 text-purple-300' : 'text-gray-300 hover:text-white'
                             }`}
                         >
                             <span>⚽</span>
@@ -127,11 +127,11 @@ const UserLayout = () => {
                 </div>
             </header>
             
-            <div className="flex min-h-screen bg-casino-gradient">
+            <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
                 {/* Overlay para móviles cuando el sidebar está abierto */}
                 {isSidebarOpen && (
                     <div 
-                        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}
@@ -140,16 +140,16 @@ const UserLayout = () => {
                 <div className={`
                     fixed lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                    lg:block w-80 h-full lg:h-auto bg-casino-gradient lg:bg-transparent p-4 overflow-y-auto z-50
+                    lg:block w-80 h-full lg:h-auto bg-gradient-to-br from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg lg:bg-transparent p-4 overflow-y-auto z-50
                     top-0 left-0 lg:top-auto lg:left-auto lg:z-auto
-                    border-r lg:border-r-0 border-primary-600/30
+                    border-r lg:border-r-0 border-gray-700/30
                 `}>
                     {/* Header del sidebar móvil */}
-                    <div className="lg:hidden flex items-center justify-between mb-4 pb-4 border-b border-primary-600/30">
-                        <h2 className="text-xl font-bold text-primary-400">Menú</h2>
+                    <div className="lg:hidden flex items-center justify-between mb-4 pb-4 border-b border-gray-700/30">
+                        <h2 className="text-xl font-bold text-gray-300">Menú</h2>
                         <button
                             onClick={() => setIsSidebarOpen(false)}
-                            className="p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors"
+                            className="p-2 text-white hover:bg-gray-700/30 rounded-lg transition-colors"
                             aria-label="Cerrar menú"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,16 +180,16 @@ const UserLayout = () => {
                 <div className={`
                     fixed xl:relative xl:translate-x-0 transition-transform duration-300 ease-in-out
                     ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}
-                    xl:block w-80 h-full xl:h-auto bg-casino-gradient xl:bg-transparent p-4 overflow-y-auto z-50
+                    xl:block w-80 h-full xl:h-auto bg-gradient-to-bl from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg xl:bg-transparent p-4 overflow-y-auto z-50
                     top-0 right-0 xl:top-auto xl:right-auto xl:z-auto
-                    border-l xl:border-l-0 border-primary-600/30
+                    border-l xl:border-l-0 border-gray-700/30
                 `}>
                     {/* Header del carrito móvil */}
-                    <div className="xl:hidden flex items-center justify-between mb-4 pb-4 border-b border-primary-600/30">
-                        <h2 className="text-xl font-bold text-primary-400">Carrito de Apuestas</h2>
+                    <div className="xl:hidden flex items-center justify-between mb-4 pb-4 border-b border-gray-700/30">
+                        <h2 className="text-xl font-bold text-gray-300">Carrito de Apuestas</h2>
                         <button
                             onClick={() => setIsCartOpen(false)}
-                            className="p-2 text-white hover:bg-primary-600/20 rounded-lg transition-colors"
+                            className="p-2 text-white hover:bg-gray-700/30 rounded-lg transition-colors"
                             aria-label="Cerrar carrito"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,7 +204,7 @@ const UserLayout = () => {
                 {/* Overlay para el carrito en móviles */}
                 {isCartOpen && (
                     <div 
-                        className="fixed inset-0 bg-black/50 z-40 xl:hidden"
+                        className="fixed inset-0 bg-black/50 z-40 xl:hidden backdrop-blur-sm"
                         onClick={() => setIsCartOpen(false)}
                     />
                 )}
