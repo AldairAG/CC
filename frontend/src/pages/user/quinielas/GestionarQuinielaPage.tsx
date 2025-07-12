@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { QuinielaEventsManager, EditQuinielaForm } from '../../features/quinielas';
-import { useQuiniela } from '../../hooks/useQuiniela';
-import { useUser } from '../../hooks/useUser';
+import { QuinielaEventsManager, EditQuinielaForm } from '../../../features/quinielas';
+import { useQuiniela } from '../../../hooks/useQuiniela';
+import { useUser } from '../../../hooks/useUser';
 import { useParams } from 'react-router-dom';
 
 const GestionarQuinielaPage: React.FC = () => {

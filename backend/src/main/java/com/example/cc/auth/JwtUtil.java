@@ -1,12 +1,7 @@
 package com.example.cc.auth;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import com.example.cc.entities.Rol;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -40,7 +35,7 @@ public class JwtUtil {
                 .setSubject(email)
                 .claim("roles", roleNames)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 864_000_000)) // 10 días
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime)) // 10 días
                 .signWith(SECRET_KEY)
                 .compact();
     }

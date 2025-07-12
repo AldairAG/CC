@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { useEventoDeportivo } from '../../hooks/useEventoDeportivo';
-import { useCarritoApuestas } from '../../hooks/useCarritoApuestas';
-import { TipoApuesta } from '../../types/ApuestaType';
-import type { EventoDeportivoType } from '../../types/EventoDeportivoTypes';
-import { USER_ROUTES } from '../../constants/ROUTERS';
+import { useEventoDeportivo } from '../../../hooks/useEventoDeportivo';
+import { useCarritoApuestas } from '../../../hooks/useCarritoApuestas';
+import { TipoApuesta } from '../../../types/ApuestaType';
+import type { EventoDeportivoType } from '../../../types/EventoDeportivoTypes';
+import { USER_ROUTES } from '../../../constants/ROUTERS';
 
 interface EventosPorLiga {
     [liga: string]: EventoDeportivoType[];

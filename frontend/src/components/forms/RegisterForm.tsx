@@ -1,4 +1,3 @@
-import WaveText from "../ui/WaveText";
 import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import useUser from "../../hooks/useUser";
@@ -20,10 +19,14 @@ interface FormField {
     type?: string;
 }
 
+interface RegisterFormProps {
+    switchToLogin?: () => void;
+}
+
 const formulario: FormField[] = [
     { id: 'username', pl: 'Usuario' },
-    { id: 'nombres', pl: 'Ingresa tu nombre(s)' },
-    { id: 'apellidos', pl: 'Ingresa tu apellido(s)' },
+    { id: 'nombres', pl: 'Nombres' },
+    { id: 'apellidos', pl: 'Apellidos' },
     { id: 'password', pl: 'Contraseña', type: 'password' },
     { id: 'email', pl: 'Correo electrónico', type: 'email' }
 ];
@@ -68,7 +71,7 @@ const initialValues = {
 };
 
 
-const RegisterForm = () => {
+const RegisterForm = ({ switchToLogin }: RegisterFormProps) => {
 
     const { createUser } = useUser();
 
@@ -89,32 +92,49 @@ const RegisterForm = () => {
             enableReinitialize
         >
             {({ isSubmitting, handleChange, handleBlur, values }) => (
-                <Form className="bg-gray-50 p-4 flex flex-col gap-4 w-md text-center rounded-sm">
-                    <WaveText text={'CasiNova'} classname="text-red-500 text-5xl" />
-                    <h1 className="font-semibold text-lg">Crear una cuenta</h1>
+                <Form className="relative max-w-md w-full space-y-6">
+                    {/* Logo y título */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 mb-2">
+                            24<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-500">bet</span>
+                        </h1>
+                        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-2">
+                            Crear Cuenta
+                        </h2>
+                        <p className="text-slate-400 font-medium">
+                            Únete a miles de ganadores en 24bet
+                        </p>
+                    </div>
 
-                    {formulario.map((item, index) => (
-                        <div key={index}>
-                            <label htmlFor={item.id} className="block text-gray-500 text-left mb-1">{item.pl}</label>
-                            <Field
-                                id={item.id}
-                                name={item.id}
-                                type={item.type || 'text'}
-                                placeholder={item.pl}
-                                className="input"
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                values={values[item.id]}
-                            />
-                            <ErrorMessage name={item.id} component="div" className="text-red-500 text-xs text-left" />
-                        </div>
-                    ))}
+                    {/* Campos básicos */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {formulario.map((item, index) => (
+                            <div key={index} className="relative group">
+                                <label htmlFor={item.id} className="block text-slate-300 text-sm font-semibold mb-2">
+                                    {item.pl}
+                                </label>
+                                <Field
+                                    id={item.id}
+                                    name={item.id}
+                                    type={item.type || 'text'}
+                                    placeholder={`Ingresa tu ${item.pl.toLowerCase()}`}
+                                    className="w-full px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm"
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                />
+                                <ErrorMessage name={item.id} component="div" className="mt-1 text-red-400 text-xs font-medium" />
+                            </div>
+                        ))}
+                    </div>
 
-                    <div>
-                        <label htmlFor="fechaNacimiento" className="block text-gray-500 text-left mb-1">Fecha de nacimiento</label>
-                        <div className="flex gap-2">
+                    {/* Campo Fecha de Nacimiento */}
+                    <div className="relative group">
+                        <label htmlFor="fechaNacimiento" className="block text-slate-300 text-sm font-semibold mb-2">
+                            Fecha de Nacimiento
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
                             <select
-                                className="input flex-1"
+                                className="px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm"
                                 value={values.fechaNacimiento ? parseInt(values.fechaNacimiento.split('-')[2] || '0') : ''}
                                 onChange={(e) => {
                                     const day = e.target.value.padStart(2, '0');
@@ -123,13 +143,13 @@ const RegisterForm = () => {
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
-                                <option value="">Día</option>
+                                <option value="" className="bg-slate-800 text-slate-300">Día</option>
                                 {[...Array(31)].map((_, i) => (
-                                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                    <option key={i + 1} value={i + 1} className="bg-slate-800 text-slate-300">{i + 1}</option>
                                 ))}
                             </select>
                             <select
-                                className="input flex-1"
+                                className="px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm"
                                 value={values.fechaNacimiento ? parseInt(values.fechaNacimiento.split('-')[1] || '0') : ''}
                                 onChange={(e) => {
                                     const month = e.target.value.padStart(2, '0');
@@ -138,13 +158,13 @@ const RegisterForm = () => {
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
-                                <option value="">Mes</option>
+                                <option value="" className="bg-slate-800 text-slate-300">Mes</option>
                                 {[...Array(12)].map((_, i) => (
-                                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                    <option key={i + 1} value={i + 1} className="bg-slate-800 text-slate-300">{i + 1}</option>
                                 ))}
                             </select>
                             <select
-                                className="input flex-1"
+                                className="px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm"
                                 value={values.fechaNacimiento ? values.fechaNacimiento.split('-')[0] : ''}
                                 onChange={(e) => {
                                     const year = e.target.value;
@@ -153,56 +173,77 @@ const RegisterForm = () => {
                                     handleChange({ target: { name: 'fechaNacimiento', value: newDate } });
                                 }}
                             >
-                                <option value="">Año</option>
+                                <option value="" className="bg-slate-800 text-slate-300">Año</option>
                                 {[...Array(100)].map((_, i) => {
                                     const year = new Date().getFullYear() - i;
-                                    return <option key={year} value={year}>{year}</option>;
+                                    return <option key={year} value={year} className="bg-slate-800 text-slate-300">{year}</option>;
                                 })}
                             </select>
                         </div>
-                        <ErrorMessage name="fechaNacimiento" component="div" className="text-red-500 text-xs text-left" />
+                        <ErrorMessage name="fechaNacimiento" component="div" className="mt-1 text-red-400 text-xs font-medium" />
                     </div>
 
-                    <div className="text-start">
-                        <label htmlFor="telefono" className="text-gray-500">Teléfono</label>
+                    {/* Campo Teléfono */}
+                    <div className="relative group">
+                        <label htmlFor="telefono" className="block text-slate-300 text-sm font-semibold mb-2">
+                            Teléfono
+                        </label>
                         <div className="flex gap-2">
                             <select
-                                className="input w-24"
+                                className="px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm w-24"
                                 name="lada"
-                                defaultValue="+52"
+                                value={values.lada}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                value={values.lada}
                             >
-                                <option value="+52">+52 🇲🇽</option>
-                                <option value="+1">+1 🇺🇸</option>
-                                <option value="+34">+34 🇪🇸</option>
-                                <option value="+57">+57 🇨🇴</option>
-                                <option value="+51">+51 🇵🇪</option>
+                                <option value="+52" className="bg-slate-800 text-slate-300">+52 🇲🇽</option>
+                                <option value="+1" className="bg-slate-800 text-slate-300">+1 🇺🇸</option>
+                                <option value="+34" className="bg-slate-800 text-slate-300">+34 🇪🇸</option>
+                                <option value="+57" className="bg-slate-800 text-slate-300">+57 🇨🇴</option>
+                                <option value="+51" className="bg-slate-800 text-slate-300">+51 🇵🇪</option>
                             </select>
                             <Field
                                 id="telefono"
                                 name="telefono"
                                 type="text"
-                                className="input flex-1"
+                                className="flex-1 px-4 py-3 bg-gradient-to-r from-slate-700/50 to-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all duration-300 backdrop-blur-sm"
                                 placeholder="Número de teléfono"
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                values={values.telefono}
                             />
                         </div>
-                        <ErrorMessage name="telefono" component="div" className="text-red-500 text-xs text-left" />
+                        <ErrorMessage name="telefono" component="div" className="mt-1 text-red-400 text-xs font-medium" />
                     </div>
 
+                    {/* Botón de envío */}
                     <button
-                        className="boton-1"
                         type="submit"
                         disabled={isSubmitting}
+                        className="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 disabled:scale-100 transition-all duration-300 border border-amber-500/30 disabled:border-slate-600/30"
                     >
-                        {isSubmitting ? "Creando cuenta..." : "Crear cuenta"}
+                        {isSubmitting ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                Creando cuenta...
+                            </span>
+                        ) : (
+                            "🚀 Crear Cuenta"
+                        )}
                     </button>
 
-                    <h5>¿Aun no tienes una cuenta? <span className="text-blue-400">Registrate aqui</span></h5>
+                    {/* Link para iniciar sesión */}
+                    <div className="text-center pt-4 border-t border-slate-600/30">
+                        <p className="text-slate-400 text-sm font-medium">
+                            ¿Ya tienes una cuenta?{" "}
+                            <button
+                                type="button"
+                                onClick={switchToLogin}
+                                className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-500 font-bold hover:from-blue-300 hover:to-cyan-400 transition-all duration-300"
+                            >
+                                Inicia sesión aquí
+                            </button>
+                        </p>
+                    </div>
                 </Form>
             )}
         </Formik>

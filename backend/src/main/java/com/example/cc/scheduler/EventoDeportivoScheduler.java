@@ -42,7 +42,7 @@ public class EventoDeportivoScheduler {
     /**
      * Actualizar livescores de eventos del día actual cada 2 minutos
      */
-    @Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
+    //@Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
     public void actualizarLivescoresEventosHoy() {
         log.info("🔴 === INICIANDO ACTUALIZACIÓN DE LIVESCORES (cada 2 min) ===");
         
@@ -183,7 +183,7 @@ public class EventoDeportivoScheduler {
     /**
      * Tarea de prueba para verificar que el scheduler funciona (cada 30 minutos)
      */
-    @Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
+    //@Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
     public void tareaVerificacion() {
         log.debug("Scheduler funcionando correctamente - {}", java.time.LocalDateTime.now());
     }

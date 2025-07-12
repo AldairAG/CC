@@ -2,6 +2,7 @@ export const USER_ROUTES = {
     LANDING_PAGE: '/',
     USER_LAYOUT: '/c/',
     HOME: '/c/home',
+    //Quinielas
     QUINIELAS_LIST: '/c/quiniela-list',
     QUINIELAS_CREADAS: '/c/quinielas-creadas',
     CREAR_QUINIELA: '/c/crear-quiniela',
@@ -10,13 +11,15 @@ export const USER_ROUTES = {
     QUINIELAS: '/c/quinielas',
     MIS_PARTICIPACIONES: '/c/mis-participaciones',
     GESTIONAR_QUINIELA: '/c/gestionar-quiniela/:id',
-    CARRITO: '/c/carrito',
-    DEPOSITAR: '/c/depositar',
-    RETIRAR: '/c/retirar',
-    WALLET_LIST: '/c/wallet-list',
-    CREAR_WALLET: '/c/crear-wallet',
+    //Crypto
+    CRYPTO_DASHBOARD: '/c/crypto',
+    DEPOSITAR: '/c/crypto/depositar',
+    RETIRAR: '/c/crypto/retirar',
+    WALLET_MANAGEMENT: '/c/crypto/wallet-management',
+    TRANSACTION_HISTORY: '/c/crypto/transaction-history',
+    //Profile
     USER_PROFILE: '/c/user-profile',
-    CRYPTO_WALLET: '/c/crypto-wallet',
+    //Apuestas
     APUESTAS_DEPORTIVAS: '/c/apuestas-deportivas',
     APUESTAS_DETAIL: '/c/apuestas-deportivas/:fecha/:nombreEvento',
     APUESTAS_POR_DEPORTE: '/c/apuestas-deportivas/:deporte',

@@ -12,12 +12,13 @@ import apuestaSlice from './slices/apuestaSlice'; // Importa el slice de eventos
 import theSportsDBSlice from './slices/theSportsDBSlice'; // Importa el slice de TheSportsDB
 import carritoApuestasSlice from './slices/carritoApuestasSlice'; // Importa el slice del carrito de apuestas
 import cuotasDinamicasSlice from './slices/cuotasDinamicasSlice'; // Importa el slice de cuotas dinámicas
+import cryptoSlice from './slices/cryptoSlice'; // Importa el slice de crypto transacciones
 
 // Configuración de Redux-Persist
 const persistConfig = {
   key: 'root', // Clave bajo la cual se guardará el estado
   storage, // Usar sessionStorage como almacenamiento compatible
-  whitelist: ['deportes', 'user','quiniela','carritoApuestas','profile','evento','theSportsDB','cuotasDinamicas'], // Solo persistir los slices especificados
+  whitelist: ['deportes', 'user','quiniela','carritoApuestas','profile','evento','theSportsDB','cuotasDinamicas','crypto'], // Solo persistir los slices especificados
 };
 
 // Combina todos los reducers
@@ -30,6 +31,7 @@ const rootReducer = combineReducers({
   theSportsDB: theSportsDBSlice,
   carritoApuestas: carritoApuestasSlice,
   cuotasDinamicas: cuotasDinamicasSlice,
+  crypto: cryptoSlice,
 });
 
 // Aplica persistencia al reducer combinado
@@ -47,17 +49,23 @@ export const store = configureStore({
         ignoredActions: [
           // Ignorar acciones que manejan grandes cantidades de datos
           'evento/setEventos',
-          'evento/setEventosProximos', 
+          'evento/setEventosProximos',
           'evento/setEventosDisponibles',
           'theSportsDB/setEventos',
           'apuesta/setApuestas',
-          'quiniela/setQuinielas'
+          'quiniela/setQuinielas',
+          'crypto/setTransactions',
+          'crypto/setBalances',
+          'crypto/setExchangeRates'
         ],
         ignoredActionsPaths: [
           // Ignorar paths específicos en las acciones
           'payload.eventos',
           'payload.data.eventos',
-          'payload.participaciones'
+          'payload.participaciones',
+          'payload.transactions',
+          'payload.balances',
+          'payload.exchangeRates'
         ],
         ignoredPaths: [
           // Ignorar paths del estado que pueden ser grandes
@@ -66,7 +74,10 @@ export const store = configureStore({
           'evento.eventosDisponibles',
           'theSportsDB.eventos',
           'apuesta.apuestas',
-          'quiniela.quinielas'
+          'quiniela.quinielas',
+          'crypto.transactions',
+          'crypto.balances',
+          'crypto.exchangeRates'
         ]
       }
     }),

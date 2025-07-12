@@ -52,3 +52,26 @@ export interface CryptoBalanceDTO {
   balance: number;
   usdValue: number;
 }
+
+export interface UserWallet {
+  id: number;
+  userId: number;
+  name: string;
+  address: string;
+  cryptoType: CryptoType;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateWalletRequest {
+  name: string;
+  address: string;
+  cryptoType: CryptoType;
+}
+
+export interface UpdateWalletRequest {
+  name?: string;
+  address?: string;
+  isActive?: boolean;
+}

@@ -374,11 +374,11 @@ export const selectCuotasEventoFiltradas = createSelector(
     }
     
     if (filtros.cuotaMinima) {
-      cuotasFiltradas = cuotasFiltradas.filter(c => c.cuotaActual >= filtros.cuotaMinima!);
+      cuotasFiltradas = cuotasFiltradas.filter(c => c.valorCuota >= filtros.cuotaMinima!);
     }
     
     if (filtros.cuotaMaxima) {
-      cuotasFiltradas = cuotasFiltradas.filter(c => c.cuotaActual <= filtros.cuotaMaxima!);
+      cuotasFiltradas = cuotasFiltradas.filter(c => c.valorCuota <= filtros.cuotaMaxima!);
     }
     
     if (filtros.activa !== undefined) {

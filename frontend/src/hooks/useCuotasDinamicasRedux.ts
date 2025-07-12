@@ -1,16 +1,12 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { CuotasDinamicasService } from '../service/casino/cuotasDinamicasService';
 import type { AppDispatch } from '../store/store';
 import type {
   CuotaEvento,
-  CuotaHistorial,
-  TendenciaCuota,
-  VolumenApuestas,
-  EstadisticasCuotas,
   ConfiguracionCuotas,
   AlertaCuota,
-  ResumenCuotas,
   FiltroCuotas,
   CuotasDinamicasState
 } from '../types/CuotasDinamicasTypes';
@@ -126,130 +122,74 @@ export const useCuotasDinamicasRedux = () => {
     try {
       dispatch(setCuotasEventoLoading(true));
       
-      // TODO: Implementar llamada real al backend cuando esté listo
-      // const response = await fetch(`/api/cuotas-dinamicas/evento/${eventoId}`);
-      // const data = await response.json();
+      // Llamada real al backend
+      const cuotas = await CuotasDinamicasService.obtenerCuotasEvento(eventoId);
       
-      // Simulación de datos por ahora
-      const cuotasSimuladas: CuotaEvento[] = [
-        {
-          id: 1,
-          eventoId,
-          tipoResultado: 'LOCAL',
-          cuotaActual: 1.90,
-          cuotaAnterior: 1.85,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        },
-        {
-          id: 2,
-          eventoId,
-          tipoResultado: 'EMPATE',
-          cuotaActual: 3.20,
-          cuotaAnterior: 3.25,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        },
-        {
-          id: 3,
-          eventoId,
-          tipoResultado: 'VISITANTE',
-          cuotaActual: 4.15,
-          cuotaAnterior: 4.20,
-          fechaActualizacion: new Date().toISOString(),
-          activa: true
-        }
-      ];
-      
-      dispatch(setCuotasEvento(cuotasSimuladas));
-      return cuotasSimuladas;
+      dispatch(setCuotasEvento(cuotas));
+      return cuotas;
     } catch (error) {
-      const errorMessage = handleError(error, 'Error al cargar cuotas del evento');
-      dispatch(setCuotasEventoError(errorMessage));
-      throw error;
+      console.error('Error al cargar cuotas del evento:', error);
+      
+      // Si no hay cuotas, intentar generarlas
+      try {
+        const cuotasGeneradas = await CuotasDinamicasService.generarCuotasParaEvento(eventoId);
+        
+        // Después de generar las cuotas, intentar cargarlas nuevamente
+        if (cuotasGeneradas.status === 'SUCCESS') {
+          toast.success(`Cuotas generadas: ${cuotasGeneradas.message}`);
+          
+          // Intentar cargar las cuotas generadas
+          const cuotasRecienGeneradas = await CuotasDinamicasService.obtenerCuotasEvento(eventoId);
+          dispatch(setCuotasEvento(cuotasRecienGeneradas));
+          return cuotasRecienGeneradas;
+        } else {
+          throw new Error(cuotasGeneradas.message || 'No se pudieron generar cuotas para este evento');
+        }
+      } catch (generationError) {
+        const errorMessage = handleError(generationError, 'Error al cargar o generar cuotas del evento');
+        dispatch(setCuotasEventoError(errorMessage));
+        throw generationError;
+      }
+    } finally {
+      dispatch(setCuotasEventoLoading(false));
     }
   }, [dispatch, handleError]);
 
   // Cargar historial de cuotas
-  const cargarHistorialCuotas = useCallback(async (cuotaEventoId: number) => {
+  const cargarHistorialCuotas = useCallback(async (eventoId: number, tipoResultado?: string) => {
     try {
       dispatch(setHistorialCuotasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch(`/api/cuotas-dinamicas/historial/${cuotaEventoId}`);
-      // const data = await response.json();
+      // Llamada real al backend
+      const resultado = await CuotasDinamicasService.obtenerHistorialCuotas(eventoId, tipoResultado);
       
-      // Simulación de datos
-      const historialSimulado: CuotaHistorial[] = [
-        {
-          id: 1,
-          cuotaEventoId,
-          cuotaAnterior: 1.80,
-          cuotaNueva: 1.85,
-          fechaCambio: new Date(Date.now() - 300000).toISOString(),
-          motivoCambio: 'Aumento de volumen de apuestas',
-          volumenAcumulado: 15000
-        },
-        {
-          id: 2,
-          cuotaEventoId,
-          cuotaAnterior: 1.85,
-          cuotaNueva: 1.90,
-          fechaCambio: new Date().toISOString(),
-          motivoCambio: 'Ajuste por balance de riesgo',
-          volumenAcumulado: 18500
-        }
-      ];
-      
-      dispatch(setHistorialCuotas(historialSimulado));
-      return historialSimulado;
+      dispatch(setHistorialCuotas(resultado.data));
+      return resultado.data;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar historial de cuotas');
       dispatch(setHistorialCuotasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setHistorialCuotasLoading(false));
     }
   }, [dispatch, handleError]);
 
   // Cargar tendencias de cuotas
-  const cargarTendenciaCuotas = useCallback(async () => {
+  const cargarTendenciaCuotas = useCallback(async (eventoId?: number, filtros?: FiltroCuotas) => {
     try {
       dispatch(setTendenciaCuotasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch('/api/cuotas-dinamicas/tendencias');
-      // const data = await response.json();
+      // Llamada real al backend
+      const tendencias = await CuotasDinamicasService.obtenerTendenciaCuotas(eventoId, filtros);
       
-      // Simulación de datos
-      const tendenciasSimuladas: TendenciaCuota[] = [
-        {
-          tipoResultado: 'LOCAL',
-          cuotaActual: 1.90,
-          tendencia: 'SUBIENDO',
-          porcentajeCambio: 2.7,
-          volumenTotal: 18500
-        },
-        {
-          tipoResultado: 'EMPATE',
-          cuotaActual: 3.20,
-          tendencia: 'BAJANDO',
-          porcentajeCambio: -1.5,
-          volumenTotal: 8200
-        },
-        {
-          tipoResultado: 'VISITANTE',
-          cuotaActual: 4.15,
-          tendencia: 'ESTABLE',
-          porcentajeCambio: -1.2,
-          volumenTotal: 5800
-        }
-      ];
-      
-      dispatch(setTendenciaCuotas(tendenciasSimuladas));
-      return tendenciasSimuladas;
+      dispatch(setTendenciaCuotas(tendencias));
+      return tendencias;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar tendencias de cuotas');
       dispatch(setTendenciaCuotasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setTendenciaCuotasLoading(false));
     }
   }, [dispatch, handleError]);
 
@@ -258,41 +198,17 @@ export const useCuotasDinamicasRedux = () => {
     try {
       dispatch(setVolumenApuestasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch(`/api/cuotas-dinamicas/volumen/${eventoId}`);
-      // const data = await response.json();
+      // Llamada real al backend
+      const volumen = await CuotasDinamicasService.obtenerVolumenApuestas(eventoId);
       
-      // Simulación de datos
-      const volumenSimulado: VolumenApuestas[] = [
-        {
-          eventoId,
-          tipoResultado: 'LOCAL',
-          volumenTotal: 18500,
-          numeroApuestas: 142,
-          fechaUltimaApuesta: new Date().toISOString()
-        },
-        {
-          eventoId,
-          tipoResultado: 'EMPATE',
-          volumenTotal: 8200,
-          numeroApuestas: 87,
-          fechaUltimaApuesta: new Date(Date.now() - 120000).toISOString()
-        },
-        {
-          eventoId,
-          tipoResultado: 'VISITANTE',
-          volumenTotal: 5800,
-          numeroApuestas: 56,
-          fechaUltimaApuesta: new Date(Date.now() - 180000).toISOString()
-        }
-      ];
-      
-      dispatch(setVolumenApuestas(volumenSimulado));
-      return volumenSimulado;
+      dispatch(setVolumenApuestas(volumen));
+      return volumen;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar volumen de apuestas');
       dispatch(setVolumenApuestasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setVolumenApuestasLoading(false));
     }
   }, [dispatch, handleError]);
 
@@ -301,25 +217,17 @@ export const useCuotasDinamicasRedux = () => {
     try {
       dispatch(setEstadisticasCuotasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch(`/api/cuotas-dinamicas/estadisticas/${eventoId}`);
-      // const data = await response.json();
+      // Llamada real al backend usando el servicio
+      const estadisticas = await CuotasDinamicasService.obtenerEstadisticasCuotas(eventoId);
       
-      // Simulación de datos
-      const estadisticasSimuladas: EstadisticasCuotas = {
-        eventoId,
-        totalMercados: 15,
-        mercadoMasPopular: 'RESULTADO_GENERAL',
-        volumenTotalEvento: 32500,
-        ultimaActualizacion: new Date().toISOString()
-      };
-      
-      dispatch(setEstadisticasCuotas(estadisticasSimuladas));
-      return estadisticasSimuladas;
+      dispatch(setEstadisticasCuotas(estadisticas));
+      return estadisticas;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar estadísticas de cuotas');
       dispatch(setEstadisticasCuotasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setEstadisticasCuotasLoading(false));
     }
   }, [dispatch, handleError]);
 
@@ -328,26 +236,17 @@ export const useCuotasDinamicasRedux = () => {
     try {
       dispatch(setResumenCuotasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch('/api/cuotas-dinamicas/resumen');
-      // const data = await response.json();
+      // Llamada real al backend usando el servicio
+      const resumen = await CuotasDinamicasService.obtenerResumenCuotas();
       
-      // Simulación de datos
-      const resumenSimulado: ResumenCuotas = {
-        totalEventos: 25,
-        totalCuotas: 375,
-        cuotasActualizadas: 89,
-        tendenciasPositivas: 142,
-        tendenciasNegativas: 98,
-        ultimaActualizacion: new Date().toISOString()
-      };
-      
-      dispatch(setResumenCuotas(resumenSimulado));
-      return resumenSimulado;
+      dispatch(setResumenCuotas(resumen));
+      return resumen;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar resumen de cuotas');
       dispatch(setResumenCuotasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setResumenCuotasLoading(false));
     }
   }, [dispatch, handleError]);
 
@@ -356,58 +255,25 @@ export const useCuotasDinamicasRedux = () => {
     try {
       dispatch(setAlertasCuotasLoading(true));
       
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch('/api/cuotas-dinamicas/alertas');
-      // const data = await response.json();
+      // Llamada real al backend usando el servicio
+      const alertas = await CuotasDinamicasService.obtenerAlertasCuotas();
       
-      // Simulación de datos
-      const alertasSimuladas: AlertaCuota[] = [
-        {
-          id: 1,
-          eventoId: 1,
-          tipoResultado: 'LOCAL',
-          cuotaObjetivo: 2.0,
-          direccion: 'MAYOR',
-          activa: true,
-          fechaCreacion: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-          id: 2,
-          eventoId: 2,
-          tipoResultado: 'VISITANTE',
-          cuotaObjetivo: 3.5,
-          direccion: 'MENOR',
-          activa: true,
-          fechaCreacion: new Date(Date.now() - 172800000).toISOString()
-        }
-      ];
-      
-      dispatch(setAlertasCuotas(alertasSimuladas));
-      return alertasSimuladas;
+      dispatch(setAlertasCuotas(alertas));
+      return alertas;
     } catch (error) {
       const errorMessage = handleError(error, 'Error al cargar alertas de cuotas');
       dispatch(setAlertasCuotasError(errorMessage));
       throw error;
+    } finally {
+      dispatch(setAlertasCuotasLoading(false));
     }
   }, [dispatch, handleError]);
 
   // Crear alerta de cuota
   const crearAlertaCuota = useCallback(async (alerta: Omit<AlertaCuota, 'id' | 'fechaCreacion'>) => {
     try {
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch('/api/cuotas-dinamicas/alertas', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(alerta)
-      // });
-      // const data = await response.json();
-      
-      // Simulación de datos
-      const nuevaAlerta: AlertaCuota = {
-        ...alerta,
-        id: Date.now(),
-        fechaCreacion: new Date().toISOString()
-      };
+      // Llamada real al backend usando el servicio
+      const nuevaAlerta = await CuotasDinamicasService.crearAlertaCuota(alerta);
       
       dispatch(agregarAlertaCuota(nuevaAlerta));
       toast.success('Alerta creada exitosamente');
@@ -421,10 +287,8 @@ export const useCuotasDinamicasRedux = () => {
   // Eliminar alerta de cuota
   const eliminarAlertaCuota = useCallback(async (alertaId: number) => {
     try {
-      // TODO: Implementar llamada real al backend
-      // await fetch(`/api/cuotas-dinamicas/alertas/${alertaId}`, {
-      //   method: 'DELETE'
-      // });
+      // Llamada real al backend usando el servicio
+      await CuotasDinamicasService.eliminarAlertaCuota(alertaId);
       
       dispatch(removerAlertaCuota(alertaId));
       toast.success('Alerta eliminada exitosamente');
@@ -437,15 +301,10 @@ export const useCuotasDinamicasRedux = () => {
   // Actualizar configuración
   const actualizarConfiguracion = useCallback(async (nuevaConfiguracion: Partial<ConfiguracionCuotas>) => {
     try {
-      // TODO: Implementar llamada real al backend
-      // const response = await fetch('/api/cuotas-dinamicas/configuracion', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(nuevaConfiguracion)
-      // });
-      // const data = await response.json();
+      // Llamada real al backend usando el servicio
+      const configuracionActualizada = await CuotasDinamicasService.actualizarConfiguracion(nuevaConfiguracion);
       
-      dispatch(setConfiguracion(nuevaConfiguracion));
+      dispatch(setConfiguracion(configuracionActualizada));
       toast.success('Configuración actualizada exitosamente');
     } catch (error) {
       handleError(error, 'Error al actualizar configuración');
@@ -508,6 +367,161 @@ export const useCuotasDinamicasRedux = () => {
     dispatch(limpiarEstado());
   }, [dispatch]);
 
+  // Suscripción en tiempo real para actualizaciones de cuotas
+  const suscripcionRef = useRef<EventSource | null>(null);
+
+  const suscribirseActualizaciones = useCallback(async (eventoId: number) => {
+    try {
+      // Cerrar suscripción anterior si existe
+      if (suscripcionRef.current) {
+        suscripcionRef.current.close();
+        suscripcionRef.current = null;
+      }
+
+      // Establecer nueva suscripción
+      const eventSource = await CuotasDinamicasService.suscribirseActualizaciones(
+        eventoId,
+        (cuotaActualizada) => {
+          dispatch(actualizarCuotaEvento(cuotaActualizada));
+          dispatch(setConexionTiempoReal({ conectado: true }));
+        }
+      );
+
+      suscripcionRef.current = eventSource;
+      dispatch(setConexionTiempoReal({ conectado: true }));
+    } catch (error) {
+      console.error('Error al establecer suscripción en tiempo real:', error);
+      dispatch(setConexionTiempoReal({ conectado: false }));
+    }
+  }, [dispatch]);
+
+  // Cancelar suscripción
+  const cancelarSuscripcion = useCallback(() => {
+    if (suscripcionRef.current) {
+      suscripcionRef.current.close();
+      suscripcionRef.current = null;
+      dispatch(setConexionTiempoReal({ conectado: false }));
+    }
+  }, [dispatch]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (suscripcionRef.current) {
+        suscripcionRef.current.close();
+      }
+    };
+  }, []);
+
+  // Buscar cuotas con filtros
+  const buscarCuotas = useCallback(async (filtros: FiltroCuotas, busqueda?: string) => {
+    try {
+      dispatch(setCuotasEventoLoading(true));
+      
+      const resultado = await CuotasDinamicasService.buscarCuotas(filtros, busqueda, paginacion);
+      
+      dispatch(setCuotasEvento(resultado.data));
+      dispatch(setPaginacion(resultado.paginacion));
+      return resultado.data;
+    } catch (error) {
+      const errorMessage = handleError(error, 'Error al buscar cuotas');
+      dispatch(setCuotasEventoError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setCuotasEventoLoading(false));
+    }
+  }, [dispatch, handleError, paginacion]);
+
+  // Obtener cuotas por mercado
+  const obtenerCuotasPorMercado = useCallback(async (eventoId: number) => {
+    try {
+      dispatch(setCuotasEventoLoading(true));
+      
+      const cuotasPorMercado = await CuotasDinamicasService.obtenerCuotasPorMercado(eventoId);
+      
+      return cuotasPorMercado;
+    } catch (error) {
+      const errorMessage = handleError(error, 'Error al obtener cuotas por mercado');
+      dispatch(setCuotasEventoError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setCuotasEventoLoading(false));
+    }
+  }, [dispatch, handleError]);
+
+  // Obtener cuotas detalladas
+  const obtenerCuotasDetalladas = useCallback(async (eventoId: number) => {
+    try {
+      dispatch(setCuotasEventoLoading(true));
+      
+      const cuotasDetalladas = await CuotasDinamicasService.obtenerCuotasDetalladas(eventoId);
+      
+      return cuotasDetalladas;
+    } catch (error) {
+      const errorMessage = handleError(error, 'Error al obtener cuotas detalladas');
+      dispatch(setCuotasEventoError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setCuotasEventoLoading(false));
+    }
+  }, [dispatch, handleError]);
+
+  // Registrar apuesta y actualizar cuotas
+  const registrarApuesta = useCallback(async (
+    eventoId: number,
+    tipoResultado: string,
+    monto: number,
+    cuotaUtilizada: number
+  ) => {
+    try {
+      const cuotasActualizadas = await CuotasDinamicasService.registrarApuesta(
+        eventoId,
+        tipoResultado,
+        monto,
+        cuotaUtilizada
+      );
+      
+      dispatch(setCuotasEvento(cuotasActualizadas));
+      toast.success('Apuesta registrada y cuotas actualizadas');
+      return cuotasActualizadas;
+    } catch (error) {
+      handleError(error, 'Error al registrar apuesta');
+      throw error;
+    }
+  }, [dispatch, handleError]);
+
+  // Generar cuotas completas
+  const generarCuotasCompletas = useCallback(async (eventoId: number) => {
+    try {
+      dispatch(setCuotasEventoLoading(true));
+      
+      const cuotasGeneradas = await CuotasDinamicasService.generarCuotasCompletas(eventoId);
+      
+      dispatch(setCuotasEvento(cuotasGeneradas));
+      toast.success('Cuotas completas generadas exitosamente');
+      return cuotasGeneradas;
+    } catch (error) {
+      const errorMessage = handleError(error, 'Error al generar cuotas completas');
+      dispatch(setCuotasEventoError(errorMessage));
+      throw error;
+    } finally {
+      dispatch(setCuotasEventoLoading(false));
+    }
+  }, [dispatch, handleError]);
+
+  // Obtener configuración
+  const obtenerConfiguracion = useCallback(async () => {
+    try {
+      const configuracion = await CuotasDinamicasService.obtenerConfiguracion();
+      
+      dispatch(setConfiguracion(configuracion));
+      return configuracion;
+    } catch (error) {
+      handleError(error, 'Error al obtener configuración');
+      throw error;
+    }
+  }, [dispatch, handleError]);
+
   return {
     // Datos
     cuotasEvento,
@@ -556,6 +570,18 @@ export const useCuotasDinamicasRedux = () => {
     irPaginaAnterior,
     limpiarErrorEspecifico,
     limpiarErrores,
-    limpiarTodoElEstado
+    limpiarTodoElEstado,
+
+    // Funciones de suscripción en tiempo real
+    suscribirseActualizaciones,
+    cancelarSuscripcion,
+
+    // Funciones adicionales del servicio
+    buscarCuotas,
+    obtenerCuotasPorMercado,
+    obtenerCuotasDetalladas,
+    registrarApuesta,
+    generarCuotasCompletas,
+    obtenerConfiguracion
   };
 };

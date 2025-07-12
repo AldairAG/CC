@@ -1,26 +1,17 @@
 import { Route, Switch, useHistory, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { USER_ROUTES } from "../constants/ROUTERS";
-import UserProfile from "../pages/user/UserProfile";
-import Dashboard from "../pages/user/ApuestasDeportivasPage";
+import UserProfile from "../pages/user/profile/UserProfile";
+import Dashboard from "../pages/user/apuestas/ApuestasDeportivasPage";
 import UserProfileButton from "../components/ui/UserProfileButton";
 import { useUser } from "../hooks/useUser";
-import { 
-    GestionarQuinielaPage, 
-    MisParticipacionesPage, 
-    QuinielasPage,
-    CrearQuinielaPage,
-    QuinielaDetailPage,
-    QuinielasListPage 
-} from "../pages/user";
-import ApuestasDeportivasPage from "../pages/user/ApuestasDeportivasPage";
 import LigasMexicanas from "../components/navigation/LigasMexicanas";
 import DeportesDisponibles from "../components/navigation/DeportesDisponibles";
 import CarritoApuestasSidebar from "../components/navigation/CarritoApuestasSidebar";
 import CarritoFlotante from "../components/navigation/CarritoFlotante";
 import BotonesFlotantes from "../components/navigation/BotonesFlotantes";
-import ApuestasPorDeportePage from "../pages/user/ApuestasPorDeportePage";
-import ApuestaDetailsPage from "../pages/user/ApuestaDetailsPage";
+import ApuestasLayout from "./ApuestasLayout";
+import CryptoLayout from "./CryptoLayout";
 
 const UserLayout = () => {
     const navigate = useHistory();
@@ -177,25 +168,10 @@ const UserLayout = () => {
                         <Switch>
                             <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
                             <Route path={USER_ROUTES.HOME} component={Dashboard} />
-                            
-                            {/* Rutas principales de quinielas */}
-                            <Route path={USER_ROUTES.QUINIELAS} component={QuinielasPage} />
-                            <Route path={USER_ROUTES.MIS_PARTICIPACIONES} component={MisParticipacionesPage} />
-                            <Route path={USER_ROUTES.GESTIONAR_QUINIELA} component={GestionarQuinielaPage} />
-                            
-                            {/* Rutas específicas de apuestas */}
-                            <Route path={USER_ROUTES.APUESTAS_DETAIL} component={ApuestaDetailsPage} />
-                            <Route path={USER_ROUTES.APUESTAS_POR_DEPORTE} component={ApuestasPorDeportePage} />
-                            <Route path={USER_ROUTES.APUESTAS_DEPORTIVAS} component={ApuestasDeportivasPage} />
+                            <Route path={USER_ROUTES.CRYPTO_DASHBOARD} component={CryptoLayout} />
 
-                            {/* Rutas específicas de quinielas */}
-                            <Route path={USER_ROUTES.QUINIELA} component={QuinielaDetailPage} />
-                            <Route path={USER_ROUTES.CREAR_QUINIELA} component={CrearQuinielaPage} />
-                            
-                            {/* Rutas legacy para compatibilidad */}
-                            <Route path={USER_ROUTES.QUINIELAS_LIST} component={QuinielasListPage} />
-                            <Route path={USER_ROUTES.QUINIELAS_CREADAS} component={MisParticipacionesPage} />
-                            <Route path={USER_ROUTES.ARMAR_QUINIELA} component={CrearQuinielaPage} />
+                            {/* Rutas específicas de apuestas */}
+                            <Route path={USER_ROUTES.APUESTAS_DEPORTIVAS} component={ApuestasLayout} />
                         </Switch>
                     </div>
                 </div>
@@ -238,7 +214,7 @@ const UserLayout = () => {
             <CarritoFlotante />
             
             {/* Botones flotantes de navegación */}
-            <BotonesFlotantes />
+            {/* <BotonesFlotantes /> */}
         </main>
     )
 }
