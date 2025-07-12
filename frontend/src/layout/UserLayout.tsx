@@ -75,7 +75,7 @@ const UserLayout = () => {
                         {/* Botón carrito para móviles */}
                         <button
                             onClick={toggleCart}
-                            className={`xl:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
+                            className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
                                 isCartOpen ? 'bg-gray-700/50' : ''
                             }`}
                             aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
@@ -84,7 +84,7 @@ const UserLayout = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m0 0h7" />
                             </svg>
                             {/* Indicador de items en carrito */}
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-80 xl:hidden"></div>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-80 lg:hidden"></div>
                         </button>
                         
                         <UserProfileButton />
@@ -127,7 +127,7 @@ const UserLayout = () => {
                 </div>
             </header>
             
-            <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+            <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 overflow-x-hidden overflow-y-auto">
                 {/* Overlay para móviles cuando el sidebar está abierto */}
                 {isSidebarOpen && (
                     <div 
@@ -140,9 +140,10 @@ const UserLayout = () => {
                 <div className={`
                     fixed lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
                     ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                    lg:block w-80 h-full lg:h-auto bg-gradient-to-br from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg lg:bg-transparent p-4 overflow-y-auto z-50
+                    lg:block w-80 lg:w-72 xl:w-80 h-full lg:h-auto bg-gradient-to-br from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg lg:bg-transparent p-4 overflow-y-auto z-50
                     top-0 left-0 lg:top-auto lg:left-auto lg:z-auto
                     border-r lg:border-r-0 border-gray-700/30
+                    lg:flex-shrink-0
                 `}>
                     {/* Header del sidebar móvil */}
                     <div className="lg:hidden flex items-center justify-between mb-4 pb-4 border-b border-gray-700/30">
@@ -163,8 +164,8 @@ const UserLayout = () => {
                 </div>
                 
                 {/* Contenido principal */}
-                <div className="flex-1 flex justify-center px-4 lg:px-0 pt-4 lg:pt-0">
-                    <div className="w-full max-w-6xl">
+                <div className="flex-1 flex justify-center pt-4 lg:pt-0 min-w-0">
+                    <div className="w-full max-w-none lg:max-w-4xl xl:max-w-6xl">
                         <Switch>
                             <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
                             <Route path={USER_ROUTES.HOME} component={Dashboard} />
@@ -178,14 +179,15 @@ const UserLayout = () => {
 
                 {/* Sidebar derecho con carrito de apuestas */}
                 <div className={`
-                    fixed xl:relative xl:translate-x-0 transition-transform duration-300 ease-in-out
-                    ${isCartOpen ? 'translate-x-0' : 'translate-x-full'}
-                    xl:block w-80 h-full xl:h-auto bg-gradient-to-bl from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg xl:bg-transparent p-4 overflow-y-auto z-50
-                    top-0 right-0 xl:top-auto xl:right-auto xl:z-auto
-                    border-l xl:border-l-0 border-gray-700/30
+                    fixed lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
+                    ${isCartOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    lg:block w-80 lg:w-72 xl:w-80 2xl:w-96 h-full lg:h-auto bg-gradient-to-bl from-gray-900/60 via-gray-800/60 to-gray-900/60 backdrop-blur-lg lg:bg-transparent p-2 lg:p-4 overflow-y-auto z-50
+                    top-0 right-0 lg:top-auto lg:right-auto lg:z-auto
+                    border-l lg:border-l-0 border-gray-700/30
+                    lg:flex-shrink-0
                 `}>
                     {/* Header del carrito móvil */}
-                    <div className="xl:hidden flex items-center justify-between mb-4 pb-4 border-b border-gray-700/30">
+                    <div className="lg:hidden flex items-center justify-between mb-4 pb-4 border-b border-gray-700/30">
                         <h2 className="text-xl font-bold text-gray-300">Carrito de Apuestas</h2>
                         <button
                             onClick={() => setIsCartOpen(false)}
@@ -204,7 +206,7 @@ const UserLayout = () => {
                 {/* Overlay para el carrito en móviles */}
                 {isCartOpen && (
                     <div 
-                        className="fixed inset-0 bg-black/50 z-40 xl:hidden backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
                         onClick={() => setIsCartOpen(false)}
                     />
                 )}

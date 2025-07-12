@@ -51,16 +51,16 @@ const CarritoApuestasSidebar = () => {
   };
 
   return (
-    <aside className="w-80 bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 flex flex-col h-fit max-h-[calc(100vh-120px)] overflow-hidden">
+    <aside className="w-full bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 flex flex-col h-fit max-h-[calc(100vh-120px)] min-h-[400px] overflow-hidden">
       {/* Header moderno */}
-      <div className="flex items-center justify-between p-4 border-b border-amber-500/20 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-sm">
-        <h3 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 flex items-center gap-2">
-          🎯 Carrito de Apuestas
+      <div className="flex items-center justify-between p-3 lg:p-4 border-b border-amber-500/20 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-sm flex-shrink-0">
+        <h3 className="text-base lg:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 flex items-center gap-2">
+          🎯 <span className="hidden sm:inline">Carrito de Apuestas</span><span className="sm:hidden">Carrito</span>
         </h3>
         {slips.length > 0 && (
           <button
             onClick={limpiarCarrito}
-            className="text-red-400 hover:text-red-300 text-sm font-medium transition-all duration-300 hover:bg-red-500/10 px-2 py-1 rounded-lg"
+            className="text-red-400 hover:text-red-300 text-xs lg:text-sm font-medium transition-all duration-300 hover:bg-red-500/10 px-2 py-1 rounded-lg"
           >
             Limpiar
           </button>
@@ -69,11 +69,11 @@ const CarritoApuestasSidebar = () => {
 
       {/* Bet Type Selector moderno */}
       {slips.length > 1 && (
-        <div className="p-4 border-b border-amber-500/20">
+        <div className="p-3 lg:p-4 border-b border-amber-500/20 flex-shrink-0">
           <div className="flex bg-slate-700/50 rounded-xl p-1 backdrop-blur-sm">
             <button
               onClick={() => cambiarTipoApuesta('simple')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`flex-1 py-1.5 lg:py-2 px-2 lg:px-3 rounded-lg text-xs lg:text-sm font-medium transition-all duration-300 ${
                 betType === 'simple'
                   ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
@@ -83,7 +83,7 @@ const CarritoApuestasSidebar = () => {
             </button>
             <button
               onClick={() => cambiarTipoApuesta('multiple')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`flex-1 py-1.5 lg:py-2 px-2 lg:px-3 rounded-lg text-xs lg:text-sm font-medium transition-all duration-300 ${
                 betType === 'multiple'
                   ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg'
                   : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
@@ -96,25 +96,25 @@ const CarritoApuestasSidebar = () => {
       )}
 
       {/* Betting Slips */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {slips.length === 0 ? (
-          <div className="p-6 text-center">
-            <div className="text-amber-500 text-4xl mb-4">🎲</div>
-            <h4 className="text-lg font-medium text-white mb-2">
+          <div className="p-4 lg:p-6 text-center">
+            <div className="text-amber-500 text-3xl lg:text-4xl mb-3 lg:mb-4">🎲</div>
+            <h4 className="text-base lg:text-lg font-medium text-white mb-2">
               Tu carrito está vacío
             </h4>
-            <p className="text-sm text-slate-400">
+            <p className="text-xs lg:text-sm text-slate-400">
               Selecciona eventos y cuotas para comenzar a apostar
             </p>
           </div>
         ) : betType === 'multiple' ? (
           // Vista múltiple moderna
-          <div className="p-4">
-            <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 backdrop-blur-sm rounded-xl p-4 mb-4 border border-amber-500/30">
-              <h4 className="font-semibold text-amber-300 mb-2">
+          <div className="p-3 lg:p-4">
+            <div className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 backdrop-blur-sm rounded-xl p-3 lg:p-4 mb-3 lg:mb-4 border border-amber-500/30">
+              <h4 className="font-semibold text-amber-300 mb-2 text-sm lg:text-base">
                 Apuesta Múltiple
               </h4>
-              <p className="text-sm text-amber-400 mb-3">
+              <p className="text-xs lg:text-sm text-amber-400 mb-3">
                 {slips.length} selecciones - Cuota total: {estadisticas.cuotaMultiple.toFixed(2)}
               </p>
               
@@ -268,9 +268,9 @@ const CarritoApuestasSidebar = () => {
 
       {/* Footer/Summary moderno */}
       {slips.length > 0 && (
-        <div className="border-t border-amber-500/20 p-4 bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm">
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
+        <div className="border-t border-amber-500/20 p-3 lg:p-4 bg-gradient-to-r from-slate-800/50 to-slate-900/50 backdrop-blur-sm flex-shrink-0">
+          <div className="space-y-2 lg:space-y-3">
+            <div className="flex justify-between text-xs lg:text-sm">
               <span className="text-slate-400">
                 {betType === 'simple' ? 'Total apostado:' : 'Monto total:'}
               </span>
@@ -279,7 +279,7 @@ const CarritoApuestasSidebar = () => {
               </span>
             </div>
             
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs lg:text-sm">
               <span className="text-slate-400">Ganancia potencial:</span>
               <span className="font-semibold text-green-400">
                 {formatCurrency(betType === 'multiple' ? estadisticas.gananciasPotencialesMultiples : estadisticas.gananciasPotencialesSimples)}
@@ -301,7 +301,7 @@ const CarritoApuestasSidebar = () => {
             <button
               onClick={procesarApuestas}
               disabled={!validaciones.puedeApostar || isCreandoApuesta}
-              className={`w-full py-3 px-4 rounded-xl font-semibold transition-all duration-300 ${
+              className={`w-full py-2.5 lg:py-3 px-3 lg:px-4 rounded-xl font-semibold transition-all duration-300 text-sm lg:text-base ${
                 !validaciones.puedeApostar || isCreandoApuesta
                   ? 'bg-slate-600/50 text-slate-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-2xl hover:shadow-green-500/25 transform hover:scale-105 active:scale-95'
@@ -309,7 +309,7 @@ const CarritoApuestasSidebar = () => {
             >
               {isCreandoApuesta ? (
                 <span className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 lg:h-4 lg:w-4 border-b-2 border-white mr-2"></div>
                   Procesando...
                 </span>
               ) : (

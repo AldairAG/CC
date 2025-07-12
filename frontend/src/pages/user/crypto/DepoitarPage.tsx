@@ -76,26 +76,26 @@ const DepositarPage = () => {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">Depositar Criptomonedas</h1>
+            <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-700/50">
+                <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-6">Depositar Criptomonedas</h1>
                 
                 {/* Deposit Method Selection */}
                 <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Método de Depósito</h3>
+                    <h3 className="text-lg font-bold text-amber-300 mb-4">Método de Depósito</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             type="button"
                             onClick={() => setDepositMethod('address')}
-                            className={`p-4 rounded-lg border-2 transition-all ${
+                            className={`p-6 rounded-xl border-2 transition-all duration-300 backdrop-blur-sm ${
                                 depositMethod === 'address'
-                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                    : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                                    ? 'border-amber-500/60 bg-amber-500/20 text-amber-300 shadow-lg'
+                                    : 'border-slate-600/50 hover:border-slate-500/70 text-gray-300 hover:bg-slate-700/20'
                             }`}
                         >
                             <div className="text-center">
                                 <div className="text-2xl mb-2">📍</div>
                                 <div className="font-semibold">Dirección de Depósito</div>
-                                <div className="text-sm mt-1">
+                                <div className="text-sm mt-1 opacity-90">
                                     Envía desde tu wallet externo a nuestra dirección
                                 </div>
                             </div>
@@ -104,16 +104,16 @@ const DepositarPage = () => {
                         <button
                             type="button"
                             onClick={() => setDepositMethod('wallet')}
-                            className={`p-4 rounded-lg border-2 transition-all ${
+                            className={`p-6 rounded-xl border-2 transition-all duration-300 backdrop-blur-sm ${
                                 depositMethod === 'wallet'
-                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                    : 'border-gray-300 hover:border-gray-400 text-gray-700'
+                                    ? 'border-green-500/60 bg-green-500/20 text-green-300 shadow-lg'
+                                    : 'border-slate-600/50 hover:border-slate-500/70 text-gray-300 hover:bg-slate-700/20'
                             }`}
                         >
                             <div className="text-center">
                                 <div className="text-2xl mb-2">👛</div>
                                 <div className="font-semibold">Desde Mi Wallet</div>
-                                <div className="text-sm mt-1">
+                                <div className="text-sm mt-1 opacity-90">
                                     Deposita desde tu wallet conectado automáticamente
                                 </div>
                             </div>
@@ -136,9 +136,9 @@ const DepositarPage = () => {
                                 </div>
 
                                 {/* Instructions */}
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                    <h3 className="font-semibold text-blue-800 mb-2">Instrucciones de Depósito</h3>
-                                    <ul className="text-sm text-blue-700 space-y-1">
+                                <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                                    <h3 className="font-semibold text-amber-300 mb-2">Instrucciones de Depósito</h3>
+                                    <ul className="text-sm text-gray-300 space-y-1">
                                         <li>• Envía tus criptomonedas a la dirección correspondiente</li>
                                         <li>• Completa el formulario con la información de tu transacción</li>
                                         <li>• Tu depósito será procesado automáticamente</li>
@@ -149,25 +149,25 @@ const DepositarPage = () => {
                                 {/* Form */}
                                 <Form className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Criptomoneda
                                         </label>
                                         <Field
                                             as="select"
                                             name="cryptoType"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm"
                                         >
                                             {cryptoOptions.map(crypto => (
-                                                <option key={crypto} value={crypto}>
+                                                <option key={crypto} value={crypto} className="bg-slate-800 text-white">
                                                     {crypto}
                                                 </option>
                                             ))}
                                         </Field>
-                                        <ErrorMessage name="cryptoType" component="div" className="text-red-600 text-sm mt-1" />
+                                        <ErrorMessage name="cryptoType" component="div" className="text-red-400 text-sm mt-1" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Cantidad
                                         </label>
                                         <Field
@@ -175,35 +175,35 @@ const DepositarPage = () => {
                                             name="amount"
                                             step="0.00000001"
                                             min="0"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm"
                                             placeholder="0.00000000"
                                         />
-                                        <ErrorMessage name="amount" component="div" className="text-red-600 text-sm mt-1" />
+                                        <ErrorMessage name="amount" component="div" className="text-red-400 text-sm mt-1" />
                                         {values.amount > 0 && (
-                                            <p className="text-sm text-gray-600 mt-1">
+                                            <p className="text-sm text-amber-300 mt-1">
                                                 ≈ ${convertToUSD(values.amount, values.cryptoType).toFixed(2)} USD
                                             </p>
                                         )}
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Hash de Transacción (Opcional)
                                         </label>
                                         <Field
                                             type="text"
                                             name="transactionHash"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm font-mono text-sm"
                                             placeholder="Ingresa el hash de tu transacción"
                                         />
-                                        <ErrorMessage name="transactionHash" component="div" className="text-red-600 text-sm mt-1" />
+                                        <ErrorMessage name="transactionHash" component="div" className="text-red-400 text-sm mt-1" />
                                     </div>
 
                                     {message && (
-                                        <div className={`p-4 rounded-lg ${
+                                        <div className={`p-4 rounded-xl backdrop-blur-lg border ${
                                             message.type === 'success' 
-                                                ? 'bg-green-50 border border-green-200 text-green-800' 
-                                                : 'bg-red-50 border border-red-200 text-red-800'
+                                                ? 'bg-green-500/20 border-green-500/30 text-green-300' 
+                                                : 'bg-red-500/20 border-red-500/30 text-red-300'
                                         }`}>
                                             {message.text}
                                         </div>
@@ -212,7 +212,7 @@ const DepositarPage = () => {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full py-3 px-4 rounded-lg text-white font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700"
+                                        className="w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
                                     >
                                         {loading ? 'Procesando...' : 'Confirmar Depósito'}
                                     </button>
@@ -229,9 +229,9 @@ const DepositarPage = () => {
                         {({ values }) => (
                             <>
                                 {/* Wallet Deposit Instructions */}
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                                    <h3 className="font-semibold text-green-800 mb-2">Depósito desde Wallet</h3>
-                                    <ul className="text-sm text-green-700 space-y-1">
+                                <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                                    <h3 className="font-semibold text-green-300 mb-2">Depósito desde Wallet</h3>
+                                    <ul className="text-sm text-gray-300 space-y-1">
                                         <li>• Ingresa la dirección de tu wallet personal</li>
                                         <li>• Selecciona la criptomoneda y el monto a depositar</li>
                                         <li>• El sistema procesará automáticamente el depósito</li>
@@ -242,41 +242,41 @@ const DepositarPage = () => {
                                 {/* Form */}
                                 <Form className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Dirección de tu Wallet
                                         </label>
                                         <Field
                                             type="text"
                                             name="walletAddress"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 backdrop-blur-sm font-mono text-sm"
                                             placeholder="Ingresa la dirección de tu wallet"
                                         />
-                                        <ErrorMessage name="walletAddress" component="div" className="text-red-600 text-sm mt-1" />
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <ErrorMessage name="walletAddress" component="div" className="text-red-400 text-sm mt-1" />
+                                        <p className="text-xs text-gray-400 mt-1">
                                             Esta dirección será utilizada para realizar el depósito automáticamente
                                         </p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Criptomoneda
                                         </label>
                                         <Field
                                             as="select"
                                             name="cryptoType"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 backdrop-blur-sm"
                                         >
                                             {cryptoOptions.map(crypto => (
-                                                <option key={crypto} value={crypto}>
+                                                <option key={crypto} value={crypto} className="bg-slate-800 text-white">
                                                     {crypto}
                                                 </option>
                                             ))}
                                         </Field>
-                                        <ErrorMessage name="cryptoType" component="div" className="text-red-600 text-sm mt-1" />
+                                        <ErrorMessage name="cryptoType" component="div" className="text-red-400 text-sm mt-1" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Cantidad
                                         </label>
                                         <Field
@@ -284,22 +284,22 @@ const DepositarPage = () => {
                                             name="amount"
                                             step="0.00000001"
                                             min="0"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 backdrop-blur-sm"
                                             placeholder="0.00000000"
                                         />
-                                        <ErrorMessage name="amount" component="div" className="text-red-600 text-sm mt-1" />
+                                        <ErrorMessage name="amount" component="div" className="text-red-400 text-sm mt-1" />
                                         {values.amount > 0 && (
-                                            <p className="text-sm text-gray-600 mt-1">
+                                            <p className="text-sm text-green-300 mt-1">
                                                 ≈ ${convertToUSD(values.amount, values.cryptoType).toFixed(2)} USD
                                             </p>
                                         )}
                                     </div>
 
                                     {message && (
-                                        <div className={`p-4 rounded-lg ${
+                                        <div className={`p-4 rounded-xl backdrop-blur-lg border ${
                                             message.type === 'success' 
-                                                ? 'bg-green-50 border border-green-200 text-green-800' 
-                                                : 'bg-red-50 border border-red-200 text-red-800'
+                                                ? 'bg-green-500/20 border-green-500/30 text-green-300' 
+                                                : 'bg-red-500/20 border-red-500/30 text-red-300'
                                         }`}>
                                             {message.text}
                                         </div>
@@ -308,7 +308,7 @@ const DepositarPage = () => {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full py-3 px-4 rounded-lg text-white font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700"
+                                        className="w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg"
                                     >
                                         {loading ? 'Procesando...' : 'Depositar desde Wallet'}
                                     </button>

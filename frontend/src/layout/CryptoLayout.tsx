@@ -50,62 +50,66 @@ const CryptoLayout = () => {
     ];
 
     const getTabStyles = (tab: typeof tabs[0], isActive: boolean) => {
-        const baseStyles = "flex items-center space-x-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 border-b-2";
+        const baseStyles = "flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 border backdrop-blur-sm";
         
         if (isActive) {
             switch (tab.color) {
                 case 'blue':
-                    return `${baseStyles} bg-blue-50 text-blue-700 border-blue-500`;
+                    return `${baseStyles} bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40 shadow-lg`;
                 case 'red':
-                    return `${baseStyles} bg-red-50 text-red-700 border-red-500`;
+                    return `${baseStyles} bg-gradient-to-r from-amber-500/20 to-red-500/20 text-amber-300 border-amber-500/40 shadow-lg`;
                 case 'purple':
-                    return `${baseStyles} bg-purple-50 text-purple-700 border-purple-500`;
+                    return `${baseStyles} bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40 shadow-lg`;
                 default:
-                    return `${baseStyles} bg-gray-50 text-gray-700 border-gray-500`;
+                    return `${baseStyles} bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40 shadow-lg`;
             }
         }
         
-        return `${baseStyles} text-gray-600 hover:text-gray-800 hover:bg-gray-50 border-transparent hover:border-gray-300`;
+        return `${baseStyles} text-gray-400 hover:text-white hover:bg-amber-500/10 border-slate-600/20 hover:border-amber-500/30 hover:scale-105 active:scale-95`;
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            {/* Portfolio Summary and Exchange Rates - Mobile/Desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <PortfolioSummary />
-                <ExchangeRates />
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+            <div className="flex flex-col gap-6 p-4">
+                {/* Portfolio Summary and Exchange Rates - Mobile/Desktop */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <PortfolioSummary />
+                    <ExchangeRates />
+                </div>
+                
+                {/* Navigation Tabs */}
+                <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-700/50">
+                    <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-6 flex items-center gap-3">
+                        💰 <span>Gestión de Criptomonedas</span>
+                    </h3>
+                    <nav className="flex flex-wrap gap-3">
+                        {tabs.map((tab) => {
+                            const isActive = location.pathname === tab.path;
+                            return (
+                                <Link
+                                    key={tab.id}
+                                    to={tab.path}
+                                    className={getTabStyles(tab, isActive)}
+                                >
+                                    <span className="text-lg">{tab.icon}</span>
+                                    <span>{tab.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
+                
+                {/* Main Content */}
+                <main className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 min-h-screen border border-slate-700/50">
+                    <Switch>
+                        <Route path={USER_ROUTES.DEPOSITAR} component={DepositarPage} />
+                        <Route path={USER_ROUTES.RETIRAR} component={RetirarPage} />
+                        <Route path={USER_ROUTES.WALLET_MANAGEMENT} component={WalletManagementPage} />
+                        <Route path={USER_ROUTES.TRANSACTION_HISTORY} component={TransactionHistoryPage} />
+                        <Route path={USER_ROUTES.CRYPTO_DASHBOARD} component={CryptoDashboard} />
+                    </Switch>
+                </main>
             </div>
-            
-            {/* Navigation Tabs */}
-            <div className="bg-white rounded-lg shadow-md p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Gestión de Criptomonedas</h3>
-                <nav className="flex flex-wrap gap-2">
-                    {tabs.map((tab) => {
-                        const isActive = location.pathname === tab.path;
-                        return (
-                            <Link
-                                key={tab.id}
-                                to={tab.path}
-                                className={getTabStyles(tab, isActive)}
-                            >
-                                <span className="text-lg">{tab.icon}</span>
-                                <span>{tab.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-            </div>
-            
-            {/* Main Content */}
-            <main className="bg-white rounded-lg shadow-md p-6 min-h-screen">
-                <Switch>
-                    <Route path={USER_ROUTES.DEPOSITAR} component={DepositarPage} />
-                    <Route path={USER_ROUTES.RETIRAR} component={RetirarPage} />
-                    <Route path={USER_ROUTES.WALLET_MANAGEMENT} component={WalletManagementPage} />
-                    <Route path={USER_ROUTES.TRANSACTION_HISTORY} component={TransactionHistoryPage} />
-                    <Route path={USER_ROUTES.CRYPTO_DASHBOARD} component={CryptoDashboard} />
-                </Switch>
-            </main>
         </div>
     );
 };

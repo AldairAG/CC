@@ -193,12 +193,12 @@ const WalletManagementPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Wallets</h1>
-          <p className="text-gray-600 mt-1">Administra tus wallets de criptomonedas</p>
+          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Gestión de Wallets</h1>
+          <p className="text-gray-300 mt-1">Administra tus wallets de criptomonedas</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 font-medium shadow-lg hover:scale-105"
         >
           + Agregar Wallet
         </button>
@@ -206,14 +206,14 @@ const WalletManagementPage = () => {
 
       {/* Message */}
       {message && (
-        <div className={`p-4 rounded-lg mb-6 ${
+        <div className={`p-4 rounded-xl mb-6 backdrop-blur-lg border ${
           message.type === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
+            ? 'bg-green-500/20 border-green-500/30 text-green-300' 
+            : 'bg-red-500/20 border-red-500/30 text-red-300'
         }`}>
           <div className="flex justify-between items-center">
             <span>{message.text}</span>
-            <button onClick={() => setMessage(null)} className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => setMessage(null)} className="text-gray-400 hover:text-gray-200 text-xl">
               ×
             </button>
           </div>
@@ -222,8 +222,8 @@ const WalletManagementPage = () => {
 
       {/* Add/Edit Form */}
       {(showAddForm || editingWallet) && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+        <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 mb-6 border border-slate-700/50">
+          <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-4">
             {editingWallet ? 'Editar Wallet' : 'Agregar Nueva Wallet'}
           </h2>
           
@@ -238,54 +238,54 @@ const WalletManagementPage = () => {
           >
             <Form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Nombre de la Wallet
                 </label>
                 <Field
                   type="text"
                   name="name"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm"
                   placeholder="Mi Wallet Bitcoin Principal"
                 />
-                <ErrorMessage name="name" component="div" className="text-red-600 text-sm mt-1" />
+                <ErrorMessage name="name" component="div" className="text-red-400 text-sm mt-1" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Dirección de la Wallet
                 </label>
                 <Field
                   type="text"
                   name="address"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm font-mono text-sm"
                   placeholder="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
                 />
-                <ErrorMessage name="address" component="div" className="text-red-600 text-sm mt-1" />
+                <ErrorMessage name="address" component="div" className="text-red-400 text-sm mt-1" />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Tipo de Criptomoneda
                 </label>
                 <Field
                   as="select"
                   name="cryptoType"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm"
                 >
                   {cryptoOptions.map(crypto => (
-                    <option key={crypto} value={crypto}>
+                    <option key={crypto} value={crypto} className="bg-slate-800 text-white">
                       {crypto}
                     </option>
                   ))}
                 </Field>
-                <ErrorMessage name="cryptoType" component="div" className="text-red-600 text-sm mt-1" />
+                <ErrorMessage name="cryptoType" component="div" className="text-red-400 text-sm mt-1" />
               </div>
 
               <div className="flex space-x-3">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition-colors"
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:from-amber-600 hover:to-orange-600 disabled:from-gray-500 disabled:to-gray-600 transition-all duration-300 font-medium shadow-lg"
                 >
                   {loading ? 'Guardando...' : editingWallet ? 'Actualizar' : 'Agregar'}
                 </button>
@@ -295,7 +295,7 @@ const WalletManagementPage = () => {
                     setShowAddForm(false);
                     setEditingWallet(null);
                   }}
-                  className="flex-1 py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  className="flex-1 py-3 px-4 bg-slate-600/50 text-white rounded-xl hover:bg-slate-500/50 transition-all duration-300 font-medium backdrop-blur-sm border border-slate-600/50"
                 >
                   Cancelar
                 </button>
@@ -306,54 +306,54 @@ const WalletManagementPage = () => {
       )}
 
       {/* Wallets List */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">
+      <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-slate-700/50">
+        <div className="px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-800/40 to-slate-700/40">
+          <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
             Mis Wallets ({wallets.length})
           </h2>
         </div>
 
         {loading && wallets.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+          <div className="p-8 text-center text-gray-400">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
             Cargando wallets...
           </div>
         ) : wallets.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-gray-400">
             <div className="text-4xl mb-2">👛</div>
-            <div className="text-lg font-medium mb-1">No tienes wallets registradas</div>
+            <div className="text-lg font-medium mb-1 text-amber-300">No tienes wallets registradas</div>
             <div className="text-sm mb-4">Agrega tu primera wallet para comenzar</div>
             <button
               onClick={() => setShowAddForm(true)}
-              className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              className="inline-block bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 font-medium shadow-lg"
             >
               Agregar Primera Wallet
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-slate-700/30">
             {wallets.map((wallet) => (
-              <div key={wallet.id} className="p-6">
+              <div key={wallet.id} className="p-6 hover:bg-slate-700/20 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-xl">{getCryptoIcon(wallet.cryptoType)}</span>
+                    <div className="w-12 h-12 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-amber-500/30 backdrop-blur-sm">
+                      <span className="text-amber-300 text-xl">{getCryptoIcon(wallet.cryptoType)}</span>
                     </div>
                     <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900">{wallet.name}</h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
+                      <div className="flex items-center space-x-3 mb-1">
+                        <h3 className="font-semibold text-white">{wallet.name}</h3>
+                        <span className={`px-3 py-1 text-xs rounded-full font-medium border ${
                           wallet.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+                            : 'bg-gray-500/20 text-gray-300 border-gray-500/30'
                         }`}>
                           {wallet.isActive ? 'Activa' : 'Inactiva'}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600">
-                        <div className="font-mono break-all">{wallet.address}</div>
-                        <div className="mt-1">
-                          {wallet.cryptoType} • Creada el {formatDate(wallet.createdAt)}
+                      <div className="text-sm text-gray-300">
+                        <div className="font-mono break-all text-amber-300 text-xs bg-slate-800/30 px-2 py-1 rounded inline-block">{wallet.address}</div>
+                        <div className="mt-2 text-gray-400">
+                          <span className="font-medium">{wallet.cryptoType}</span> • Creada el {formatDate(wallet.createdAt)}
                         </div>
                       </div>
                     </div>
@@ -362,23 +362,23 @@ const WalletManagementPage = () => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleToggleWalletStatus(wallet)}
-                      className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 font-medium ${
                         wallet.isActive
-                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          : 'bg-green-100 text-green-800 hover:bg-green-200'
+                          ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 hover:bg-yellow-500/30'
+                          : 'bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30'
                       }`}
                     >
                       {wallet.isActive ? 'Desactivar' : 'Activar'}
                     </button>
                     <button
                       onClick={() => setEditingWallet(wallet)}
-                      className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors"
+                      className="px-3 py-2 text-sm bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg hover:bg-blue-500/30 transition-all duration-200 font-medium"
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDeleteWallet(wallet.id)}
-                      className="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
+                      className="px-3 py-2 text-sm bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all duration-200 font-medium"
                     >
                       Eliminar
                     </button>

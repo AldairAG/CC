@@ -78,19 +78,19 @@ const RetirarPage = () => {
 
     return (
         <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">Retirar Criptomonedas</h1>
+            <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-700/50">
+                <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-6">Retirar Criptomonedas</h1>
                 
                 {/* Current Balances */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-gray-800 mb-3">Balances Disponibles</h3>
+                <div className="bg-slate-700/30 rounded-xl p-4 mb-6 backdrop-blur-sm border border-slate-600/30">
+                    <h3 className="font-semibold text-amber-300 mb-3">Balances Disponibles</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {balances.map((balance) => (
-                            <div key={balance.cryptoType} className="bg-white rounded-lg p-3 border">
+                            <div key={balance.cryptoType} className="bg-gradient-to-br from-slate-800/60 to-slate-700/60 rounded-xl p-3 border border-slate-600/40 backdrop-blur-sm">
                                 <div className="text-center">
-                                    <div className="font-semibold text-gray-800">{balance.cryptoType}</div>
-                                    <div className="text-sm text-gray-600">{balance.balance.toFixed(8)}</div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className="font-semibold text-white">{balance.cryptoType}</div>
+                                    <div className="text-sm text-amber-300">{balance.balance.toFixed(8)}</div>
+                                    <div className="text-xs text-gray-400">
                                         ${convertToUSD(balance.balance, balance.cryptoType).toFixed(2)}
                                     </div>
                                 </div>
@@ -100,9 +100,9 @@ const RetirarPage = () => {
                 </div>
 
                 {/* Warning */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                    <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Información Importante</h3>
-                    <ul className="text-sm text-yellow-700 space-y-1">
+                <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
+                    <h3 className="font-semibold text-yellow-300 mb-2">⚠️ Información Importante</h3>
+                    <ul className="text-sm text-gray-300 space-y-1">
                         <li>• La conversión se realizará al tipo de cambio actual</li>
                         <li>• Los fondos se agregarán a tu balance en USD</li>
                         <li>• Esta operación no se puede deshacer</li>
@@ -113,17 +113,17 @@ const RetirarPage = () => {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                             Criptomoneda
                         </label>
                         <select
                             name="cryptoType"
                             value={formData.cryptoType}
                             onChange={handleInputChange}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 backdrop-blur-sm"
                         >
                             {balances.map(balance => (
-                                <option key={balance.cryptoType} value={balance.cryptoType}>
+                                <option key={balance.cryptoType} value={balance.cryptoType} className="bg-slate-800 text-white">
                                     {balance.cryptoType} (Disponible: {balance.balance.toFixed(8)})
                                 </option>
                             ))}
@@ -131,7 +131,7 @@ const RetirarPage = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                             Cantidad a Retirar
                         </label>
                         <div className="relative">
@@ -143,27 +143,27 @@ const RetirarPage = () => {
                                 step="0.00000001"
                                 min="0"
                                 max={getAvailableBalance(formData.cryptoType)}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                                className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 backdrop-blur-sm"
                                 placeholder="0.00000000"
                             />
                             <button
                                 type="button"
                                 onClick={setMaxAmount}
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-amber-400 hover:text-amber-300 text-sm font-medium px-2 py-1 bg-amber-500/20 rounded-lg transition-colors"
                             >
                                 MAX
                             </button>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-600 mt-1">
+                        <div className="flex justify-between text-sm text-gray-400 mt-1">
                             <span>Disponible: {getAvailableBalance(formData.cryptoType).toFixed(8)} {formData.cryptoType}</span>
                             {formData.amount > 0 && (
-                                <span>≈ ${getEstimatedUSD().toFixed(2)} USD</span>
+                                <span className="text-amber-300">≈ ${getEstimatedUSD().toFixed(2)} USD</span>
                             )}
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
                             Notas (Opcional)
                         </label>
                         <textarea
@@ -171,25 +171,25 @@ const RetirarPage = () => {
                             value={formData.notes}
                             onChange={handleInputChange}
                             rows={3}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 backdrop-blur-sm resize-none"
                             placeholder="Información adicional sobre tu retiro"
                         />
                     </div>
 
                     {/* Conversion Summary */}
                     {formData.amount > 0 && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 className="font-semibold text-blue-800 mb-2">Resumen de Conversión</h3>
+                        <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-4 backdrop-blur-sm">
+                            <h3 className="font-semibold text-amber-300 mb-2">Resumen de Conversión</h3>
                             <div className="space-y-1 text-sm">
-                                <div className="flex justify-between">
+                                <div className="flex justify-between text-gray-300">
                                     <span>Cantidad a retirar:</span>
-                                    <span>{formData.amount.toFixed(8)} {formData.cryptoType}</span>
+                                    <span className="text-white">{formData.amount.toFixed(8)} {formData.cryptoType}</span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between text-gray-300">
                                     <span>Valor estimado:</span>
-                                    <span>${getEstimatedUSD().toFixed(2)} USD</span>
+                                    <span className="text-white">${getEstimatedUSD().toFixed(2)} USD</span>
                                 </div>
-                                <div className="flex justify-between font-semibold text-blue-800">
+                                <div className="flex justify-between font-semibold text-amber-300 pt-2 border-t border-amber-500/20">
                                     <span>Recibirás:</span>
                                     <span>~${getEstimatedUSD().toFixed(2)} USD</span>
                                 </div>
@@ -198,10 +198,10 @@ const RetirarPage = () => {
                     )}
 
                     {message && (
-                        <div className={`p-4 rounded-lg ${
+                        <div className={`p-4 rounded-xl backdrop-blur-lg border ${
                             message.type === 'success' 
-                                ? 'bg-green-50 border border-green-200 text-green-800' 
-                                : 'bg-red-50 border border-red-200 text-red-800'
+                                ? 'bg-green-500/20 border-green-500/30 text-green-300' 
+                                : 'bg-red-500/20 border-red-500/30 text-red-300'
                         }`}>
                             {message.text}
                         </div>
@@ -210,7 +210,7 @@ const RetirarPage = () => {
                     <button
                         type="submit"
                         disabled={loading || formData.amount <= 0}
-                        className="w-full bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-xl hover:from-red-600 hover:to-red-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 font-medium shadow-lg"
                     >
                         {loading ? 'Procesando...' : 'Confirmar Retiro'}
                     </button>
