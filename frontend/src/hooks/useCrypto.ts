@@ -11,6 +11,7 @@ import {
   updateBalance,
   clearError,
   resetCryptoState,
+  setError,
 } from '../store/slices/cryptoSlice';
 import {
   selectCryptoBalances,
@@ -24,9 +25,10 @@ import {
   selectRecentTransactions,
   selectPortfolioStats,
 } from '../store/selectors/cryptoSelectors';
-import type { CryptoBalance, CryptoTransaction, ExchangeRate } from '../types/CryptoTypes';
+import type { CreateWalletRequest, CryptoBalance, CryptoTransaction, CryptoWithdrawalRequest, ExchangeRate, UpdateWalletRequest } from '../types/CryptoTypes';
+import {CryptoService} from '../service/crypto/cryptoService';
 
-export const useCryptoStore = () => {
+export const useCrypto = () => {
   const dispatch = useAppDispatch();
   
   // Basic selectors
@@ -105,6 +107,77 @@ export const useCryptoStore = () => {
     ]);
   }, [dispatch]);
 
+  // Wallet CRUD actions
+  const createWallet = useCallback(async (walletData:CreateWalletRequest) => {
+    try {
+      const wallet = await CryptoService.createCryptoWallet(walletData);
+      // Si tienes un slice de wallets, aquí deberías despachar la acción para guardar el wallet
+      return wallet;
+    } catch (error) {
+      dispatch(setError('Error al crear wallet'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  const getWalletById = useCallback(async (walletId: number) => {
+    try {
+      return await CryptoService.getCryptoWalletById(walletId);
+    } catch (error) {
+      dispatch(setError('Error al obtener wallet'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  const getWalletsByUserId = useCallback(async (userId: number) => {
+    try {
+      return await CryptoService.getCryptoWalletsByUserId(userId);
+    } catch (error) {
+      dispatch(setError('Error al obtener wallets de usuario'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  const updateWallet = useCallback(async (walletId: number, walletData: UpdateWalletRequest) => {
+    try {
+      return await CryptoService.updateCryptoWallet(walletId, walletData);
+    } catch (error) {
+      dispatch(setError('Error al actualizar wallet'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  const deleteWallet = useCallback(async (walletId: number) => {
+    try {
+      await CryptoService.deleteCryptoWallet(walletId);
+      // Si tienes un slice de wallets, aquí deberías despachar la acción para eliminar el wallet
+    } catch (error) {
+      dispatch(setError('Error al eliminar wallet'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  // Withdraw actions
+  const createWithdrawal = useCallback(async (withdrawalData: CryptoWithdrawalRequest) => {
+    try {
+      const tx = await CryptoService.createCryptoWithdrawal(withdrawalData);
+      dispatch(addTransaction(tx));
+      return tx;
+    } catch (error) {
+      dispatch(setError('Error al crear retiro'));
+      throw error;
+    }
+  }, [dispatch]);
+
+  const processWithdrawalConfirmation = useCallback(async (txHash: string, confirmations: number) => {
+    try {
+      await CryptoService.processWithdrawalConfirmation(txHash, confirmations);
+      // Podrías actualizar el estado de la transacción en el slice si lo necesitas
+    } catch (error) {
+      dispatch(setError('Error al confirmar retiro'));
+      throw error;
+    }
+  }, [dispatch]);
+
   return {
     // State
     balances,
@@ -137,5 +210,15 @@ export const useCryptoStore = () => {
     getBalanceByType,
     getExchangeRateByType,
     convertToUSD,
+
+    // Wallet CRUD
+    createWallet,
+    getWalletById,
+    getWalletsByUserId,
+    updateWallet,
+    deleteWallet,
+    // Withdrawals
+    createWithdrawal,
+    processWithdrawalConfirmation,
   };
 };

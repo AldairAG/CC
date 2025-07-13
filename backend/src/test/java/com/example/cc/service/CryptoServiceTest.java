@@ -7,6 +7,7 @@ import com.example.cc.entities.Usuario;
 import com.example.cc.repository.CryptoTransactionRepository;
 import com.example.cc.repository.CryptoWalletRepository;
 import com.example.cc.repository.UsuarioRepository;
+import com.example.cc.service.crypto.CryptoService;
 import com.example.cc.repository.TransaccionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,8 @@
 package com.example.cc.controller;
 
 import com.example.cc.dto.crypto.*;
-import com.example.cc.service.CryptoService;
+import com.example.cc.service.crypto.CryptoService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,6 @@ import java.util.List;
 @RequestMapping("/cc/crypto")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class CryptoController {
     
     private final CryptoService cryptoService;

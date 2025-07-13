@@ -8,6 +8,7 @@ import {
     EstadoApuesta,
     type TipoApuesta,
 } from "../../types/ApuestaType";
+import type { EventoDeportivoType } from "../../types/EventoDeportivoTypes";
 
 interface ApuestaState {
     // Apuestas principales con diferentes vistas
@@ -19,6 +20,7 @@ interface ApuestaState {
     apuestasPorEstado: ApuestaType[];
     apuestasPorEvento: ApuestaType[];
     resultadosBusqueda: ApuestaType[];
+    eventosConMasApuestas: EventoDeportivoType[];
 
     // Apuesta actual seleccionada
     apuestaActual: ApuestaDetalle | null;
@@ -29,6 +31,7 @@ interface ApuestaState {
     // Estados de carga
     loading: {
         misApuestas: boolean;
+        eventosConMasApuestas: boolean;
         apuestasActivas: boolean;
         apuestasFinalizadas: boolean;
         apuestasRecientes: boolean;
@@ -58,6 +61,7 @@ interface ApuestaState {
         crearApuesta: string | null;
         cancelarApuesta: string | null;
         procesarResultados: string | null;
+        eventosConMasApuestas: string | null;
     };
 
     // Filtros y búsqueda
@@ -138,10 +142,12 @@ const initialState: ApuestaState = {
     apuestasPorEstado: [],
     apuestasPorEvento: [],
     resultadosBusqueda: [],
+    eventosConMasApuestas: [],
     apuestaActual: null,
     estadisticasApuestas: null,
 
     loading: {
+        eventosConMasApuestas: false,
         misApuestas: false,
         apuestasActivas: false,
         apuestasFinalizadas: false,
@@ -158,6 +164,7 @@ const initialState: ApuestaState = {
     },
 
     error: {
+        eventosConMasApuestas: null,
         misApuestas: null,
         apuestasActivas: null,
         apuestasFinalizadas: null,
@@ -289,6 +296,21 @@ const apuestaSlice = createSlice({
         setApuestasActivasError: (state, action: PayloadAction<string>) => {
             state.error.apuestasActivas = action.payload;
             state.loading.apuestasActivas = false;
+        },
+        setEventosConMasApuestas: (state, action: PayloadAction<EventoDeportivoType[]>) => {
+            state.eventosConMasApuestas = action.payload;
+            state.loading.eventosConMasApuestas = false;
+            state.error.eventosConMasApuestas = null;
+        },
+        setEventosConMasApuestasLoading: (state, action: PayloadAction<boolean>) => {
+            state.loading.eventosConMasApuestas = action.payload;
+            if (action.payload) {
+                state.error.eventosConMasApuestas = null;
+            }
+        },
+        setEventosConMasApuestasError: (state, action: PayloadAction<string>) => {
+            state.error.eventosConMasApuestas = action.payload;
+            state.loading.eventosConMasApuestas = false;
         },
 
         // Acciones para apuestas finalizadas
@@ -722,6 +744,7 @@ const apuestaSlice = createSlice({
         // Limpiar errores
         clearErrors: (state) => {
             state.error = {
+                eventosConMasApuestas: null,
                 misApuestas: null,
                 apuestasActivas: null,
                 apuestasFinalizadas: null,
@@ -752,6 +775,9 @@ const apuestaSlice = createSlice({
 
 // Exportar acciones
 export const {
+    setEventosConMasApuestasLoading,
+    setEventosConMasApuestasError,
+    setEventosConMasApuestas,
     setMisApuestasLoading,
     setMisApuestas,
     setMisApuestasError,
@@ -822,6 +848,7 @@ const selectApuestaState = (state: { apuesta: ApuestaState }) => state.apuesta;
 export const apuestaSelector = {
     // Selectores básicos
     misApuestas: createSelector([selectApuestaState], (state) => state.misApuestas),
+    eventosConMasApuestas: createSelector([selectApuestaState], (state) => state.eventosConMasApuestas),
     apuestasActivas: createSelector([selectApuestaState], (state) => state.apuestasActivas),
     apuestasFinalizadas: createSelector([selectApuestaState], (state) => state.apuestasFinalizadas),
     apuestasRecientes: createSelector([selectApuestaState], (state) => state.apuestasRecientes),

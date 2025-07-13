@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
-import { useCryptoTransactions } from '../../../hooks/useCryptoTransactions';
+import { useCrypto } from '../../../hooks/useCrypto';
 import { USER_ROUTES } from '../../../constants/ROUTERS';
 import PortfolioSummary from '../../../components/crypto/PortfolioSummary';
 import ExchangeRates from '../../../components/crypto/ExchangeRates';
 import TransactionStatus from '../../../components/crypto/TransactionStatus';
 
 const CryptoDashboard = () => {
-    const { transactions, loading, error } = useCryptoTransactions();
+    const { transactions, loading, error } = useCrypto();
 
     // Get recent transactions (last 5)
     const recentTransactions = transactions

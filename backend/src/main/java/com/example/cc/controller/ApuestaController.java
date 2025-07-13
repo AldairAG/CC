@@ -4,9 +4,13 @@ import com.example.cc.dto.apuesta.ApuestaMapper;
 import com.example.cc.dto.apuesta.ApuestaResponseDTO;
 import com.example.cc.dto.apuesta.CrearApuestaRequestDTO;
 import com.example.cc.entities.Apuesta;
+import com.example.cc.entities.EventoDeportivo;
 import com.example.cc.service.apuestas.ApuestaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +32,21 @@ public class ApuestaController {
 
     private final ApuestaService apuestaService;
     private final ApuestaMapper apuestaMapper;
+
+    /**
+     * Obtener eventos con más apuestas
+     */
+    @GetMapping("/eventos-con-mas-apuestas")    
+    public ResponseEntity<List<EventoDeportivo>> obtenerEventosConMasApuestas(
+            @RequestParam(defaultValue = "5") int limite) {
+        try {
+            var eventos = apuestaService.obtenerEventosConMasApuestas(limite);
+            return ResponseEntity.ok(eventos);
+        } catch (Exception e) {
+            log.error("Error al obtener eventos con más apuestas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     /**
      * Crear una nueva apuesta
@@ -162,6 +181,20 @@ public class ApuestaController {
         } catch (Exception e) {
             log.error("Error al procesar resultados de apuestas para evento {}: {}", eventoId, e.getMessage());
             return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para obtener estadísticas de apuestas de un usuario
+     */
+    @GetMapping("/estadisticas")
+    public ResponseEntity<com.example.cc.dto.apuestas.EstadisticasApuestaDTO> getEstadisticasApuestasUsuario(@RequestParam Long usuarioId) {
+        try {
+            com.example.cc.dto.apuestas.EstadisticasApuestaDTO estadisticas = apuestaService.obtenerEstadisticasApuestasUsuario(usuarioId);
+            return ResponseEntity.ok(estadisticas);
+        } catch (Exception e) {
+            log.error("Error obteniendo estadísticas de apuestas", e);
+            return ResponseEntity.badRequest().build();
         }
     }
 }

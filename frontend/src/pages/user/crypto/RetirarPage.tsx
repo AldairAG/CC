@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useCryptoTransactions } from '../../../hooks/useCryptoTransactions';
+import { useCrypto } from '../../../hooks/useCrypto';
 import { CryptoService } from '../../../service/crypto/cryptoService';
 import type { CryptoToFiatConversionRequest } from '../../../types/CryptoTypes';
 
 const RetirarPage = () => {
-    const { balances, convertToUSD, refreshData } = useCryptoTransactions();
+    const { balances, convertToUSD } = useCrypto();
     const [formData, setFormData] = useState<CryptoToFiatConversionRequest>({
         cryptoType: 'BTC',
         amount: 0,
@@ -49,8 +49,6 @@ const RetirarPage = () => {
                 notes: ''
             });
             
-            // Refresh balances
-            await refreshData();
         } catch (error) {
             console.error('Error converting crypto:', error);
             setMessage({ type: 'error', text: 'Error al procesar la conversión. Intenta nuevamente.' });

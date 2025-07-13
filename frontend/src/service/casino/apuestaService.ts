@@ -9,6 +9,7 @@ import type {
     EstadoApuesta,
     TipoApuesta
 } from "../../types/ApuestaType";
+import type { EventoDeportivoType } from "../../types/EventoDeportivoTypes";
 import { apiClient } from "./ApiCliente";
 
 const BASE_URL = '/apuestas';
@@ -19,7 +20,7 @@ export const ApuestaService = {
      * @param apuesta Datos de la apuesta a crear
      * @returns La apuesta creada
      */
-    crearApuesta: async (apuesta: CrearApuestaRequestType,usuarioId:number): Promise<ApuestaType> => {
+    crearApuesta: async (apuesta: CrearApuestaRequestType, usuarioId: number): Promise<ApuestaType> => {
         const response = await apiClient.post<ApuestaType>(`${BASE_URL}/${usuarioId}`, apuesta);
         return response.data;
     },
@@ -81,7 +82,7 @@ export const ApuestaService = {
             size,
             ...filtros
         };
-        
+
         const response = await apiClient.get<ApuestasResponse>(`${BASE_URL}/mis-apuestas/filtradas`, {
             params
         });
@@ -92,8 +93,8 @@ export const ApuestaService = {
      * Obtener estadísticas de apuestas del usuario actual
      * @returns Estadísticas de apuestas
      */
-    obtenerEstadisticasApuestas: async (): Promise<EstadisticasApuestaType> => {
-        const response = await apiClient.get<EstadisticasApuestaType>(`${BASE_URL}/estadisticas`);
+    obtenerEstadisticasApuestas: async (idUsuario: number): Promise<EstadisticasApuestaType> => {
+        const response = await apiClient.get<EstadisticasApuestaType>(`${BASE_URL}/estadisticas/${idUsuario}`);
         return response.data;
     },
 
@@ -104,6 +105,18 @@ export const ApuestaService = {
      */
     obtenerApuestasRecientes: async (limite = 5): Promise<ResumenApuestaType[]> => {
         const response = await apiClient.get<ResumenApuestaType[]>(`${BASE_URL}/recientes`, {
+            params: { limite }
+        });
+        return response.data;
+    },
+
+    /**
+     * Obtener eventos con más apuestas
+     * @param limite Número máximo de eventos a retornar
+     * @returns Lista de eventos con más apuestas
+     */
+    obtenerEventosConMasApuestas: async (limite = 5): Promise<EventoDeportivoType[]> => {
+        const response = await apiClient.get<EventoDeportivoType[]>(`${BASE_URL}/eventos-mas-apuestas`, {
             params: { limite }
         });
         return response.data;

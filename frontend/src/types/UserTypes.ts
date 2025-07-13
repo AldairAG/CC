@@ -2,7 +2,7 @@ export type UserType= {
     idUsuario: number|null;
     email: string;
     username: string;
-    saldo: number;
+    saldoUsuario: number;
     perfilImage: string;
     idPerfil?: number;
     rol: string[];

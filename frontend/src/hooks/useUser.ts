@@ -11,6 +11,7 @@ import type { NuevoUsuarioRequestType, UserType } from '../types/UserTypes';
 import type { LoginRequest } from '../types/LoginTypes';
 import {UserService} from '../service/casino/userService';
 import { ADMIN_ROUTES, USER_ROUTES } from '../constants/ROUTERS';
+import { useUserProfile } from './useUserProfile';
 
 /**
  * Hook personalizado `useUser` para gestionar el estado del usuario y la navegación en la aplicación.
@@ -70,7 +71,7 @@ export const useUser = () => {
 
         // Primero guarda el usuario y token en el estado global
         setUserData(response.usuario, response.token);
-
+        
         const rol=getRoleFromToken(response.token)
 
         if (rol.includes("ROLE_CLIENTE")) {

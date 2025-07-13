@@ -21,7 +21,7 @@ const ApuestasDeportivasPage = () => {
   } = useEventoDeportivo();
   
   const { 
-    loadApuestasRecientes,
+    loadEventosConMasApuestas,
     apuestasRecientes,
     loadEstadisticasApuestas,
     estadisticasApuestas,
@@ -40,13 +40,13 @@ const ApuestasDeportivasPage = () => {
       await cargarEventosProximos();
       
       // Cargar estadísticas y apuestas del usuario
-      await loadApuestasRecientes(10);
+      await loadEventosConMasApuestas(10);
       await loadEstadisticasApuestas();
       await loadApuestasActivas(0, 5);
     };
 
     loadDashboardData();
-  }, [cargarEventosProximos, loadApuestasRecientes, loadEstadisticasApuestas, loadApuestasActivas]);
+  }, [cargarEventosProximos, loadEventosConMasApuestas, loadEstadisticasApuestas, loadApuestasActivas]);
 
   // Funciones de navegación
   const navigateToApuestasDeportivas = () => {

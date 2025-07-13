@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage, type FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import type { ActualizarPerfilRequest, PerfilUsuarioCompleto } from '../../types/PerfilTypes';
+import type { ActualizarPerfilRequest } from '../../types/PerfilTypes';
 
 // Validation schema with Yup
 const validationSchema = Yup.object({
@@ -23,13 +23,13 @@ const validationSchema = Yup.object({
     fechaNacimiento: Yup.date()
         .max(new Date(), 'La fecha de nacimiento no puede ser futura')
         .min(new Date('1900-01-01'), 'Fecha de nacimiento inválida')
-        .test('age', 'Debes ser mayor de 18 años', function(value) {
+        .test('age', 'Debes ser mayor de 18 años', function (value) {
             if (!value) return false;
             const today = new Date();
             const birthDate = new Date(value);
             const age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
-            
+
             if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                 return age - 1 >= 18;
             }
@@ -39,29 +39,14 @@ const validationSchema = Yup.object({
 });
 
 const EditProfile = () => {
-    const { 
-        user, 
-        updateProfile, 
-        loading, 
-        getUserProfile
+    const {
+        user,
+        updateProfile,
+        loading,
+        perfilCompleto
     } = useUserProfile();
 
     const [message, setMessage] = React.useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [perfilCompleto, setPerfilCompleto] = React.useState<PerfilUsuarioCompleto | null>(null);
-
-    // Load user profile when component mounts
-    useEffect(() => {
-        const loadProfile = async () => {
-            if (user?.idUsuario) {
-                const profile = await getUserProfile(user.idUsuario);                
-                if (profile) {
-                    setPerfilCompleto(profile);
-                }
-            }
-        };
-        
-        loadProfile();
-    }, []);
 
     // Helper function to format date for input
     const formatDateForInput = (dateString?: string): string => {
@@ -86,7 +71,7 @@ const EditProfile = () => {
     ) => {
         try {
             setMessage(null);
-            
+
             if (!user?.idUsuario) {
                 setMessage({ type: 'error', text: 'Usuario no encontrado' });
                 return;
@@ -102,9 +87,9 @@ const EditProfile = () => {
                 setMessage({ type: 'error', text: result.message });
             }
         } catch (error) {
-            setMessage({ 
-                type: 'error', 
-                text: error instanceof Error ? error.message : 'Error inesperado' 
+            setMessage({
+                type: 'error',
+                text: error instanceof Error ? error.message : 'Error inesperado'
             });
         } finally {
             setSubmitting(false);
@@ -129,11 +114,10 @@ const EditProfile = () => {
             </div>
 
             {message && (
-                <div className={`p-4 rounded-lg mb-6 ${
-                    message.type === 'success'
+                <div className={`p-4 rounded-lg mb-6 ${message.type === 'success'
                         ? 'bg-green-50 border border-green-200 text-green-700'
                         : 'bg-red-50 border border-red-200 text-red-700'
-                }`}>
+                    }`}>
                     <div className="flex">
                         <div className="flex-shrink-0">
                             <span>
@@ -146,11 +130,10 @@ const EditProfile = () => {
                         <div className="ml-auto pl-3">
                             <button
                                 onClick={() => setMessage(null)}
-                                className={`${
-                                    message.type === 'success' 
-                                        ? 'text-green-400 hover:text-green-600' 
+                                className={`${message.type === 'success'
+                                        ? 'text-green-400 hover:text-green-600'
                                         : 'text-red-400 hover:text-red-600'
-                                } transition-colors`}
+                                    } transition-colors`}
                             >
                                 ✕
                             </button>
@@ -177,17 +160,16 @@ const EditProfile = () => {
                                     type="text"
                                     id="nombre"
                                     name="nombre"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                                        touched.nombre && errors.nombre 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${touched.nombre && errors.nombre
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="Ingresa tu nombre"
                                 />
-                                <ErrorMessage 
-                                    name="nombre" 
-                                    component="div" 
-                                    className="mt-1 text-sm text-red-600" 
+                                <ErrorMessage
+                                    name="nombre"
+                                    component="div"
+                                    className="mt-1 text-sm text-red-600"
                                 />
                             </div>
 
@@ -200,17 +182,16 @@ const EditProfile = () => {
                                     type="text"
                                     id="apellido"
                                     name="apellido"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                                        touched.apellido && errors.apellido 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${touched.apellido && errors.apellido
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="Ingresa tu apellido"
                                 />
-                                <ErrorMessage 
-                                    name="apellido" 
-                                    component="div" 
-                                    className="mt-1 text-sm text-red-600" 
+                                <ErrorMessage
+                                    name="apellido"
+                                    component="div"
+                                    className="mt-1 text-sm text-red-600"
                                 />
                             </div>
                         </div>
@@ -225,20 +206,19 @@ const EditProfile = () => {
                                     type="text"
                                     id="lada"
                                     name="lada"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                                        touched.lada && errors.lada 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${touched.lada && errors.lada
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="+52"
                                 />
-                                <ErrorMessage 
-                                    name="lada" 
-                                    component="div" 
-                                    className="mt-1 text-sm text-red-600" 
+                                <ErrorMessage
+                                    name="lada"
+                                    component="div"
+                                    className="mt-1 text-sm text-red-600"
                                 />
                             </div>
-                            
+
                             <div className="md:col-span-3">
                                 <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-2">
                                     Teléfono *
@@ -247,18 +227,17 @@ const EditProfile = () => {
                                     type="tel"
                                     id="telefono"
                                     name="telefono"
-                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                                        touched.telefono && errors.telefono 
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${touched.telefono && errors.telefono
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                             : 'border-gray-300'
-                                    }`}
+                                        }`}
                                     placeholder="1234567890"
                                     maxLength={10}
                                 />
-                                <ErrorMessage 
-                                    name="telefono" 
-                                    component="div" 
-                                    className="mt-1 text-sm text-red-600" 
+                                <ErrorMessage
+                                    name="telefono"
+                                    component="div"
+                                    className="mt-1 text-sm text-red-600"
                                 />
                                 <p className="mt-1 text-xs text-gray-500">
                                     Ingresa 10 dígitos sin espacios ni guiones
@@ -275,17 +254,16 @@ const EditProfile = () => {
                                 type="date"
                                 id="fechaNacimiento"
                                 name="fechaNacimiento"
-                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                                    touched.fechaNacimiento && errors.fechaNacimiento 
-                                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${touched.fechaNacimiento && errors.fechaNacimiento
+                                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                                         : 'border-gray-300'
-                                }`}
+                                    }`}
                                 max={new Date().toISOString().split('T')[0]} // Prevent future dates
                             />
-                            <ErrorMessage 
-                                name="fechaNacimiento" 
-                                component="div" 
-                                className="mt-1 text-sm text-red-600" 
+                            <ErrorMessage
+                                name="fechaNacimiento"
+                                component="div"
+                                className="mt-1 text-sm text-red-600"
                             />
                         </div>
 

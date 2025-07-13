@@ -1,21 +1,39 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useUser } from './useUser';
 import { 
-  getUserProfileAsync,
-  updateProfileAsync,
-  changePasswordAsync,
-  uploadDocumentAsync,
-  fetchDocumentsAsync,
-  deleteDocumentAsync,
-  fetchTransactionHistoryAsync,
-  fetchTransactionHistoryPaginatedAsync,
-  createSupportTicketAsync,
-  fetchSupportTicketsAsync,
-  fetch2FAStatusAsync,
-  enable2FAAsync,
-  disable2FAAsync,
-  verify2FACodeAsync,
-  fetchUserStatisticsAsync,
+  // Actions for state management
+  setError,
+  clearError,
+  setFetchingProfile,
+  setPerfilCompleto,
+  clearPerfilCompleto,
+  setUpdatingProfile,
+  updateProfileSuccess,
+  setChangingPassword,
+  changePasswordSuccess,
+  setUploadingDocument,
+  addDocument,
+  setFetchingDocuments,
+  setDocuments,
+  removeDocument,
+  setFetchingTransactions,
+  setTransactionHistory,
+  setPaginatedTransactions,
+  clearTransactionHistory,
+  setCreatingTicket,
+  addSupportTicket,
+  setFetchingTickets,
+  setSupportTickets,
+  updateTicketStatus,
+  setCreating2FA,
+  setDeleting2FA,
+  setVerifying2FA,
+  updateTSVStatus,
+  setFetchingStatistics,
+  setUserStatistics,
+  clearStatistics,
+  resetProfileState,
+  // Selectors
   selectPerfilCompleto,
   selectFetchingProfile,
   selectProfileError,
@@ -31,7 +49,12 @@ import {
   selectChangingPassword,
   selectCreating2FA,
   selectCreatingTicket,
-  clearError
+  selectFetchingDocuments,
+  selectFetchingTransactions,
+  selectFetchingTickets,
+  selectDeleting2FA,
+  selectVerifying2FA,
+  selectFetchingStatistics
 } from '../store/slices/profileSlice';
 import { profileService } from '../service/casino/profileService';
 import type {
@@ -70,6 +93,12 @@ export const useUserProfile = () => {
   const changingPassword = useAppSelector(selectChangingPassword);
   const creating2FA = useAppSelector(selectCreating2FA);
   const creatingTicket = useAppSelector(selectCreatingTicket);
+  const fetchingDocuments = useAppSelector(selectFetchingDocuments);
+  const fetchingTransactions = useAppSelector(selectFetchingTransactions);
+  const fetchingTickets = useAppSelector(selectFetchingTickets);
+  const deleting2FA = useAppSelector(selectDeleting2FA);
+  const verifying2FA = useAppSelector(selectVerifying2FA);
+  const fetchingStatistics = useAppSelector(selectFetchingStatistics);
 
   // Local state for additional functionality
   const [localLoading, setLocalLoading] = useState(false);
@@ -78,32 +107,42 @@ export const useUserProfile = () => {
   // Profile management
   const updateProfile = useCallback(async (profileData: ActualizarPerfilRequest) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      const result = await dispatch(updateProfileAsync({ userId: user.idUsuario, profileData })).unwrap();
-      return result;
+      dispatch(setUpdatingProfile(true));
+      await profileService.updateProfile(user.idUsuario, profileData);
+      dispatch(updateProfileSuccess());
+      return { success: true, message: 'Perfil actualizado exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al actualizar el perfil';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
 
   const changePassword = useCallback(async (passwordData: CambiarPasswordRequest) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      const result = await dispatch(changePasswordAsync({ userId: user.idUsuario, passwordData })).unwrap();
-      return result;
+      dispatch(setChangingPassword(true));
+      await profileService.changePassword(user.idUsuario, passwordData);
+      dispatch(changePasswordSuccess());
+      return { success: true, message: 'Contraseña cambiada exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cambiar la contraseña';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
@@ -111,65 +150,96 @@ export const useUserProfile = () => {
   // Document management
   const uploadDocument = useCallback(async (document: DocumentUploadRequest) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      const newDocument = await dispatch(uploadDocumentAsync({ userId: user.idUsuario, document })).unwrap();
+      // Validate file first
+      const validation = profileService.validateFile(document.file);
+      if (!validation.valid) {
+        const errorMsg = validation.error || 'Archivo inválido';
+        setLocalError(errorMsg);
+        dispatch(setError(errorMsg));
+        return { success: false, message: errorMsg };
+      }
+
+      dispatch(setUploadingDocument(true));
+      const newDocument = await profileService.uploadDocument(user.idUsuario, document);
+      dispatch(addDocument(newDocument));
       return { success: true, document: newDocument, message: 'Documento subido exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al subir el documento';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
 
   const fetchDocuments = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return [];
     }
 
     try {
-      const docs = await dispatch(fetchDocumentsAsync(user.idUsuario)).unwrap();
+      dispatch(setFetchingDocuments(true));
+      const docs = await profileService.getDocuments(user.idUsuario);
+      dispatch(setDocuments(docs));
       return docs;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar los documentos';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return [];
     }
   }, [user?.idUsuario, dispatch]);
 
   const deleteDocument = useCallback(async (documentId: number) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      await dispatch(deleteDocumentAsync({ userId: user.idUsuario, documentId })).unwrap();
+      // Optimistic update
+      dispatch(removeDocument(documentId));
+      await profileService.deleteDocument(user.idUsuario, documentId);
       return { success: true, message: 'Documento eliminado exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al eliminar el documento';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
+      // Revert optimistic update by fetching documents again
+      fetchDocuments();
       return { success: false, message: errorMessage };
     }
-  }, [user?.idUsuario, dispatch]);
+  }, [user?.idUsuario, dispatch, fetchDocuments]);
 
   // Transaction history
   const fetchTransactionHistory = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return [];
     }
 
     try {
-      const history = await dispatch(fetchTransactionHistoryAsync(user.idUsuario)).unwrap();
+      dispatch(setFetchingTransactions(true));
+      const history = await profileService.getTransactionHistory(user.idUsuario);
+      dispatch(setTransactionHistory(history));
       return history;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar el historial de transacciones';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return [];
     }
   }, [user?.idUsuario, dispatch]);
@@ -181,22 +251,27 @@ export const useUserProfile = () => {
     sortDir: 'asc' | 'desc' = 'desc'
   ) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return { content: [], totalElements: 0, totalPages: 0, size: 0, number: 0, first: true, last: true };
     }
 
     try {
-      const paginatedHistory = await dispatch(fetchTransactionHistoryPaginatedAsync({
-        userId: user.idUsuario,
-        page,
-        size,
-        sortBy,
+      dispatch(setFetchingTransactions(true));
+      const paginatedHistory = await profileService.getTransactionHistoryPaginated(
+        user.idUsuario, 
+        page, 
+        size, 
+        sortBy, 
         sortDir
-      })).unwrap();
+      );
+      dispatch(setPaginatedTransactions(paginatedHistory));
       return paginatedHistory;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar el historial paginado';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { content: [], totalElements: 0, totalPages: 0, size: 0, number: 0, first: true, last: true };
     }
   }, [user?.idUsuario, dispatch]);
@@ -204,32 +279,42 @@ export const useUserProfile = () => {
   // Support system
   const createSupportTicket = useCallback(async (ticketData: CreateTicketRequest) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      const newTicket = await dispatch(createSupportTicketAsync({ userId: user.idUsuario, ticketData })).unwrap();
+      dispatch(setCreatingTicket(true));
+      const newTicket = await profileService.createSupportTicket(user.idUsuario, ticketData);
+      dispatch(addSupportTicket(newTicket));
       return { success: true, ticket: newTicket, message: 'Ticket creado exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al crear el ticket de soporte';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
 
   const fetchSupportTickets = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return [];
     }
 
     try {
-      const tickets = await dispatch(fetchSupportTicketsAsync(user.idUsuario)).unwrap();
+      dispatch(setFetchingTickets(true));
+      const tickets = await profileService.getSupportTickets(user.idUsuario);
+      dispatch(setSupportTickets(tickets));
       return tickets;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar los tickets de soporte';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return [];
     }
   }, [user?.idUsuario, dispatch]);
@@ -257,64 +342,83 @@ export const useUserProfile = () => {
   // Two-Factor Authentication (2FA)
   const fetch2FAStatus = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return { enabled: false };
     }
 
     try {
-      const status = await dispatch(fetch2FAStatusAsync(user.idUsuario)).unwrap();
+      const status = await profileService.get2FAConfiguration(user.idUsuario);
+      dispatch(updateTSVStatus(status));
       return status;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar el estado de 2FA';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { enabled: false };
     }
   }, [user?.idUsuario, dispatch]);
 
   const enable2FA = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      const result = await dispatch(enable2FAAsync(user.idUsuario)).unwrap();
+      dispatch(setCreating2FA(true));
+      const result = await profileService.enable2FA(user.idUsuario);
+      dispatch(updateTSVStatus(result));
       return { success: true, data: result, message: '2FA habilitado exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al habilitar 2FA';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
 
   const disable2FA = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { success: false, message: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { success: false, message: errorMsg };
     }
 
     try {
-      await dispatch(disable2FAAsync(user.idUsuario)).unwrap();
+      dispatch(setDeleting2FA(true));
+      await profileService.disable2FA(user.idUsuario);
+      dispatch(updateTSVStatus({ enabled: false }));
       return { success: true, message: '2FA deshabilitado exitosamente' };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al deshabilitar 2FA';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { success: false, message: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
 
   const verify2FACode = useCallback(async (code: string) => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
-      return { valido: false, mensaje: 'Usuario no encontrado' };
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return { valido: false, mensaje: errorMsg };
     }
 
     try {
-      const result = await dispatch(verify2FACodeAsync({ userId: user.idUsuario, code })).unwrap();
+      dispatch(setVerifying2FA(true));
+      const result = await profileService.verify2FACode(user.idUsuario, code);
+      dispatch(setVerifying2FA(false));
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al verificar el código';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return { valido: false, mensaje: errorMessage };
     }
   }, [user?.idUsuario, dispatch]);
@@ -342,16 +446,21 @@ export const useUserProfile = () => {
   // Statistics
   const fetchUserStatistics = useCallback(async () => {
     if (!user?.idUsuario) {
-      setLocalError('Usuario no encontrado');
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
       return null;
     }
 
     try {
-      const stats = await dispatch(fetchUserStatisticsAsync(user.idUsuario)).unwrap();
+      dispatch(setFetchingStatistics(true));
+      const stats = await profileService.getUserStatistics(user.idUsuario);
+      dispatch(setUserStatistics(stats));
       return stats;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar las estadísticas';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return null;
     }
   }, [user?.idUsuario, dispatch]);
@@ -359,11 +468,14 @@ export const useUserProfile = () => {
   // Obtener perfil de usuario por ID
   const getUserProfile = useCallback(async (userId: number): Promise<PerfilUsuarioCompleto | null> => {
     try {
-      const result = await dispatch(getUserProfileAsync(userId)).unwrap();
+      dispatch(setFetchingProfile(true));
+      const result = await profileService.getUserProfile(userId);
+      dispatch(setPerfilCompleto(result));
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al obtener el perfil del usuario';
       setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
       return null;
     }
   }, [dispatch]);
@@ -373,10 +485,33 @@ export const useUserProfile = () => {
     dispatch(clearError());
   }, [dispatch]);
 
+  // Utility functions
+  const clearProfileData = useCallback(() => {
+    dispatch(clearPerfilCompleto());
+  }, [dispatch]);
+
+  const clearTransactionData = useCallback(() => {
+    dispatch(clearTransactionHistory());
+  }, [dispatch]);
+
+  const clearStatisticsData = useCallback(() => {
+    dispatch(clearStatistics());
+  }, [dispatch]);
+
+  const resetProfile = useCallback(() => {
+    dispatch(resetProfileState());
+    setLocalError(null);
+    setLocalLoading(false);
+  }, [dispatch]);
+
+  const updateTicketStatusLocal = useCallback((ticketId: number, status: 'ABIERTO' | 'EN_PROCESO' | 'CERRADO') => {
+    dispatch(updateTicketStatus({ ticketId, status }));
+  }, [dispatch]);
+
   return {
     user,
     // Combined loading states
-    loading: localLoading || profileLoading || fetchingProfile || uploadingDocument || updatingProfile || changingPassword || creating2FA || creatingTicket,
+    loading: localLoading || profileLoading || fetchingProfile || uploadingDocument || updatingProfile || changingPassword || creating2FA || creatingTicket || fetchingDocuments || fetchingTransactions || fetchingTickets || deleting2FA || verifying2FA || fetchingStatistics,
     error: localError || profileError,
     
     // Redux state data
@@ -395,6 +530,12 @@ export const useUserProfile = () => {
     changingPassword,
     creating2FA,
     creatingTicket,
+    fetchingDocuments,
+    fetchingTransactions,
+    fetchingTickets,
+    deleting2FA,
+    verifying2FA,
+    fetchingStatistics,
 
     // Profile Actions
     updateProfile,
@@ -426,6 +567,11 @@ export const useUserProfile = () => {
     fetchUserStatistics,
 
     // Utility Actions
-    clearError: clearErrorLocal
+    clearError: clearErrorLocal,
+    clearProfileData,
+    clearTransactionData,
+    clearStatisticsData,
+    resetProfile,
+    updateTicketStatus: updateTicketStatusLocal
   };
 };

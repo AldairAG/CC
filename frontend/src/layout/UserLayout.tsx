@@ -1,5 +1,5 @@
 import { Route, Switch, useHistory, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { USER_ROUTES } from "../constants/ROUTERS";
 import UserProfile from "../pages/user/profile/UserProfile";
 import Dashboard from "../pages/user/apuestas/ApuestasDeportivasPage";
@@ -12,12 +12,21 @@ import CarritoFlotante from "../components/navigation/CarritoFlotante";
 import BotonesFlotantes from "../components/navigation/BotonesFlotantes";
 import ApuestasLayout from "./ApuestasLayout";
 import CryptoLayout from "./CryptoLayout";
+import QuinielasLayout from "./QuinielaLayout";
+import { useUserProfile } from "../hooks/useUserProfile";
 
 const UserLayout = () => {
     const navigate = useHistory();
     const location = useLocation();
-    const { logout } = useUser();
-    
+    const { logout, user } = useUser();
+    const {getUserProfile } = useUserProfile();
+
+    useEffect(() => {
+        if (user?.idUsuario) {
+            getUserProfile(user?.idUsuario);
+        }
+    }, [user?.idUsuario]);
+
     // Estados para controlar los sidebars
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -51,9 +60,8 @@ const UserLayout = () => {
                     {/* Botón hamburguesa para móviles */}
                     <button
                         onClick={toggleSidebar}
-                        className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
-                            isSidebarOpen ? 'bg-gray-700/50' : ''
-                        }`}
+                        className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${isSidebarOpen ? 'bg-gray-700/50' : ''
+                            }`}
                         aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,14 +78,13 @@ const UserLayout = () => {
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 bg-clip-text animate-pulse">
                         24bet
                     </h1>
-                    
+
                     <div className='flex gap-2 sm:gap-4 items-center'>
                         {/* Botón carrito para móviles */}
                         <button
                             onClick={toggleCart}
-                            className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${
-                                isCartOpen ? 'bg-gray-700/50' : ''
-                            }`}
+                            className={`lg:hidden p-2 text-white hover:bg-gray-700/30 rounded-xl transition-all duration-300 relative ${isCartOpen ? 'bg-gray-700/50' : ''
+                                }`}
                             aria-label={isCartOpen ? "Cerrar carrito" : "Abrir carrito"}
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,9 +93,9 @@ const UserLayout = () => {
                             {/* Indicador de items en carrito */}
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full opacity-80 lg:hidden"></div>
                         </button>
-                        
+
                         <UserProfileButton />
-                        <button 
+                        <button
                             onClick={handleLogout}
                             className="px-2 sm:px-4 py-2 bg-gradient-to-r from-red-600/90 to-red-700/90 backdrop-blur-sm text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 shadow-lg flex items-center gap-2 text-sm sm:text-base hover:scale-105 active:scale-95"
                             title="Cerrar sesión"
@@ -100,37 +107,45 @@ const UserLayout = () => {
                         </button>
                     </div>
                 </div>
-                
+
                 <div className="flex bg-gradient-to-r from-gray-800/50 to-slate-800/50 items-center justify-center border-t border-gray-600/20 overflow-x-auto scrollbar-hide">
                     <div className="flex min-w-max px-2 sm:px-4">
-                        <span 
-                            onClick={() => handleNavigate(USER_ROUTES.HOME)} 
-                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${
-                                isActiveRoute(USER_ROUTES.HOME) ? 'bg-gray-700/50 border-b-2 border-blue-400 text-blue-300' : 'text-gray-300 hover:text-white'
-                            }`}
+                        <span
+                            onClick={() => handleNavigate(USER_ROUTES.HOME)}
+                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${isActiveRoute(USER_ROUTES.HOME) ? 'bg-gray-700/50 border-b-2 border-blue-400 text-blue-300' : 'text-gray-300 hover:text-white'
+                                }`}
                         >
                             <span className="sm:hidden">🎰</span>
                             <span className="hidden sm:inline">🎰 Casino</span>
                         </span>
-                        
-                        <span 
-                            onClick={() => handleNavigate(USER_ROUTES.APUESTAS_DEPORTIVAS)} 
-                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 flex items-center space-x-1 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${
-                                isActiveRoute(USER_ROUTES.APUESTAS_DEPORTIVAS) ? 'bg-gray-700/50 border-b-2 border-purple-400 text-purple-300' : 'text-gray-300 hover:text-white'
-                            }`}
+
+                        <span
+                            onClick={() => handleNavigate(USER_ROUTES.APUESTAS_DEPORTIVAS)}
+                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 flex items-center space-x-1 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${isActiveRoute(USER_ROUTES.APUESTAS_DEPORTIVAS) ? 'bg-gray-700/50 border-b-2 border-purple-400 text-purple-300' : 'text-gray-300 hover:text-white'
+                                }`}
                         >
                             <span>⚽</span>
                             <span className="hidden lg:inline">Apuestas Deportivas</span>
                             <span className="lg:hidden hidden sm:inline">Apuestas</span>
                         </span>
+
+                        <span
+                            onClick={() => handleNavigate(USER_ROUTES.QUINIELAS)}
+                            className={`px-4 sm:px-6 py-3 font-semibold cursor-pointer hover:bg-gray-700/30 transition-all duration-300 flex items-center space-x-1 border-gray-500 whitespace-nowrap text-sm sm:text-base rounded-t-xl ${isActiveRoute(USER_ROUTES.QUINIELAS) ? 'bg-gray-700/50 border-b-2 border-purple-400 text-purple-300' : 'text-gray-300 hover:text-white'
+                                }`}
+                        >
+                            <span>⚽</span>
+                            <span className="hidden lg:inline">Quinielas</span>
+                            <span className="lg:hidden hidden sm:inline">Quinielas</span>
+                        </span>
                     </div>
                 </div>
             </header>
-            
+
             <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 overflow-x-hidden overflow-y-auto">
                 {/* Overlay para móviles cuando el sidebar está abierto */}
                 {isSidebarOpen && (
-                    <div 
+                    <div
                         className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
                         onClick={() => setIsSidebarOpen(false)}
                     />
@@ -162,7 +177,7 @@ const UserLayout = () => {
                     <LigasMexicanas onItemClick={() => setIsSidebarOpen(false)} />
                     <DeportesDisponibles onItemClick={() => setIsSidebarOpen(false)} />
                 </div>
-                
+
                 {/* Contenido principal */}
                 <div className="flex-1 flex justify-center pt-4 lg:pt-0 min-w-0">
                     <div className="w-full max-w-none lg:max-w-4xl xl:max-w-6xl">
@@ -170,7 +185,7 @@ const UserLayout = () => {
                             <Route path={USER_ROUTES.USER_PROFILE} component={UserProfile} />
                             <Route path={USER_ROUTES.HOME} component={Dashboard} />
                             <Route path={USER_ROUTES.CRYPTO_DASHBOARD} component={CryptoLayout} />
-
+                            <Route path={USER_ROUTES.QUINIELA} component={QuinielasLayout} />
                             {/* Rutas específicas de apuestas */}
                             <Route path={USER_ROUTES.APUESTAS_DEPORTIVAS} component={ApuestasLayout} />
                         </Switch>
@@ -205,7 +220,7 @@ const UserLayout = () => {
 
                 {/* Overlay para el carrito en móviles */}
                 {isCartOpen && (
-                    <div 
+                    <div
                         className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
                         onClick={() => setIsCartOpen(false)}
                     />
@@ -214,7 +229,7 @@ const UserLayout = () => {
 
             {/* Carrito flotante para móviles */}
             <CarritoFlotante />
-            
+
             {/* Botones flotantes de navegación */}
             {/* <BotonesFlotantes /> */}
         </main>

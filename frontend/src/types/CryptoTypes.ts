@@ -45,6 +45,12 @@ export interface CryptoDepositRequest {
   notes?: string;
 }
 
+export interface CryptoWithdrawalRequest {
+  toAddress: string;
+  amount: number;
+  cryptoType: 'BTC' | 'ETH' | 'SOL';
+}
+
 export type CryptoType = 'BTC' | 'ETH' | 'SOL';
 
 export interface CryptoBalanceDTO {
@@ -74,4 +80,19 @@ export interface UpdateWalletRequest {
   name?: string;
   address?: string;
   isActive?: boolean;
+}
+
+export interface CryptoWallet {
+  id: number;
+  userId: number;
+  cryptoType: CryptoType;
+  balance: number;
+  pendingDeposits: number;
+  pendingWithdrawals: number;
+  totalDeposited: number;
+  totalWithdrawn: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  address: string;
 }

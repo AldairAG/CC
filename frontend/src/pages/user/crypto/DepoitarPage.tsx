@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { useCryptoTransactions } from '../../../hooks/useCryptoTransactions';
+import { useCrypto } from '../../../hooks/useCrypto';
 import { CryptoService } from '../../../service/crypto/cryptoService';
 import DepositAddress from '../../../components/crypto/DepositAddress';
 import type { CryptoDepositRequest, CryptoType } from '../../../types/CryptoTypes';
 
 const DepositarPage = () => {
-    const { convertToUSD, refreshData } = useCryptoTransactions();
+    const { convertToUSD } = useCrypto();
     const [depositMethod, setDepositMethod] = useState<'address' | 'wallet'>('address');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -64,8 +64,6 @@ const DepositarPage = () => {
             // Reset form
             resetForm();
             
-            // Refresh balances
-            await refreshData();
         } catch (error) {
             console.error('Error creating deposit:', error);
             setMessage({ type: 'error', text: 'Error al crear el depósito. Intenta nuevamente.' });

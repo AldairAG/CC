@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCryptoTransactions } from '../../hooks/useCryptoTransactions';
+import { useCrypto } from '../../hooks/useCrypto';
 import { useUser } from '../../hooks/useUser';
 import { CryptoService } from '../../service/crypto/cryptoService';
 import type { CryptoBalance, ExchangeRate } from '../../types/CryptoTypes';
@@ -14,7 +14,7 @@ export const CryptoToFiatConverter: React.FC<CryptoToFiatConverterProps> = ({
   onSuccess, 
   onClose 
 }) => {
-  const { balances, exchangeRates, convertToUSD } = useCryptoTransactions();
+  const { balances, exchangeRates, convertToUSD } = useCrypto();
   const { user, refreshUser } = useUser();
   const [selectedCrypto, setSelectedCrypto] = useState('BTC');
   const [amount, setAmount] = useState('');
@@ -199,12 +199,12 @@ export const CryptoToFiatConverter: React.FC<CryptoToFiatConverterProps> = ({
             <div className="text-sm">
               <div className="flex justify-between">
                 <span className="text-blue-700">Saldo actual:</span>
-                <span className="font-medium text-blue-800">${user?.saldo?.toFixed(2) || '0.00'}</span>
+                <span className="font-medium text-blue-800">${user?.saldoUsuario?.toFixed(2) || '0.00'}</span>
               </div>
               {fiatValue > 0 && (
                 <div className="flex justify-between mt-1">
                   <span className="text-blue-700">Nuevo saldo:</span>
-                  <span className="font-bold text-blue-800">${((user?.saldo || 0) + fiatValue).toFixed(2)}</span>
+                  <span className="font-bold text-blue-800">${((user?.saldoUsuario || 0) + fiatValue).toFixed(2)}</span>
                 </div>
               )}
             </div>

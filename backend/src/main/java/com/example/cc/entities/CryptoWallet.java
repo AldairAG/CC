@@ -54,6 +54,9 @@ public class CryptoWallet {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "address", length = 255, nullable = false)
+    private String address; // Dirección de la wallet, puede ser una dirección de criptomoneda
     
     // Métodos de utilidad
     public void addToBalance(BigDecimal amount) {
@@ -76,6 +79,10 @@ public class CryptoWallet {
     
     public void addToPendingWithdrawals(BigDecimal amount) {
         this.pendingWithdrawals = this.pendingWithdrawals.add(amount);
+    }
+
+    public void addToTotalWithdrawn(BigDecimal amount) {
+        this.totalWithdrawn = this.totalWithdrawn.add(amount);
     }
     
     public void subtractFromPendingWithdrawals(BigDecimal amount) {

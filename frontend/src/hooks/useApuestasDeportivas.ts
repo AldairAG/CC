@@ -61,6 +61,9 @@ import {
     clearErrors,
     clearMisApuestas,
     clearApuestasActivas,
+    setEventosConMasApuestas,
+    setEventosConMasApuestasLoading,
+    setEventosConMasApuestasError
 } from '../store/slices/apuestaSlice';
 import { ApuestaService } from '../service/casino/apuestaService';
 
@@ -75,6 +78,7 @@ import {
     EstadoApuesta,
     type TipoApuesta
 } from '../types/ApuestaType';
+import { type EventoDeportivoType } from '../types/EventoDeportivoTypes';
 import useUser from './useUser';
 
 /**
@@ -228,17 +232,17 @@ export const useApuestasDeportivas = () => {
     }, [dispatch]);
 
     /**
-     * Carga apuestas recientes
+     * Carga eventos con más apuestas
      */
-    const loadApuestasRecientes = useCallback(async (limite: number = 5): Promise<ResumenApuestaType[]> => {
-        dispatch(setApuestasRecientesLoading(true));
+    const loadEventosConMasApuestas = useCallback(async (limite: number = 5): Promise<EventoDeportivoType[]> => {
+        dispatch(setEventosConMasApuestasLoading(true));
         try {
-            const response = await ApuestaService.obtenerApuestasRecientes(limite);
-            dispatch(setApuestasRecientes(response));
+            const response = await ApuestaService.obtenerEventosConMasApuestas(limite);
+            dispatch(setEventosConMasApuestas(response));
             return response;
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Error al cargar apuestas recientes';
-            dispatch(setApuestasRecientesError(errorMessage));
+            const errorMessage = error.response?.data?.message || 'Error al cargar eventos con más apuestas';
+            dispatch(setEventosConMasApuestasError(errorMessage));
             return [];
         }
     }, [dispatch]);
@@ -364,7 +368,7 @@ export const useApuestasDeportivas = () => {
     const loadEstadisticasApuestas = useCallback(async (): Promise<EstadisticasApuestaType | null> => {
         dispatch(setEstadisticasLoading(true));
         try {
-            const response = await ApuestaService.obtenerEstadisticasApuestas();
+            const response = await ApuestaService.obtenerEstadisticasApuestas(user?.idUsuario || 0);
             dispatch(setEstadisticasApuestas(response));
             return response;
         } catch (error: any) {
@@ -631,14 +635,14 @@ export const useApuestasDeportivas = () => {
     const loadCompleteDashboard = useCallback(async () => {
         try {
             await Promise.all([
-                loadApuestasRecientes(5),
+                loadEventosConMasApuestas(5),
                 loadEstadisticasApuestas(),
                 loadLimitesApuesta(),
             ]);
         } catch (error) {
             console.error('Error al cargar dashboard completo de apuestas:', error);
         }
-    }, [loadApuestasRecientes, loadEstadisticasApuestas, loadLimitesApuesta]);
+    }, [loadEventosConMasApuestas, loadEstadisticasApuestas, loadLimitesApuesta]);
 
     /**
      * Refresca todas las vistas principales
@@ -648,13 +652,12 @@ export const useApuestasDeportivas = () => {
             await Promise.all([
                 loadMisApuestas(page, size),
                 loadApuestasActivas(page, size),
-                loadApuestasRecientes(5),
                 loadEstadisticasApuestas(),
             ]);
         } catch (error) {
             console.error('Error al refrescar todas las vistas:', error);
         }
-    }, [loadMisApuestas, loadApuestasActivas, loadApuestasRecientes, loadEstadisticasApuestas]);
+    }, [loadMisApuestas, loadApuestasActivas, loadEstadisticasApuestas]);
 
     /**
      * Verifica si se puede cancelar una apuesta
@@ -737,7 +740,7 @@ export const useApuestasDeportivas = () => {
         loadMisApuestas,
         loadApuestasActivas,
         loadApuestasFinalizadas,
-        loadApuestasRecientes,
+        loadEventosConMasApuestas,
         loadApuestasPorTipo,
         loadApuestasPorEstado,
         loadApuestasPorEvento,

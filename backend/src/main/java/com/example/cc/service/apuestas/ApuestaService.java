@@ -1,5 +1,6 @@
 package com.example.cc.service.apuestas;
 
+import com.example.cc.dto.apuestas.EstadisticasApuestaDTO;
 import com.example.cc.entities.*;
 import com.example.cc.repository.ApuestaRepository;
 import com.example.cc.repository.CuotaEventoRepository;
@@ -28,6 +29,14 @@ public class ApuestaService {
     private final EventoDeportivoRepository eventoRepository;
     private final CuotaEventoRepository cuotaRepository;
     private final TransaccionService transaccionService;
+
+    /**
+     * Obtener eventos con más apuestas (limitados por parámetro)
+     */
+    public List<EventoDeportivo> obtenerEventosConMasApuestas(int limite) {
+        List<EventoDeportivo> resultados = apuestaRepository.findEventosConMasApuestas(limite);
+        return resultados;
+    }
 
     /**
      * Crear una nueva apuesta
@@ -81,8 +90,7 @@ public class ApuestaService {
                 Transaccion.TipoTransaccion.RETIRO,
                 montoApostado,
                 "Apuesta en evento: " + evento.getNombreEvento(),
-                Transaccion.EstadoTransaccion.COMPLETADA
-        );
+                Transaccion.EstadoTransaccion.COMPLETADA);
 
         // Guardar la apuesta
         return apuestaRepository.save(apuesta);
@@ -147,8 +155,7 @@ public class ApuestaService {
                             Transaccion.TipoTransaccion.DEPOSITO,
                             ganancia,
                             "Ganancia por apuesta en evento: " + evento.getNombreEvento(),
-                            Transaccion.EstadoTransaccion.COMPLETADA
-                    );
+                            Transaccion.EstadoTransaccion.COMPLETADA);
 
                     log.info("Apuesta ganadora procesada: {} - Usuario: {} - Ganancia: {}",
                             apuesta.getId(), usuario.getIdUsuario(), ganancia);
@@ -185,8 +192,10 @@ public class ApuestaService {
             throw new RuntimeException("La apuesta no pertenece al usuario");
         }
 
-        // Verificar que la apuesta puede cancelarse (solo si está pendiente o aceptada y el evento no ha comenzado)
-        if (apuesta.getEstado() != Apuesta.EstadoApuesta.PENDIENTE && apuesta.getEstado() != Apuesta.EstadoApuesta.ACEPTADA) {
+        // Verificar que la apuesta puede cancelarse (solo si está pendiente o aceptada
+        // y el evento no ha comenzado)
+        if (apuesta.getEstado() != Apuesta.EstadoApuesta.PENDIENTE
+                && apuesta.getEstado() != Apuesta.EstadoApuesta.ACEPTADA) {
             throw new RuntimeException("La apuesta no puede cancelarse en su estado actual");
         }
 
@@ -210,8 +219,7 @@ public class ApuestaService {
                 Transaccion.TipoTransaccion.REEMBOLSO,
                 apuesta.getMontoApostado(),
                 "Devolución por cancelación de apuesta en evento: " + evento.getNombreEvento(),
-                Transaccion.EstadoTransaccion.COMPLETADA
-        );
+                Transaccion.EstadoTransaccion.COMPLETADA);
 
         log.info("Apuesta cancelada: {} - Usuario: {} - Monto devuelto: {}",
                 apuestaId, usuarioId, apuesta.getMontoApostado());
@@ -235,5 +243,46 @@ public class ApuestaService {
                 log.error("Error al procesar apuesta pendiente {}: {}", apuesta.getId(), e.getMessage());
             }
         }
+    }
+
+    public EstadisticasApuestaDTO obtenerEstadisticasApuestasUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+
+        List<Apuesta> apuestas = apuestaRepository.findByUsuarioOrderByFechaCreacionDesc(usuario);
+
+        int totalApuestas = apuestas.size();
+        int apuestasGanadas = 0;
+        int apuestasPerdidas = 0;
+        int apuestasPendientes = 0;
+        BigDecimal montoTotalApostado = BigDecimal.ZERO;
+        BigDecimal gananciaTotal = BigDecimal.ZERO;
+
+        for (Apuesta apuesta : apuestas) {
+            montoTotalApostado = montoTotalApostado.add(apuesta.getMontoApostado());
+            if (Boolean.TRUE.equals(apuesta.getEsGanadora())) {
+                apuestasGanadas++;
+                gananciaTotal = gananciaTotal.add(apuesta.getMontoGanancia() != null ? apuesta.getMontoGanancia() : BigDecimal.ZERO);
+            } else if (apuesta.getEstado() == Apuesta.EstadoApuesta.RESUELTA) {
+                apuestasPerdidas++;
+            } else if (apuesta.getEstado() == Apuesta.EstadoApuesta.PENDIENTE) {
+                apuestasPendientes++;
+            }
+        }
+
+        double rentabilidad = montoTotalApostado.compareTo(BigDecimal.ZERO) > 0
+            ? gananciaTotal.divide(montoTotalApostado, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
+            : 0.0;
+
+        EstadisticasApuestaDTO estadisticas = new EstadisticasApuestaDTO();
+        estadisticas.setTotalApuestas(totalApuestas);
+        estadisticas.setMontoTotalApostado(montoTotalApostado);
+        estadisticas.setApuestasGanadas(apuestasGanadas);
+        estadisticas.setApuestasPerdidas(apuestasPerdidas);
+        estadisticas.setApuestasPendientes(apuestasPendientes);
+        estadisticas.setGananciaTotal(gananciaTotal);
+        estadisticas.setRentabilidad(rentabilidad);
+
+        return estadisticas;
     }
 }

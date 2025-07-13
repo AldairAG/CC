@@ -16,6 +16,8 @@ import java.util.List;
 @Repository
 public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
 
+    
+
     /**
      * Obtener apuestas por usuario
      */
@@ -65,4 +67,14 @@ public interface ApuestaRepository extends JpaRepository<Apuesta, Long> {
     @Query("SELECT COUNT(a), SUM(a.montoApostado), SUM(a.montoGanancia) FROM Apuesta a " +
            "WHERE a.usuario.idUsuario = :usuarioId AND a.estado = 'RESUELTA' GROUP BY a.esGanadora")
     List<Object[]> getApuestasEstadisticasByUsuario(@Param("usuarioId") Long usuarioId);
+
+    /**
+     * Obtener eventos con más apuestas (top N)
+     */
+    @Query("SELECT a.eventoDeportivo, COUNT(a) as totalApuestas FROM Apuesta a GROUP BY a.eventoDeportivo ORDER BY totalApuestas DESC")
+    List<EventoDeportivo> findEventosConMasApuestas(org.springframework.data.domain.Pageable pageable);
+
+    default List<EventoDeportivo> findEventosConMasApuestas(int limite) {
+        return findEventosConMasApuestas(org.springframework.data.domain.PageRequest.of(0, limite));
+    }
 }

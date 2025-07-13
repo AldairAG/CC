@@ -1,8 +1,10 @@
 import { useUser } from '../../hooks/useUser';
 import { USER_ROUTES } from '../../constants/ROUTERS';
 import { useHistory } from 'react-router-dom';
+import { useUserProfile } from '../../hooks/useUserProfile';
 
 const UserProfileButton = () => {
+    const { perfilCompleto } = useUserProfile();
     const { user } = useUser();
     const navigate = useHistory();
 
@@ -22,9 +24,9 @@ const UserProfileButton = () => {
         <div className="flex items-center space-x-2">
             {/* Información del Usuario (solo desktop) */}
             <div className="hidden md:flex flex-col items-end text-sm">
-                <span className="font-medium text-white">{user?.username || 'Usuario'}</span>
+                <span className="font-medium text-white">{perfilCompleto?.username || 'Usuario'}</span>
                 <span className="text-gold-500 font-semibold">
-                    ${user?.saldo?.toLocaleString() || '0'}
+                    ${user?.saldoUsuario?.toLocaleString() || '0'}
                 </span>
             </div>
 
@@ -77,9 +79,9 @@ const UserProfileButton = () => {
                     {user?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 {/* Indicador de saldo (solo mobile) */}
-                {user?.saldo && user.saldo > 0 && (
+                {user?.saldoUsuario && user.saldoUsuario > 0 && (
                     <div className="absolute -top-1 -right-1 bg-gold-500 text-dark-900 text-xs px-1 py-0.5 rounded-full min-w-[20px] text-center font-bold">
-                        ${user.saldo > 999 ? '999+' : user.saldo}
+                        ${user.saldoUsuario > 999 ? '999+' : user.saldoUsuario}
                     </div>
                 )}
             </button>

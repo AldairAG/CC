@@ -1,8 +1,8 @@
 import React from 'react';
-import { useCryptoTransactions } from '../../hooks/useCryptoTransactions';
+import { useCrypto } from '../../hooks/useCrypto';
 
 const ExchangeRates: React.FC = () => {
-    const { exchangeRates, loading, error } = useCryptoTransactions();
+    const { exchangeRates, loading, error } = useCrypto();
 
     if (loading) {
         return (

@@ -1,7 +1,5 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { profileService } from '../../service/casino/profileService';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type {
-    DocumentUploadRequest,
     UserDocument,
     SupportTicket,
     TSVData
@@ -9,13 +7,10 @@ import type {
 import type {
     TransactionHistory,
     UserStatistics,
-    CreateTicketRequest,
     PaginatedResponse
 } from '../../service/casino/profileService';
 import type {
-    PerfilUsuarioCompleto,
-    ActualizarPerfilRequest,
-    CambiarPasswordRequest
+    PerfilUsuarioCompleto
 } from '../../types/PerfilTypes';
 
 // State interface
@@ -41,6 +36,12 @@ interface ProfileState {
     creating2FA: boolean;
     creatingTicket: boolean;
     fetchingProfile: boolean;
+    fetchingDocuments: boolean;
+    fetchingTransactions: boolean;
+    fetchingTickets: boolean;
+    fetchingStatistics: boolean;
+    deleting2FA: boolean;
+    verifying2FA: boolean;
 }
 
 // Initial state
@@ -63,223 +64,29 @@ const initialState: ProfileState = {
     creating2FA: false,
     creatingTicket: false,
     fetchingProfile: false,
+    fetchingDocuments: false,
+    fetchingTransactions: false,
+    fetchingTickets: false,
+    fetchingStatistics: false,
+    deleting2FA: false,
+    verifying2FA: false,
 };
-
-// Async thunks
-
-// Profile management
-export const updateProfileAsync = createAsyncThunk(
-    'profile/updateProfile',
-    async ({ userId, profileData }: { userId: number; profileData: ActualizarPerfilRequest }, { rejectWithValue }) => {
-        try {
-            await profileService.updateProfile(userId, profileData);
-            return { success: true, message: 'Perfil actualizado exitosamente' };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al actualizar el perfil');
-        }
-    }
-);
-
-export const changePasswordAsync = createAsyncThunk(
-    'profile/changePassword',
-    async ({ userId, passwordData }: { userId: number; passwordData: CambiarPasswordRequest }, { rejectWithValue }) => {
-        try {
-            await profileService.changePassword(userId, passwordData);
-            return { success: true, message: 'Contraseña cambiada exitosamente' };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
-        }
-    }
-);
-
-// Document management
-export const uploadDocumentAsync = createAsyncThunk(
-    'profile/uploadDocument',
-    async ({ userId, document }: { userId: number; document: DocumentUploadRequest }, { rejectWithValue }) => {
-        try {
-            // Validate file
-            const validation = profileService.validateFile(document.file);
-            if (!validation.valid) {
-                throw new Error(validation.error);
-            }
-
-            const newDocument = await profileService.uploadDocument(userId, document);
-            return newDocument;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al subir el documento');
-        }
-    }
-);
-
-export const fetchDocumentsAsync = createAsyncThunk(
-    'profile/fetchDocuments',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const documents = await profileService.getDocuments(userId);
-            return documents;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar los documentos');
-        }
-    }
-);
-
-export const deleteDocumentAsync = createAsyncThunk(
-    'profile/deleteDocument',
-    async ({ userId, documentId }: { userId: number; documentId: number }, { rejectWithValue }) => {
-        try {
-            await profileService.deleteDocument(userId, documentId);
-            return documentId;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al eliminar el documento');
-        }
-    }
-);
-
-// Transaction history
-export const fetchTransactionHistoryAsync = createAsyncThunk(
-    'profile/fetchTransactionHistory',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const history = await profileService.getTransactionHistory(userId);
-            return history;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar el historial de transacciones');
-        }
-    }
-);
-
-export const fetchTransactionHistoryPaginatedAsync = createAsyncThunk(
-    'profile/fetchTransactionHistoryPaginated',
-    async ({
-        userId,
-        page = 0,
-        size = 10,
-        sortBy = 'fechaCreacion',
-        sortDir = 'desc' as 'asc' | 'desc'
-    }: {
-        userId: number;
-        page?: number;
-        size?: number;
-        sortBy?: string;
-        sortDir?: 'asc' | 'desc'
-    }, { rejectWithValue }) => {
-        try {
-            const paginatedHistory = await profileService.getTransactionHistoryPaginated(userId, page, size, sortBy, sortDir);
-            return paginatedHistory;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar el historial paginado');
-        }
-    }
-);
-
-// Support system
-export const createSupportTicketAsync = createAsyncThunk(
-    'profile/createSupportTicket',
-    async ({ userId, ticketData }: { userId: number; ticketData: CreateTicketRequest }, { rejectWithValue }) => {
-        try {
-            const newTicket = await profileService.createSupportTicket(userId, ticketData);
-            return newTicket;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al crear el ticket de soporte');
-        }
-    }
-);
-
-export const fetchSupportTicketsAsync = createAsyncThunk(
-    'profile/fetchSupportTickets',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const tickets = await profileService.getSupportTickets(userId);
-            return tickets;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar los tickets de soporte');
-        }
-    }
-);
-
-// 2FA management
-export const fetch2FAStatusAsync = createAsyncThunk(
-    'profile/fetch2FAStatus',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const status = await profileService.get2FAConfiguration(userId);
-            return status;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar el estado de 2FA');
-        }
-    }
-);
-
-export const enable2FAAsync = createAsyncThunk(
-    'profile/enable2FA',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const result = await profileService.enable2FA(userId);
-            return result;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al habilitar 2FA');
-        }
-    }
-);
-
-export const disable2FAAsync = createAsyncThunk(
-    'profile/disable2FA',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            await profileService.disable2FA(userId);
-            return { enabled: false };
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al deshabilitar 2FA');
-        }
-    }
-);
-
-export const verify2FACodeAsync = createAsyncThunk(
-    'profile/verify2FACode',
-    async ({ userId, code }: { userId: number; code: string }, { rejectWithValue }) => {
-        try {
-            const result = await profileService.verify2FACode(userId, code);
-            return result;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al verificar el código');
-        }
-    }
-);
-
-// Statistics
-export const fetchUserStatisticsAsync = createAsyncThunk(
-    'profile/fetchUserStatistics',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const stats = await profileService.getUserStatistics(userId);
-            return stats;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al cargar las estadísticas');
-        }
-    }
-);
-
-// Get user profile by ID
-export const getUserProfileAsync = createAsyncThunk(
-    'profile/getUserProfile',
-    async (userId: number, { rejectWithValue }) => {
-        try {
-            const profile = await profileService.getUserProfile(userId);
-            return profile;
-        } catch (error) {
-            return rejectWithValue(error instanceof Error ? error.message : 'Error al obtener el perfil del usuario');
-        }
-    }
-);
 
 // Profile slice
 const profileSlice = createSlice({
     name: 'profile',
     initialState,
     reducers: {
+        // ========== GENERAL ACTIONS ==========
+        
         // Clear error
         clearError: (state) => {
             state.error = null;
+        },
+
+        // Set error
+        setError: (state, action: PayloadAction<string>) => {
+            state.error = action.payload;
         },
 
         // Clear loading states
@@ -290,6 +97,13 @@ const profileSlice = createSlice({
             state.changingPassword = false;
             state.creating2FA = false;
             state.creatingTicket = false;
+            state.fetchingProfile = false;
+            state.fetchingDocuments = false;
+            state.fetchingTransactions = false;
+            state.fetchingTickets = false;
+            state.fetchingStatistics = false;
+            state.deleting2FA = false;
+            state.verifying2FA = false;
         },
 
         // Reset profile state
@@ -297,261 +111,229 @@ const profileSlice = createSlice({
             return { ...initialState };
         },
 
+        // ========== PROFILE MANAGEMENT ==========
+
+        // Set loading state for fetching profile
+        setFetchingProfile: (state, action: PayloadAction<boolean>) => {
+            state.fetchingProfile = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Set profile data
+        setPerfilCompleto: (state, action: PayloadAction<PerfilUsuarioCompleto>) => {
+            state.perfilCompleto = action.payload;
+            state.fetchingProfile = false;
+            state.loading=false;
+        },
+
         // Clear profile data
         clearPerfilCompleto: (state) => {
             state.perfilCompleto = null;
         },
 
-        // Update TSV status locally
-        updateTSVStatus: (state, action: PayloadAction<TSVData>) => {
-            state.tsvStatus = action.payload;
+        // Set updating profile state
+        setUpdatingProfile: (state, action: PayloadAction<boolean>) => {
+            state.updatingProfile = action.payload;
+            if (action.payload) state.error = null;
         },
 
-        // Remove document locally (optimistic update)
-        removeDocumentOptimistic: (state, action: PayloadAction<number>) => {
+        // Update profile success
+        updateProfileSuccess: (state) => {
+            state.updatingProfile = false;
+        },
+
+        // Set changing password state
+        setChangingPassword: (state, action: PayloadAction<boolean>) => {
+            state.changingPassword = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Change password success
+        changePasswordSuccess: (state) => {
+            state.changingPassword = false;
+        },
+
+        // ========== DOCUMENT MANAGEMENT ==========
+
+        // Set uploading document state
+        setUploadingDocument: (state, action: PayloadAction<boolean>) => {
+            state.uploadingDocument = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Add document
+        addDocument: (state, action: PayloadAction<UserDocument>) => {
+            state.documents.push(action.payload);
+            state.uploadingDocument = false;
+        },
+
+        // Set fetching documents state
+        setFetchingDocuments: (state, action: PayloadAction<boolean>) => {
+            state.fetchingDocuments = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Set documents
+        setDocuments: (state, action: PayloadAction<UserDocument[]>) => {
+            state.documents = action.payload;
+            state.fetchingDocuments = false;
+        },
+
+        // Remove document (optimistic update)
+        removeDocument: (state, action: PayloadAction<number>) => {
             state.documents = state.documents.filter(doc => doc.id !== action.payload);
         },
-    },
-    extraReducers: (builder) => {
-        // Update profile
-        builder
-            .addCase(updateProfileAsync.pending, (state) => {
-                state.updatingProfile = true;
-                state.error = null;
-            })
-            .addCase(updateProfileAsync.fulfilled, (state) => {
-                state.updatingProfile = false;
-            })
-            .addCase(updateProfileAsync.rejected, (state, action) => {
-                state.updatingProfile = false;
-                state.error = action.payload as string;
-            });
 
-        // Change password
-        builder
-            .addCase(changePasswordAsync.pending, (state) => {
-                state.changingPassword = true;
-                state.error = null;
-            })
-            .addCase(changePasswordAsync.fulfilled, (state) => {
-                state.changingPassword = false;
-            })
-            .addCase(changePasswordAsync.rejected, (state, action) => {
-                state.changingPassword = false;
-                state.error = action.payload as string;
-            });
+        // ========== TRANSACTION HISTORY ==========
 
-        // Upload document
-        builder
-            .addCase(uploadDocumentAsync.pending, (state) => {
-                state.uploadingDocument = true;
-                state.error = null;
-            })
-            .addCase(uploadDocumentAsync.fulfilled, (state, action) => {
-                state.uploadingDocument = false;
-                state.documents.push(action.payload);
-            })
-            .addCase(uploadDocumentAsync.rejected, (state, action) => {
-                state.uploadingDocument = false;
-                state.error = action.payload as string;
-            });
+        // Set fetching transactions state
+        setFetchingTransactions: (state, action: PayloadAction<boolean>) => {
+            state.fetchingTransactions = action.payload;
+            if (action.payload) state.error = null;
+        },
 
-        // Fetch documents
-        builder
-            .addCase(fetchDocumentsAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchDocumentsAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.documents = action.payload;
-            })
-            .addCase(fetchDocumentsAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Set transaction history
+        setTransactionHistory: (state, action: PayloadAction<TransactionHistory[]>) => {
+            state.transactionHistory = action.payload;
+            state.fetchingTransactions = false;
+        },
 
-        // Delete document
-        builder
-            .addCase(deleteDocumentAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(deleteDocumentAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.documents = state.documents.filter(doc => doc.id !== action.payload);
-            })
-            .addCase(deleteDocumentAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-                // Restore document if deletion failed (revert optimistic update)
-            });
+        // Set paginated transactions
+        setPaginatedTransactions: (state, action: PayloadAction<PaginatedResponse<TransactionHistory>>) => {
+            state.paginatedTransactions = action.payload;
+            state.fetchingTransactions = false;
+        },
 
-        // Fetch transaction history
-        builder
-            .addCase(fetchTransactionHistoryAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchTransactionHistoryAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.transactionHistory = action.payload;
-            })
-            .addCase(fetchTransactionHistoryAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Clear transaction history
+        clearTransactionHistory: (state) => {
+            state.transactionHistory = [];
+            state.paginatedTransactions = null;
+        },
 
-        // Fetch paginated transaction history
-        builder
-            .addCase(fetchTransactionHistoryPaginatedAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchTransactionHistoryPaginatedAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.paginatedTransactions = action.payload;
-            })
-            .addCase(fetchTransactionHistoryPaginatedAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // ========== SUPPORT TICKETS ==========
 
-        // Create support ticket
-        builder
-            .addCase(createSupportTicketAsync.pending, (state) => {
-                state.creatingTicket = true;
-                state.error = null;
-            })
-            .addCase(createSupportTicketAsync.fulfilled, (state, action) => {
-                state.creatingTicket = false;
-                state.supportTickets.unshift(action.payload);
-            })
-            .addCase(createSupportTicketAsync.rejected, (state, action) => {
-                state.creatingTicket = false;
-                state.error = action.payload as string;
-            });
+        // Set creating ticket state
+        setCreatingTicket: (state, action: PayloadAction<boolean>) => {
+            state.creatingTicket = action.payload;
+            if (action.payload) state.error = null;
+        },
 
-        // Fetch support tickets
-        builder
-            .addCase(fetchSupportTicketsAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchSupportTicketsAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.supportTickets = action.payload;
-            })
-            .addCase(fetchSupportTicketsAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Add support ticket
+        addSupportTicket: (state, action: PayloadAction<SupportTicket>) => {
+            state.supportTickets.unshift(action.payload);
+            state.creatingTicket = false;
+        },
 
-        // Fetch 2FA status
-        builder
-            .addCase(fetch2FAStatusAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetch2FAStatusAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.tsvStatus = action.payload;
-            })
-            .addCase(fetch2FAStatusAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Set fetching tickets state
+        setFetchingTickets: (state, action: PayloadAction<boolean>) => {
+            state.fetchingTickets = action.payload;
+            if (action.payload) state.error = null;
+        },
 
-        // Enable 2FA
-        builder
-            .addCase(enable2FAAsync.pending, (state) => {
-                state.creating2FA = true;
-                state.error = null;
-            })
-            .addCase(enable2FAAsync.fulfilled, (state, action) => {
-                state.creating2FA = false;
-                state.tsvStatus = action.payload;
-            })
-            .addCase(enable2FAAsync.rejected, (state, action) => {
-                state.creating2FA = false;
-                state.error = action.payload as string;
-            });
+        // Set support tickets
+        setSupportTickets: (state, action: PayloadAction<SupportTicket[]>) => {
+            state.supportTickets = action.payload;
+            state.fetchingTickets = false;
+        },
 
-        // Disable 2FA
-        builder
-            .addCase(disable2FAAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(disable2FAAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.tsvStatus = action.payload;
-            })
-            .addCase(disable2FAAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Update ticket status
+        updateTicketStatus: (state, action: PayloadAction<{ ticketId: number; status: 'ABIERTO' | 'EN_PROCESO' | 'CERRADO' }>) => {
+            const ticket = state.supportTickets.find(t => t.id === action.payload.ticketId);
+            if (ticket) {
+                ticket.estado = action.payload.status;
+            }
+        },
 
-        // Verify 2FA code
-        builder
-            .addCase(verify2FACodeAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(verify2FACodeAsync.fulfilled, (state) => {
-                state.loading = false;
-            })
-            .addCase(verify2FACodeAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // ========== 2FA MANAGEMENT ==========
 
-        // Fetch user statistics
-        builder
-            .addCase(fetchUserStatisticsAsync.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(fetchUserStatisticsAsync.fulfilled, (state, action) => {
-                state.loading = false;
-                state.statistics = action.payload;
-            })
-            .addCase(fetchUserStatisticsAsync.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload as string;
-            });
+        // Set creating 2FA state
+        setCreating2FA: (state, action: PayloadAction<boolean>) => {
+            state.creating2FA = action.payload;
+            if (action.payload) state.error = null;
+        },
 
-        // Get user profile by ID
-        builder
-            .addCase(getUserProfileAsync.pending, (state) => {
-                state.fetchingProfile = true;
-                state.error = null;
-            })
-            .addCase(getUserProfileAsync.fulfilled, (state, action) => {
-                state.fetchingProfile = false;
-                state.perfilCompleto = action.payload;
-            })
-            .addCase(getUserProfileAsync.rejected, (state, action) => {
-                state.fetchingProfile = false;
-                state.error = action.payload as string;
-            });
+        // Set deleting 2FA state
+        setDeleting2FA: (state, action: PayloadAction<boolean>) => {
+            state.deleting2FA = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Set verifying 2FA state
+        setVerifying2FA: (state, action: PayloadAction<boolean>) => {
+            state.verifying2FA = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Update TSV status
+        updateTSVStatus: (state, action: PayloadAction<TSVData>) => {
+            state.tsvStatus = action.payload;
+            state.creating2FA = false;
+            state.deleting2FA = false;
+            state.verifying2FA = false;
+        },
+
+        // ========== STATISTICS ==========
+
+        // Set fetching statistics state
+        setFetchingStatistics: (state, action: PayloadAction<boolean>) => {
+            state.fetchingStatistics = action.payload;
+            if (action.payload) state.error = null;
+        },
+
+        // Set user statistics
+        setUserStatistics: (state, action: PayloadAction<UserStatistics>) => {
+            state.statistics = action.payload;
+            state.fetchingStatistics = false;
+        },
+
+        // Clear statistics
+        clearStatistics: (state) => {
+            state.statistics = null;
+        },
     },
 });
 
 // Export actions
 export const {
     clearError,
+    setError,
     clearLoading,
     resetProfileState,
+    setFetchingProfile,
+    setPerfilCompleto,
     clearPerfilCompleto,
+    setUpdatingProfile,
+    updateProfileSuccess,
+    setChangingPassword,
+    changePasswordSuccess,
+    setUploadingDocument,
+    addDocument,
+    setFetchingDocuments,
+    setDocuments,
+    removeDocument,
+    setFetchingTransactions,
+    setTransactionHistory,
+    setPaginatedTransactions,
+    clearTransactionHistory,
+    setCreatingTicket,
+    addSupportTicket,
+    setFetchingTickets,
+    setSupportTickets,
+    updateTicketStatus,
+    setCreating2FA,
+    setDeleting2FA,
+    setVerifying2FA,
     updateTSVStatus,
-    removeDocumentOptimistic
+    setFetchingStatistics,
+    setUserStatistics,
+    clearStatistics
 } = profileSlice.actions;
 
 // Selectors
 export const selectProfile = (state: { profile: ProfileState }) => state.profile;
-export const selectProfileLoading = (state: { profile: ProfileState }) => state.profile.loading;
 export const selectProfileError = (state: { profile: ProfileState }) => state.profile.error;
+
+// Profile data selectors
 export const selectPerfilCompleto = (state: { profile: ProfileState }) => state.profile.perfilCompleto;
 export const selectDocuments = (state: { profile: ProfileState }) => state.profile.documents;
 export const selectTransactionHistory = (state: { profile: ProfileState }) => state.profile.transactionHistory;
@@ -560,12 +342,19 @@ export const selectSupportTickets = (state: { profile: ProfileState }) => state.
 export const selectTSVStatus = (state: { profile: ProfileState }) => state.profile.tsvStatus;
 export const selectUserStatistics = (state: { profile: ProfileState }) => state.profile.statistics;
 
-// Loading selectors
-export const selectUploadingDocument = (state: { profile: ProfileState }) => state.profile.uploadingDocument;
+// Loading state selectors
+export const selectProfileLoading = (state: { profile: ProfileState }) => state.profile.loading;
+export const selectFetchingProfile = (state: { profile: ProfileState }) => state.profile.fetchingProfile;
 export const selectUpdatingProfile = (state: { profile: ProfileState }) => state.profile.updatingProfile;
 export const selectChangingPassword = (state: { profile: ProfileState }) => state.profile.changingPassword;
-export const selectCreating2FA = (state: { profile: ProfileState }) => state.profile.creating2FA;
+export const selectUploadingDocument = (state: { profile: ProfileState }) => state.profile.uploadingDocument;
+export const selectFetchingDocuments = (state: { profile: ProfileState }) => state.profile.fetchingDocuments;
+export const selectFetchingTransactions = (state: { profile: ProfileState }) => state.profile.fetchingTransactions;
 export const selectCreatingTicket = (state: { profile: ProfileState }) => state.profile.creatingTicket;
-export const selectFetchingProfile = (state: { profile: ProfileState }) => state.profile.fetchingProfile;
+export const selectFetchingTickets = (state: { profile: ProfileState }) => state.profile.fetchingTickets;
+export const selectCreating2FA = (state: { profile: ProfileState }) => state.profile.creating2FA;
+export const selectDeleting2FA = (state: { profile: ProfileState }) => state.profile.deleting2FA;
+export const selectVerifying2FA = (state: { profile: ProfileState }) => state.profile.verifying2FA;
+export const selectFetchingStatistics = (state: { profile: ProfileState }) => state.profile.fetchingStatistics;
 
 export default profileSlice.reducer;
