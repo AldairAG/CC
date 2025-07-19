@@ -12,9 +12,6 @@ import {
     setApuestasFinalizadasLoading,
     setApuestasFinalizadas,
     setApuestasFinalizadasError,
-    setApuestasRecientesLoading,
-    setApuestasRecientes,
-    setApuestasRecientesError,
     setApuestasPorTipoLoading,
     setApuestasPorTipo,
     setApuestasPorTipoError,
@@ -73,7 +70,6 @@ import {
     type CrearApuestaRequestType,
     type ApuestasResponse,
     type EstadisticasApuestaType,
-    type ResumenApuestaType,
     type FiltrosApuesta,
     EstadoApuesta,
     type TipoApuesta

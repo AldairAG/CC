@@ -15,10 +15,26 @@ public interface ICryptoService {
     CryptoTransactionDTO transferCrypto(Long userId, String fromAddress, String toAddress, BigDecimal amount, CryptoTransaction.CryptoType cryptoType, CryptoTransaction.TransactionType transactionType);
     CryptoTransactionDTO createWithdrawal(Long userId, String toAddress, BigDecimal amount, CryptoTransaction.CryptoType cryptoType);
     void processWithdrawalConfirmation(String txHash, int confirmations);
+    
     // CRUD para CryptoWallet
     CryptoWallet createCryptoWallet(CryptoWallet wallet);
     CryptoWallet getCryptoWalletById(Long walletId);
     List<CryptoWallet> getCryptoWalletsByUserId(Long userId);
     CryptoWallet updateCryptoWallet(Long walletId, CryptoWallet wallet);
     void deleteCryptoWallet(Long walletId);
+    
+    // Operaciones manuales
+    CryptoTransactionDTO createManualDepositRequest(Long userId, CryptoManualDepositRequestDTO request);
+    CryptoTransactionDTO createManualWithdrawalRequest(Long userId, CryptoManualWithdrawalRequestDTO request);
+    CryptoTransactionDTO approveManualTransaction(Long transactionId, CryptoAdminApprovalRequestDTO request);
+    List<CryptoTransactionDTO> getPendingManualTransactions();
+    
+    // Operaciones automáticas con verificación externa
+    CryptoTransactionDTO createAutomaticDeposit(Long userId, CryptoDepositRequestDTO request);
+    CryptoTransactionDTO createAutomaticWithdrawal(Long userId, String toAddress, BigDecimal amount, CryptoTransaction.CryptoType cryptoType);
+    boolean verifyTransactionWithExternalApi(String txHash, CryptoTransaction.CryptoType cryptoType);
+    
+    // Conversiones para DTOs
+    CryptoWalletDTO convertToWalletDTO(CryptoWallet wallet);
+    CryptoWallet convertFromWalletDTO(CryptoWalletCreateRequestDTO dto, Long userId);
 }

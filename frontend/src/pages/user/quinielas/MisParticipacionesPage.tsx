@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { UserParticipationsList, PrediccionesForm } from '../../features/quinielas';
-import { useQuiniela } from '../../hooks/useQuiniela';
-import { useUser } from '../../hooks/useUser';
-import { EstadoParticipacion } from '../../types/QuinielaType';
-import type { QuinielaParticipacionType } from '../../types/QuinielaType';
+import { UserParticipationsList, PrediccionesForm } from '../../../features/quinielas';
+import { useQuiniela } from '../../../hooks/useQuiniela';
+import { useUser } from '../../../hooks/useUser';
+import { EstadoParticipacion } from '../../../types/QuinielaType';
+import type { QuinielaParticipacionType } from '../../../types/QuinielaType';
 
 const MisParticipacionesPage: React.FC = () => {
   const { user } = useUser();

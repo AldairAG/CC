@@ -3,8 +3,11 @@ package com.example.cc.service.perfil;
 import com.example.cc.dto.request.ActualizarPerfilRequest;
 import com.example.cc.dto.request.CambiarPasswordRequest;
 import com.example.cc.dto.request.CrearTicketSoporteRequest;
+import com.example.cc.dto.request.GameHistory;
 import com.example.cc.dto.response.*;
 import com.example.cc.entities.DocumentoIdentidad;
+import com.example.cc.entities.enums.GameType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,4 +48,7 @@ public interface IPerfilUsuarioService {
     
     // Estadísticas del usuario
     EstadisticasUsuarioResponse obtenerEstadisticasCompletas(Long idUsuario);
+
+    List<GameHistory> obtenerHistorialDeJuegoByUserId(Long idUsuario, Pageable pageable);
+
 }

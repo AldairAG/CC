@@ -5,75 +5,94 @@ import {
     UserPlusIcon,
     EyeIcon,
     PencilIcon,
-    NoSymbolIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    TrashIcon
 } from "@heroicons/react/24/outline";
-
-interface User {
-    id: number;
-    username: string;
-    email: string;
-    saldo: number;
-    fechaRegistro: string;
-    estado: 'ACTIVO' | 'INACTIVO' | 'SUSPENDIDO';
-    ultimoAcceso: string;
-    totalApuestas: number;
-    gananciasPerdidas: number;
-}
+import { useAdmin } from '../../hooks/useAdmin';
+import type { AdminUser, CreateUserRequest } from '../../types/AdminTypes';
+import UserManagementTabs from '../../components/tabs/UserManagementTabs';
+import UserDeleteModal from '../../components/modals/UserDeleteModal';
+import UserCreateModal from '../../components/modals/UserCreateModal';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
 const AdminUsers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('TODOS');
-    const [users] = useState<User[]>([
-        {
-            id: 1,
-            username: 'carlos_garcia',
-            email: 'carlos@email.com',
-            saldo: 1250.50,
-            fechaRegistro: '2024-01-15',
-            estado: 'ACTIVO',
-            ultimoAcceso: '2024-07-02 10:30',
-            totalApuestas: 45,
-            gananciasPerdidas: -150.25
-        },
-        {
-            id: 2,
-            username: 'maria_lopez',
-            email: 'maria@email.com',
-            saldo: 850.00,
-            fechaRegistro: '2024-02-20',
-            estado: 'ACTIVO',
-            ultimoAcceso: '2024-07-02 09:15',
-            totalApuestas: 32,
-            gananciasPerdidas: 320.75
-        },
-        {
-            id: 3,
-            username: 'juan_perez',
-            email: 'juan@email.com',
-            saldo: 0.00,
-            fechaRegistro: '2024-03-10',
-            estado: 'SUSPENDIDO',
-            ultimoAcceso: '2024-06-28 14:20',
-            totalApuestas: 78,
-            gananciasPerdidas: -890.50
-        },
-        {
-            id: 4,
-            username: 'ana_silva',
-            email: 'ana@email.com',
-            saldo: 2150.30,
-            fechaRegistro: '2024-01-05',
-            estado: 'ACTIVO',
-            ultimoAcceso: '2024-07-02 11:45',
-            totalApuestas: 156,
-            gananciasPerdidas: 1205.80
-        }
-    ]);
+    const { 
+        users, 
+        selectedUser, 
+        selectUser, 
+        handleDeleteUser: deleteUserAction, 
+        handleCreateUser: createUserAction,
+        loading 
+    } = useAdmin();
+    
+    // Estados para los modales
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
 
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Si hay un usuario seleccionado, mostrar las pestañas
+    if (selectedUser) {
+        return (
+            <div className="h-full">
+                <UserManagementTabs />
+            </div>
+        );
+    }
+
+    if (loading) {
+        return <LoadingSpinner size="large" text="Cargando usuarios..." />;
+    }
+
+    // Handlers para los modales
+    const handleCreateUser = () => {
+        setCreateModalOpen(true);
+    };
+
+    const handleViewUser = (user: AdminUser) => {
+        selectUser(user);
+    };
+
+    const handleEditUser = (user: AdminUser) => {
+        selectUser(user);
+    };
+
+    const handleDeleteUser = (user: AdminUser) => {
+        setUserToDelete(user);
+        setDeleteModalOpen(true);
+    };
+
+    const handleSaveNewUser = async (userData: CreateUserRequest) => {
+        try {
+            await createUserAction(userData);
+            setCreateModalOpen(false);
+        } catch (error) {
+            console.error('Error al crear usuario:', error);
+            throw error;
+        }
+    };
+
+    const handleConfirmDelete = async (userId: number) => {
+        try {
+            await deleteUserAction(userId);
+            setDeleteModalOpen(false);
+            setUserToDelete(null);
+        } catch (error) {
+            console.error('Error al eliminar usuario:', error);
+            throw error;
+        }
+    };
+
+    const closeModals = () => {
+        setCreateModalOpen(false);
+        setDeleteModalOpen(false);
+        setUserToDelete(null);
+    };
+
+    const filteredUsers = (users || []).filter(user => {
+        const matchesSearch = (user.username || "").toLowerCase().includes((searchTerm || "").toLowerCase()) ||
+            (user.email || "").toLowerCase().includes((searchTerm || "").toLowerCase());
         const matchesFilter = filterStatus === 'TODOS' || user.estado === filterStatus;
         return matchesSearch && matchesFilter;
     });
@@ -88,9 +107,9 @@ const AdminUsers = () => {
     };
 
     const getStatusIcon = (estado: string) => {
-        switch(estado) {
+        switch (estado) {
             case 'ACTIVO': return <CheckCircleIcon className="h-4 w-4" />;
-            case 'SUSPENDIDO': return <NoSymbolIcon className="h-4 w-4" />;
+            case 'SUSPENDIDO': return <TrashIcon className="h-4 w-4" />;
             default: return <div className="h-4 w-4 rounded-full bg-gray-400" />;
         }
     };
@@ -103,7 +122,10 @@ const AdminUsers = () => {
                     <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
                     <p className="text-gray-600 mt-2">Administra usuarios del casino</p>
                 </div>
-                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button 
+                    onClick={handleCreateUser}
+                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
                     <UserPlusIcon className="h-5 w-5 mr-2" />
                     Nuevo Usuario
                 </button>
@@ -146,24 +168,24 @@ const AdminUsers = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-sm font-medium text-gray-500">Total Usuarios</h3>
-                    <p className="text-2xl font-bold text-gray-900 mt-2">{users.length}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-2">{users?.length || 0}</p>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-sm font-medium text-gray-500">Usuarios Activos</h3>
                     <p className="text-2xl font-bold text-green-600 mt-2">
-                        {users.filter(u => u.estado === 'ACTIVO').length}
+                        {users?.filter(u => u.estado === 'ACTIVO').length || 0}
                     </p>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-sm font-medium text-gray-500">Usuarios Suspendidos</h3>
                     <p className="text-2xl font-bold text-red-600 mt-2">
-                        {users.filter(u => u.estado === 'SUSPENDIDO').length}
+                        {users?.filter(u => u.estado === 'SUSPENDIDO').length || 0}
                     </p>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                     <h3 className="text-sm font-medium text-gray-500">Saldo Total</h3>
                     <p className="text-2xl font-bold text-blue-600 mt-2">
-                        ${users.reduce((sum, u) => sum + u.saldo, 0).toLocaleString()}
+                        ${users?.reduce((sum, u) => sum + u.saldoUsuario, 0).toLocaleString() || 0}
                     </p>
                 </div>
             </div>
@@ -204,7 +226,7 @@ const AdminUsers = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredUsers.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50">
+                                <tr key={user.idUsuario} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div>
                                             <div className="text-sm font-medium text-gray-900">
@@ -222,14 +244,14 @@ const AdminUsers = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        ${user.saldo.toLocaleString()}
+                                        ${user.saldoUsuario.toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {user.totalApuestas}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                                         <span className={user.gananciasPerdidas >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                            {user.gananciasPerdidas >= 0 ? '+' : ''}${user.gananciasPerdidas.toLocaleString()}
+                                            {user.gananciasPerdidas >= 0 ? '+' : ''}${(user.gananciasPerdidas||0).toLocaleString()}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -237,14 +259,26 @@ const AdminUsers = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">
-                                            <button className="text-blue-600 hover:text-blue-900">
+                                            <button 
+                                                onClick={() => handleViewUser(user)}
+                                                className="text-blue-600 hover:text-blue-900"
+                                                title="Ver detalles"
+                                            >
                                                 <EyeIcon className="h-4 w-4" />
                                             </button>
-                                            <button className="text-green-600 hover:text-green-900">
+                                            <button 
+                                                onClick={() => handleEditUser(user)}
+                                                className="text-green-600 hover:text-green-900"
+                                                title="Editar usuario"
+                                            >
                                                 <PencilIcon className="h-4 w-4" />
                                             </button>
-                                            <button className="text-red-600 hover:text-red-900">
-                                                <NoSymbolIcon className="h-4 w-4" />
+                                            <button 
+                                                onClick={() => handleDeleteUser(user)}
+                                                className="text-red-600 hover:text-red-900"
+                                                title="Eliminar usuario"
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
                                             </button>
                                         </div>
                                     </td>
@@ -254,6 +288,24 @@ const AdminUsers = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Modales */}
+            <UserCreateModal
+                isOpen={createModalOpen}
+                onClose={closeModals}
+                onSave={handleSaveNewUser}
+            />
+
+            <UserDeleteModal
+                isOpen={deleteModalOpen}
+                onClose={closeModals}
+                user={userToDelete ? {
+                    idUsuario: userToDelete.idUsuario,
+                    username: userToDelete.username,
+                    email: userToDelete.email
+                } : null}
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     );
 };

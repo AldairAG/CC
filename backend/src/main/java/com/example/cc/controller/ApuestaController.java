@@ -9,7 +9,9 @@ import com.example.cc.service.apuestas.ApuestaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +46,233 @@ public class ApuestaController {
             return ResponseEntity.ok(eventos);
         } catch (Exception e) {
             log.error("Error al obtener eventos con más apuestas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Alias para eventos con más apuestas (para compatibilidad con frontend)
+     */
+    @GetMapping("/eventos-mas-apuestas")    
+    public ResponseEntity<List<EventoDeportivo>> obtenerEventosConMasApuestasAlias(
+            @RequestParam(defaultValue = "5") int limite) {
+        return obtenerEventosConMasApuestas(limite);
+    }
+
+    /**
+     * Obtener apuestas activas del usuario
+     */
+    @GetMapping("/activas")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getApuestasActivas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.getApuestasActivas(usuarioId, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al obtener apuestas activas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener historial de apuestas del usuario
+     */
+    @GetMapping("/historial")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getHistorialApuestas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.getHistorialApuestas(usuarioId, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al obtener historial de apuestas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener apuestas recientes del usuario
+     */
+    @GetMapping("/recientes")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getApuestasRecientes(
+            @RequestParam(defaultValue = "5") int limite) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            List<com.example.cc.dto.apuesta.ResumenApuestaDTO> apuestas = apuestaService.getApuestasRecientesDTO(usuarioId, limite);
+            
+            return ResponseEntity.ok(apuestas);
+        } catch (Exception e) {
+            log.error("Error al obtener apuestas recientes: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener apuestas por estado
+     */
+    @GetMapping("/estado/{estado}")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getApuestasPorEstado(
+            @PathVariable String estado,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.getApuestasPorEstado(usuarioId, estado, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al obtener apuestas por estado: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener apuestas por evento
+     */
+    @GetMapping("/evento/{eventoId}")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getApuestasPorEvento(
+            @PathVariable Long eventoId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.getApuestasPorEvento(usuarioId, eventoId, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al obtener apuestas por evento: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Verificar si una apuesta es válida
+     */
+    @GetMapping("/verificar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> verificarApuesta(
+            @RequestParam Long eventoId,
+            @RequestParam Long cuotaId,
+            @RequestParam BigDecimal monto) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            boolean valida = apuestaService.verificarApuestaValida(usuarioId, eventoId, cuotaId, monto);
+            
+            return ResponseEntity.ok(Map.of("valida", valida));
+        } catch (Exception e) {
+            log.error("Error al verificar apuesta: {}", e.getMessage());
+            return ResponseEntity.ok(Map.of("valida", false));
+        }
+    }
+
+    /**
+     * Obtener límites de apuesta del usuario
+     */
+    @GetMapping("/limites")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getLimitesApuesta() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            var limites = apuestaService.getLimitesApuesta(usuarioId);
+            
+            return ResponseEntity.ok(limites);
+        } catch (Exception e) {
+            log.error("Error al obtener límites de apuesta: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Buscar apuestas
+     */
+    @GetMapping("/buscar")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> buscarApuestas(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.buscarApuestas(usuarioId, q, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al buscar apuestas: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Obtener apuestas filtradas del usuario
+     */
+    @GetMapping("/mis-apuestas/filtradas")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<?> getApuestasFiltradas(
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String tipoApuesta,
+            @RequestParam(required = false) String fechaInicio,
+            @RequestParam(required = false) String fechaFin,
+            @RequestParam(required = false) BigDecimal montoMin,
+            @RequestParam(required = false) BigDecimal montoMax,
+            @RequestParam(required = false) Long eventoId,
+            @RequestParam(required = false) String busqueda,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            Long usuarioId = Long.parseLong(auth.getName());
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Apuesta> apuestas = apuestaService.getApuestasFiltradas(
+                usuarioId, estado, tipoApuesta, fechaInicio, fechaFin, 
+                montoMin, montoMax, eventoId, busqueda, pageable);
+            
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error al obtener apuestas filtradas: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -106,7 +335,9 @@ public class ApuestaController {
             Pageable pageable = PageRequest.of(page, size);
             Page<Apuesta> apuestas = apuestaService.getApuestasByUsuario(usuarioId, pageable);
             
-            return ResponseEntity.ok(apuestas);
+            com.example.cc.dto.apuesta.ApuestasPageResponseDTO response = apuestaService.convertirAPageResponseDTO(apuestas);
+            
+            return ResponseEntity.ok(response);
             
         } catch (Exception e) {
             log.error("Error al obtener apuestas del usuario: {}", e.getMessage());
@@ -187,8 +418,8 @@ public class ApuestaController {
     /**
      * Endpoint para obtener estadísticas de apuestas de un usuario
      */
-    @GetMapping("/estadisticas")
-    public ResponseEntity<com.example.cc.dto.apuestas.EstadisticasApuestaDTO> getEstadisticasApuestasUsuario(@RequestParam Long usuarioId) {
+    @GetMapping("/estadisticas/{usuarioId}")
+    public ResponseEntity<com.example.cc.dto.apuestas.EstadisticasApuestaDTO> getEstadisticasApuestasUsuario(@PathVariable Long usuarioId) {
         try {
             com.example.cc.dto.apuestas.EstadisticasApuestaDTO estadisticas = apuestaService.obtenerEstadisticasApuestasUsuario(usuarioId);
             return ResponseEntity.ok(estadisticas);
@@ -196,5 +427,13 @@ public class ApuestaController {
             log.error("Error obteniendo estadísticas de apuestas", e);
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    /**
+     * Alias para estadísticas (mantener compatibilidad)
+     */
+    @GetMapping("/estadisticas")
+    public ResponseEntity<com.example.cc.dto.apuestas.EstadisticasApuestaDTO> getEstadisticasApuestasUsuarioQuery(@RequestParam Long usuarioId) {
+        return getEstadisticasApuestasUsuario(usuarioId);
     }
 }

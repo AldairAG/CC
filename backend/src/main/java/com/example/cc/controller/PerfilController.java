@@ -3,6 +3,7 @@ package com.example.cc.controller;
 import com.example.cc.dto.request.ActualizarPerfilRequest;
 import com.example.cc.dto.request.CambiarPasswordRequest;
 import com.example.cc.dto.request.CrearTicketSoporteRequest;
+import com.example.cc.dto.request.GameHistory;
 import com.example.cc.dto.response.*;
 import com.example.cc.entities.DocumentoIdentidad;
 import com.example.cc.service.perfil.IPerfilUsuarioService;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +25,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/cc/perfil")
-@CrossOrigin(origins = "*")
 public class PerfilController {
 
     @Autowired
@@ -144,13 +145,14 @@ public class PerfilController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "fechaCreacion") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
-        
-        Sort sort = sortDir.equalsIgnoreCase("desc") 
-            ? Sort.by(sortBy).descending() 
-            : Sort.by(sortBy).ascending();
-        
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<TransaccionResponse> transacciones = perfilService.obtenerHistorialTransaccionesPaginado(idUsuario, pageable);
+        Page<TransaccionResponse> transacciones = perfilService.obtenerHistorialTransaccionesPaginado(idUsuario,
+                pageable);
         return ResponseEntity.ok(transacciones);
     }
 
@@ -268,7 +270,7 @@ public class PerfilController {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Código requerido"));
             }
-            
+
             boolean valido = perfilService.verificarCodigo2FA(idUsuario, codigo);
             if (valido) {
                 return ResponseEntity.ok(Map.of("valido", true, "mensaje", "Código válido"));
@@ -307,5 +309,16 @@ public class PerfilController {
             @PathVariable Long idUsuario) {
         EstadisticasUsuarioResponse estadisticas = perfilService.obtenerEstadisticasCompletas(idUsuario);
         return ResponseEntity.ok(estadisticas);
+    }
+
+    /**
+     * Obtener el historial de juego del usuario
+     */
+    @GetMapping("/{idUsuario}/gameHistory")
+    public ResponseEntity<List<GameHistory>> obtenerEstadisticasCompletas(
+            @PathVariable Long idUsuario,
+            @RequestParam()@PageableDefault(size = 30, page = 0)  Pageable pageable) {
+        List<GameHistory> historial = perfilService.obtenerHistorialDeJuegoByUserId(idUsuario,pageable);
+        return ResponseEntity.ok(historial);
     }
 }

@@ -23,5 +23,7 @@ public class CryptoDepositRequestDTO {
     @NotNull
     private String userWalletAddress;
     
+    private String txHash; // Hash de la transacción para verificación automática
+    
     private String notes;
 }

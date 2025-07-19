@@ -42,7 +42,6 @@ const ApuestaDetailsPage = () => {
     establecerConexionTiempoReal,
     loading: loadingCuotas,
     isLoading,
-    error: errorCuotas,
     conexionTiempoReal
   } = useCuotasDinamicasRedux();
 

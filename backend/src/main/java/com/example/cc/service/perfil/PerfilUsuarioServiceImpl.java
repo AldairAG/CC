@@ -3,8 +3,10 @@ package com.example.cc.service.perfil;
 import com.example.cc.dto.request.ActualizarPerfilRequest;
 import com.example.cc.dto.request.CambiarPasswordRequest;
 import com.example.cc.dto.request.CrearTicketSoporteRequest;
+import com.example.cc.dto.request.GameHistory;
 import com.example.cc.dto.response.*;
 import com.example.cc.entities.*;
+import com.example.cc.entities.enums.GameType;
 import com.example.cc.repository.*;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +44,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
     private final TransaccionRepository transaccionRepository;
     private final TicketSoporteRepository ticketRepository;
     private final Autenticacion2FARepository autenticacion2FARepository;
+    private final ApuestaRepository apuestaRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -60,9 +64,12 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
         }
 
         // Actualizar campos del perfil
-        if (request.getNombre() != null) perfil.setNombre(request.getNombre());
-        if (request.getApellido() != null) perfil.setApellido(request.getApellido());
-        if (request.getTelefono() != null) perfil.setTelefono(request.getTelefono());
+        if (request.getNombre() != null)
+            perfil.setNombre(request.getNombre());
+        if (request.getApellido() != null)
+            perfil.setApellido(request.getApellido());
+        if (request.getTelefono() != null)
+            perfil.setTelefono(request.getTelefono());
 
         if (request.getFechaNacimiento() != null) {
             try {
@@ -91,12 +98,13 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
 
         usuario.setPassword(passwordEncoder.encode(request.getNuevaPassword()));
         usuarioRepository.save(usuario);
-        
+
         log.info("Contraseña cambiada para usuario: {}", idUsuario);
     }
 
     @Override
-    public DocumentoIdentidadResponse subirDocumento(Long idUsuario, DocumentoIdentidad.TipoDocumento tipo, MultipartFile archivo) {
+    public DocumentoIdentidadResponse subirDocumento(Long idUsuario, DocumentoIdentidad.TipoDocumento tipo,
+            MultipartFile archivo) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
@@ -125,8 +133,8 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
             Files.copy(archivo.getInputStream(), filePath);
 
             // Verificar si ya existe un documento de este tipo
-            Optional<DocumentoIdentidad> documentoExistente = 
-                documentoRepository.findByUsuarioAndTipoDocumento(usuario, tipo);
+            Optional<DocumentoIdentidad> documentoExistente = documentoRepository.findByUsuarioAndTipoDocumento(usuario,
+                    tipo);
 
             DocumentoIdentidad documento;
             if (documentoExistente.isPresent()) {
@@ -152,7 +160,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
             documento.setFechaSubida(LocalDateTime.now());
 
             documento = documentoRepository.save(documento);
-            
+
             log.info("Documento {} subido para usuario: {}", tipo, idUsuario);
             return convertirADocumentoResponse(documento);
 
@@ -255,7 +263,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
         ticket.setDescripcion(request.getDescripcion());
 
         ticket = ticketRepository.save(ticket);
-        
+
         log.info("Ticket de soporte {} creado para usuario: {}", ticket.getIdTicket(), idUsuario);
         return convertirATicketResponse(ticket);
     }
@@ -287,7 +295,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         Optional<Autenticacion2FA> auth2FA = autenticacion2FARepository.findByUsuario(usuario);
-        
+
         if (auth2FA.isPresent()) {
             return convertirAAutenticacion2FAResponse(auth2FA.get());
         } else {
@@ -316,7 +324,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
         auth2FA.setFechaActivacion(LocalDateTime.now());
 
         auth2FA = autenticacion2FARepository.save(auth2FA);
-        
+
         log.info("Autenticación 2FA habilitada para usuario: {}", idUsuario);
         return convertirAAutenticacion2FAResponse(auth2FA);
     }
@@ -345,11 +353,11 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                     if (!auth2FA.isHabilitado() || auth2FA.isBloqueado()) {
                         return false;
                     }
-                    
+
                     // Aquí implementarías la lógica de verificación TOTP
                     // Por simplicidad, simulamos la verificación
                     boolean valido = verificarTOTP(auth2FA.getSecretKey(), codigo);
-                    
+
                     if (valido) {
                         auth2FA.setUltimoUso(LocalDateTime.now());
                         auth2FA.setIntentosFallidos(0);
@@ -362,7 +370,7 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                         }
                         autenticacion2FARepository.save(auth2FA);
                     }
-                    
+
                     return valido;
                 })
                 .orElse(false);
@@ -391,14 +399,17 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
 
         // Estadísticas de transacciones
         BigDecimal totalDepositado = transaccionRepository
-                .sumMontoByUsuarioAndTipoAndEstado(usuario, Transaccion.TipoTransaccion.DEPOSITO, Transaccion.EstadoTransaccion.COMPLETADA)
+                .sumMontoByUsuarioAndTipoAndEstado(usuario, Transaccion.TipoTransaccion.DEPOSITO,
+                        Transaccion.EstadoTransaccion.COMPLETADA)
                 .orElse(BigDecimal.ZERO);
 
         BigDecimal totalRetirado = transaccionRepository
-                .sumMontoByUsuarioAndTipoAndEstado(usuario, Transaccion.TipoTransaccion.RETIRO, Transaccion.EstadoTransaccion.COMPLETADA)
+                .sumMontoByUsuarioAndTipoAndEstado(usuario, Transaccion.TipoTransaccion.RETIRO,
+                        Transaccion.EstadoTransaccion.COMPLETADA)
                 .orElse(BigDecimal.ZERO);
 
-        Long numeroDepositos = transaccionRepository.countByUsuarioAndTipo(usuario, Transaccion.TipoTransaccion.DEPOSITO);
+        Long numeroDepositos = transaccionRepository.countByUsuarioAndTipo(usuario,
+                Transaccion.TipoTransaccion.DEPOSITO);
         Long numeroRetiros = transaccionRepository.countByUsuarioAndTipo(usuario, Transaccion.TipoTransaccion.RETIRO);
 
         // Documentos
@@ -443,21 +454,21 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         Perfil perfil = usuario.getPerfil();
-        
+
         // Verificar si tiene 2FA habilitado
-        boolean tiene2FA = usuario.getAutenticacion2FA() != null && 
-                          usuario.getAutenticacion2FA().isHabilitado();
-        
+        boolean tiene2FA = usuario.getAutenticacion2FA() != null &&
+                usuario.getAutenticacion2FA().isHabilitado();
+
         // Contar documentos subidos
-        int documentosSubidos = usuario.getDocumentos() != null ? 
-                               usuario.getDocumentos().size() : 0;
-        
+        int documentosSubidos = usuario.getDocumentos() != null ? usuario.getDocumentos().size() : 0;
+
         // Obtener última transacción para determinar última actividad
-        Date ultimaActividad = usuario.getTransacciones() != null && !usuario.getTransacciones().isEmpty() ?
-                              usuario.getTransacciones().stream()
-                                     .map(t -> java.sql.Timestamp.valueOf(t.getFechaCreacion()))
-                                     .max(Date::compareTo)
-                                     .orElse(null) : null;
+        Date ultimaActividad = usuario.getTransacciones() != null && !usuario.getTransacciones().isEmpty()
+                ? usuario.getTransacciones().stream()
+                        .map(t -> java.sql.Timestamp.valueOf(t.getFechaCreacion()))
+                        .max(Date::compareTo)
+                        .orElse(null)
+                : null;
 
         return PerfilUsuarioResponse.builder()
                 .idUsuario(usuario.getIdUsuario())
@@ -482,7 +493,8 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
     // Métodos auxiliares privados
 
     private String getFileExtension(String filename) {
-        if (filename == null) return "";
+        if (filename == null)
+            return "";
         int lastDot = filename.lastIndexOf('.');
         return lastDot > 0 ? filename.substring(lastDot) : "";
     }
@@ -585,5 +597,31 @@ public class PerfilUsuarioServiceImpl implements IPerfilUsuarioService {
                 .ultimoUso(auth2FA.getUltimoUso())
                 .bloqueado(auth2FA.isBloqueado())
                 .build();
+    }
+
+    @Override
+    public List<GameHistory> obtenerHistorialDeJuegoByUserId(Long idUsuario, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<Apuesta> apuestas = apuestaRepository.findByUsuarioOrderByFechaCreacionDesc(usuario, pageable)
+                .getContent();
+
+        List<GameHistory> gameHistory = new ArrayList<GameHistory>();
+
+        for (Apuesta apuesta : apuestas) {
+            gameHistory.add(
+                    GameHistory.builder()
+                            .id(apuesta.getId())
+                            .tipo(GameType.APUESTA)
+                            .fecha(apuesta.getFechaCreacion())
+                            .descripcion(apuesta.getDescripcion())
+                            .monto(apuesta.getMontoApostado())
+                            .resultado(apuesta.getMontoGanancia())
+                            .estado(apuesta.getEstado().name())
+                            .build());
+        }
+
+        return gameHistory;
     }
 }

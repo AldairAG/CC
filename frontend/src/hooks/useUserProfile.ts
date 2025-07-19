@@ -1,9 +1,11 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useUser } from './useUser';
-import { 
+import {
   // Actions for state management
   setError,
   clearError,
+  setGameHistory,
+  setFetchingGameHistory,
   setFetchingProfile,
   setPerfilCompleto,
   clearPerfilCompleto,
@@ -54,7 +56,9 @@ import {
   selectFetchingTickets,
   selectDeleting2FA,
   selectVerifying2FA,
-  selectFetchingStatistics
+  selectFetchingStatistics,
+  selectGameHistory,
+  selectFetchigGameHistory
 } from '../store/slices/profileSlice';
 import { profileService } from '../service/casino/profileService';
 import type {
@@ -74,7 +78,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 export const useUserProfile = () => {
   const { user } = useUser();
   const dispatch = useAppDispatch();
-  
+
   // Redux selectors
   const perfilCompleto = useAppSelector(selectPerfilCompleto);
   const fetchingProfile = useAppSelector(selectFetchingProfile);
@@ -86,7 +90,8 @@ export const useUserProfile = () => {
   const supportTickets = useAppSelector(selectSupportTickets);
   const tsvStatus = useAppSelector(selectTSVStatus);
   const statistics = useAppSelector(selectUserStatistics);
-  
+  const gameHistory = useAppSelector(selectGameHistory);
+
   // Loading states
   const uploadingDocument = useAppSelector(selectUploadingDocument);
   const updatingProfile = useAppSelector(selectUpdatingProfile);
@@ -99,6 +104,7 @@ export const useUserProfile = () => {
   const deleting2FA = useAppSelector(selectDeleting2FA);
   const verifying2FA = useAppSelector(selectVerifying2FA);
   const fetchingStatistics = useAppSelector(selectFetchingStatistics);
+  const fetchingGameHisotry = useAppSelector(selectFetchigGameHistory);
 
   // Local state for additional functionality
   const [localLoading, setLocalLoading] = useState(false);
@@ -260,13 +266,21 @@ export const useUserProfile = () => {
     try {
       dispatch(setFetchingTransactions(true));
       const paginatedHistory = await profileService.getTransactionHistoryPaginated(
-        user.idUsuario, 
-        page, 
-        size, 
-        sortBy, 
+        user.idUsuario,
+        page,
+        size,
+        sortBy,
         sortDir
       );
-      dispatch(setPaginatedTransactions(paginatedHistory));
+      dispatch(setPaginatedTransactions({
+        transactions: paginatedHistory,
+        paginacion: {
+          page: paginatedHistory.number,
+          size: paginatedHistory.size,
+          totalElements: paginatedHistory.totalElements,
+          totalPages: paginatedHistory.totalPages
+        }
+      }));
       return paginatedHistory;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar el historial paginado';
@@ -508,12 +522,33 @@ export const useUserProfile = () => {
     dispatch(updateTicketStatus({ ticketId, status }));
   }, [dispatch]);
 
+  const fetchGameHistory = useCallback(async () => {
+    if (!user?.idUsuario) {
+      const errorMsg = 'Usuario no encontrado';
+      setLocalError(errorMsg);
+      dispatch(setError(errorMsg));
+      return null;
+    }
+
+    try {
+      dispatch(setFetchingGameHistory(true));
+      const stats = await profileService.getUserGameHistory(user.idUsuario);
+      dispatch(setGameHistory(stats));
+      return stats;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar las estadísticas';
+      setLocalError(errorMessage);
+      dispatch(setError(errorMessage));
+      return null;
+    }
+  }, [user?.idUsuario, dispatch]);
+
   return {
     user,
     // Combined loading states
-    loading: localLoading || profileLoading || fetchingProfile || uploadingDocument || updatingProfile || changingPassword || creating2FA || creatingTicket || fetchingDocuments || fetchingTransactions || fetchingTickets || deleting2FA || verifying2FA || fetchingStatistics,
+    loading: localLoading || profileLoading || fetchingProfile || uploadingDocument || fetchingGameHisotry || updatingProfile || changingPassword || creating2FA || creatingTicket || fetchingDocuments || fetchingTransactions || fetchingTickets || deleting2FA || verifying2FA || fetchingStatistics,
     error: localError || profileError,
-    
+
     // Redux state data
     perfilCompleto,
     documents,
@@ -522,8 +557,10 @@ export const useUserProfile = () => {
     supportTickets,
     tsvStatus,
     statistics,
+    gameHistory,
 
     // Specific loading states
+    fetchingGameHisotry,
     fetchingProfile,
     uploadingDocument,
     updatingProfile,
@@ -565,6 +602,7 @@ export const useUserProfile = () => {
 
     // Statistics Actions
     fetchUserStatistics,
+    fetchGameHistory,
 
     // Utility Actions
     clearError: clearErrorLocal,

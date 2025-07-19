@@ -4,10 +4,10 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 const TwoFactorAuth = () => {
     const { 
         tsvStatus, 
-        fetchTSVStatus, 
-        enableTSV, 
-        disableTSV, 
-        loading 
+        fetch2FAStatus, 
+        enable2FA, 
+        disable2FA, 
+        verifying2FA:loading 
     } = useUserProfile();
     
     const [showSetup, setShowSetup] = useState(false);
@@ -16,12 +16,12 @@ const TwoFactorAuth = () => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
-        fetchTSVStatus();
-    }, [fetchTSVStatus]);
+        fetch2FAStatus();
+    }, [fetch2FAStatus]);
 
-    const handleEnableTSV = async () => {
+    const handleenable2FA = async () => {
         setMessage(null);
-        const result = await enableTSV();
+        const result = await enable2FA();
         
         if (result.success) {
             setShowSetup(true);
@@ -32,9 +32,9 @@ const TwoFactorAuth = () => {
         }
     };
 
-    const handleDisableTSV = async () => {
+    const handledisable2FA = async () => {
         setMessage(null);
-        const result = await disableTSV();
+        const result = await disable2FA();
         
         if (result.success) {
             setShowSetup(false);
@@ -106,7 +106,7 @@ const TwoFactorAuth = () => {
                     </div>
 
                     <button
-                        onClick={handleEnableTSV}
+                        onClick={handleenable2FA}
                         disabled={loading}
                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >
@@ -138,7 +138,7 @@ const TwoFactorAuth = () => {
                     </div>
 
                     <button
-                        onClick={handleDisableTSV}
+                        onClick={handledisable2FA}
                         disabled={loading}
                         className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >

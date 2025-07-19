@@ -201,7 +201,7 @@ const BettingCart = ({
                       {slip.evento.equipoLocal} vs {slip.evento.equipoVisitante}
                     </h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {slip.evento.liga} • {slip.evento.deporte}
+                      {slip.evento.liga.nombre} • {slip.evento.deporte.nombre}
                     </p>
                   </div>
                   <button

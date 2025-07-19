@@ -1,73 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useCrypto } from '../../../hooks/useCrypto';
 import type { CryptoTransaction } from '../../../types/CryptoTypes';
 
-// Mock service - En producción esto vendría del backend
-const TransactionService = {
-  async getUserTransactions(): Promise<CryptoTransaction[]> {
-    // Mock data
-    return [
-      {
-        id: 1,
-        userId: 1,
-        cryptoType: 'BTC',
-        amount: 0.05,
-        transactionType: 'DEPOSIT',
-        status: 'COMPLETED',
-        notes: 'Depósito inicial',
-        createdAt: new Date('2024-01-15T10:30:00'),
-        updatedAt: new Date('2024-01-15T10:35:00')
-      },
-      {
-        id: 2,
-        userId: 1,
-        cryptoType: 'ETH',
-        amount: 2.5,
-        transactionType: 'DEPOSIT',
-        status: 'COMPLETED',
-        notes: 'Depósito vía wallet externa',
-        createdAt: new Date('2024-01-20T14:20:00'),
-        updatedAt: new Date('2024-01-20T14:25:00')
-      },
-      {
-        id: 3,
-        userId: 1,
-        cryptoType: 'BTC',
-        amount: 0.02,
-        transactionType: 'WITHDRAWAL',
-        status: 'PENDING',
-        notes: 'Retiro a wallet externa',
-        createdAt: new Date('2024-01-25T09:15:00'),
-        updatedAt: new Date('2024-01-25T09:15:00')
-      },
-      {
-        id: 4,
-        userId: 1,
-        cryptoType: 'SOL',
-        amount: 100,
-        transactionType: 'CONVERSION',
-        status: 'COMPLETED',
-        notes: 'Conversión de BTC a SOL',
-        createdAt: new Date('2024-02-01T16:45:00'),
-        updatedAt: new Date('2024-02-01T16:50:00')
-      },
-      {
-        id: 5,
-        userId: 1,
-        cryptoType: 'ETH',
-        amount: 1.0,
-        transactionType: 'WITHDRAWAL',
-        status: 'FAILED',
-        notes: 'Retiro fallido - dirección inválida',
-        createdAt: new Date('2024-02-05T11:30:00'),
-        updatedAt: new Date('2024-02-05T11:35:00')
-      }
-    ];
-  }
-};
-
 const TransactionHistoryPage = () => {
-  const [transactions, setTransactions] = useState<CryptoTransaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    transactions,
+    getCryptoTransactions,
+    isFetchingTransactions
+  } = useCrypto();
+  
   const [filter, setFilter] = useState<{
     type: string;
     status: string;
@@ -81,13 +22,9 @@ const TransactionHistoryPage = () => {
   // Load transactions
   const loadTransactions = async () => {
     try {
-      setLoading(true);
-      const userTransactions = await TransactionService.getUserTransactions();
-      setTransactions(userTransactions);
+      await getCryptoTransactions();
     } catch (error) {
       console.error('Error loading transactions:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -97,7 +34,7 @@ const TransactionHistoryPage = () => {
 
   // Filter transactions
   const filteredTransactions = transactions.filter(transaction => {
-    const typeMatch = filter.type === 'all' || transaction.transactionType === filter.type;
+    const typeMatch = filter.type === 'all' || transaction.type === filter.type;
     const statusMatch = filter.status === 'all' || transaction.status === filter.status;
     const cryptoMatch = filter.crypto === 'all' || transaction.cryptoType === filter.crypto;
     
@@ -109,34 +46,46 @@ const TransactionHistoryPage = () => {
       case 'COMPLETED':
         return 'bg-green-500/20 text-green-300 border border-green-500/30';
       case 'PENDING':
+      case 'PENDING_ADMIN_APPROVAL':
         return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
+      case 'CONFIRMED':
+      case 'APPROVED':
+        return 'bg-blue-500/20 text-blue-300 border border-blue-500/30';
       case 'FAILED':
+      case 'CANCELLED':
+      case 'REJECTED':
         return 'bg-red-500/20 text-red-300 border border-red-500/30';
       default:
         return 'bg-slate-500/20 text-slate-300 border border-slate-500/30';
     }
   };
 
-  const getTransactionIcon = (type: CryptoTransaction['transactionType']) => {
+  const getTransactionIcon = (type: CryptoTransaction['type']) => {
     switch (type) {
       case 'DEPOSIT':
+      case 'MANUAL_DEPOSIT_REQUEST':
         return '↓';
       case 'WITHDRAWAL':
+      case 'MANUAL_WITHDRAWAL_REQUEST':
         return '↑';
-      case 'CONVERSION':
+      case 'CONVERSION_TO_FIAT':
+      case 'CONVERSION_FROM_FIAT':
         return '🔄';
       default:
         return '📄';
     }
   };
 
-  const getTransactionColor = (type: CryptoTransaction['transactionType']) => {
+  const getTransactionColor = (type: CryptoTransaction['type']) => {
     switch (type) {
       case 'DEPOSIT':
+      case 'MANUAL_DEPOSIT_REQUEST':
         return 'text-green-400';
       case 'WITHDRAWAL':
+      case 'MANUAL_WITHDRAWAL_REQUEST':
         return 'text-red-400';
-      case 'CONVERSION':
+      case 'CONVERSION_TO_FIAT':
+      case 'CONVERSION_FROM_FIAT':
         return 'text-amber-400';
       default:
         return 'text-gray-400';
@@ -168,21 +117,37 @@ const TransactionHistoryPage = () => {
         return 'Completada';
       case 'PENDING':
         return 'Pendiente';
+      case 'CONFIRMED':
+        return 'Confirmada';
       case 'FAILED':
         return 'Fallida';
+      case 'CANCELLED':
+        return 'Cancelada';
+      case 'PENDING_ADMIN_APPROVAL':
+        return 'Pendiente Aprobación';
+      case 'APPROVED':
+        return 'Aprobada';
+      case 'REJECTED':
+        return 'Rechazada';
       default:
         return status;
     }
   };
 
-  const getTransactionLabel = (type: CryptoTransaction['transactionType']) => {
+  const getTransactionLabel = (type: CryptoTransaction['type']) => {
     switch (type) {
       case 'DEPOSIT':
         return 'Depósito';
+      case 'MANUAL_DEPOSIT_REQUEST':
+        return 'Solicitud de Depósito';
       case 'WITHDRAWAL':
         return 'Retiro';
-      case 'CONVERSION':
-        return 'Conversión';
+      case 'MANUAL_WITHDRAWAL_REQUEST':
+        return 'Solicitud de Retiro';
+      case 'CONVERSION_TO_FIAT':
+        return 'Conversión a USD';
+      case 'CONVERSION_FROM_FIAT':
+        return 'Conversión desde USD';
       default:
         return type;
     }
@@ -214,8 +179,11 @@ const TransactionHistoryPage = () => {
             >
               <option value="all">Todas</option>
               <option value="DEPOSIT">Depósitos</option>
+              <option value="MANUAL_DEPOSIT_REQUEST">Solicitudes de Depósito</option>
               <option value="WITHDRAWAL">Retiros</option>
-              <option value="CONVERSION">Conversiones</option>
+              <option value="MANUAL_WITHDRAWAL_REQUEST">Solicitudes de Retiro</option>
+              <option value="CONVERSION_TO_FIAT">Conversiones a USD</option>
+              <option value="CONVERSION_FROM_FIAT">Conversiones desde USD</option>
             </select>
           </div>
 
@@ -230,9 +198,14 @@ const TransactionHistoryPage = () => {
               className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 backdrop-blur-sm"
             >
               <option value="all">Todos</option>
-              <option value="COMPLETED">Completadas</option>
               <option value="PENDING">Pendientes</option>
+              <option value="CONFIRMED">Confirmadas</option>
+              <option value="COMPLETED">Completadas</option>
               <option value="FAILED">Fallidas</option>
+              <option value="CANCELLED">Canceladas</option>
+              <option value="PENDING_ADMIN_APPROVAL">Pendiente Aprobación</option>
+              <option value="APPROVED">Aprobadas</option>
+              <option value="REJECTED">Rechazadas</option>
             </select>
           </div>
 
@@ -263,7 +236,7 @@ const TransactionHistoryPage = () => {
           </h2>
         </div>
 
-        {loading ? (
+        {isFetchingTransactions ? (
           <div className="p-8 text-center text-gray-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
             Cargando transacciones...
@@ -281,18 +254,18 @@ const TransactionHistoryPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm border ${
-                      transaction.transactionType === 'DEPOSIT' ? 'bg-green-500/20 border-green-500/30' :
-                      transaction.transactionType === 'WITHDRAWAL' ? 'bg-red-500/20 border-red-500/30' :
+                      transaction.type === 'DEPOSIT' || transaction.type === 'MANUAL_DEPOSIT_REQUEST' ? 'bg-green-500/20 border-green-500/30' :
+                      transaction.type === 'WITHDRAWAL' || transaction.type === 'MANUAL_WITHDRAWAL_REQUEST' ? 'bg-red-500/20 border-red-500/30' :
                       'bg-amber-500/20 border-amber-500/30'
                     }`}>
-                      <span className={`text-xl ${getTransactionColor(transaction.transactionType)}`}>
-                        {getTransactionIcon(transaction.transactionType)}
+                      <span className={`text-xl ${getTransactionColor(transaction.type)}`}>
+                        {getTransactionIcon(transaction.type)}
                       </span>
                     </div>
                     <div>
                       <div className="flex items-center space-x-3 mb-1">
                         <h3 className="font-semibold text-white">
-                          {getTransactionLabel(transaction.transactionType)}
+                          {getTransactionLabel(transaction.type)}
                         </h3>
                         <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusColor(transaction.status)}`}>
                           {getStatusLabel(transaction.status)}

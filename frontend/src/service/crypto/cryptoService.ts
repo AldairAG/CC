@@ -1,4 +1,17 @@
-import type { CryptoBalance, ExchangeRate, CryptoToFiatConversionRequest, CryptoToFiatConversionResponse, CryptoTransaction, CryptoDepositRequest, UserWallet, CreateWalletRequest } from '../../types/CryptoTypes';
+import type { 
+  CryptoBalance, 
+  ExchangeRate, 
+  CryptoToFiatConversionRequest, 
+  CryptoToFiatConversionResponse, 
+  CryptoTransaction, 
+  CryptoDepositRequest, 
+  CryptoManualDepositRequest,
+  CryptoWithdrawalRequest,
+  CryptoManualWithdrawalRequest,
+  CryptoAdminApprovalRequest,
+  UserWallet, 
+  CreateWalletRequest 
+} from '../../types/CryptoTypes';
 import { apiClient } from '../casino/ApiCliente';
 
 const BASE_URL = '/crypto';
@@ -22,6 +35,7 @@ export class CryptoService {
       { currency: 'BTC', usdPrice: 45000, timestamp: new Date() },
       { currency: 'ETH', usdPrice: 3000, timestamp: new Date() },
       { currency: 'SOL', usdPrice: 100, timestamp: new Date() },
+      { currency: 'TRC20', usdPrice: 0.1, timestamp: new Date() },
     ];
   }
 
@@ -34,10 +48,42 @@ export class CryptoService {
   }
 
   /**
-   * Create a crypto deposit
+   * Create a crypto deposit (basic)
    */
-  static async createCryptoDeposit(request: CryptoDepositRequest): Promise<CryptoTransaction> {
-    const response = await apiClient.post(`${BASE_URL}/deposit`, request);
+  static async createCryptoDeposit(request: CryptoDepositRequest,userId:number): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/deposit/${userId}`, request);
+    return response.data;
+  }
+
+  /**
+   * Create automatic crypto deposit with external verification
+   */
+  static async createAutomaticDeposit(request: CryptoDepositRequest): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/deposit/automatic`, request);
+    return response.data;
+  }
+
+  /**
+   * Create manual deposit request
+   */
+  static async createManualDepositRequest(request: CryptoManualDepositRequest,userId:number): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/deposit/manual/${userId}`, request);
+    return response.data;
+  }
+
+  /**
+   * Create automatic withdrawal
+   */
+  static async createAutomaticWithdrawal(request: CryptoManualWithdrawalRequest): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/withdraw/automatic`, request);
+    return response.data;
+  }
+
+  /**
+   * Create manual withdrawal request
+   */
+  static async createManualWithdrawalRequest(request: CryptoManualWithdrawalRequest): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/withdraw/manual`, request);
     return response.data;
   }
 
@@ -50,34 +96,32 @@ export class CryptoService {
   }
 
   /**
-   * Create a crypto withdrawal
+   * Process confirmation (webhook/internal)
    */
-  static async createCryptoWithdrawal(request: {
-    toAddress: string;
-    amount: number;
-    cryptoType: 'BTC' | 'ETH' | 'SOL';
-  }): Promise<CryptoTransaction> {
-    const response = await apiClient.post(`${BASE_URL}/withdraw`, request);
+  static async processConfirmation(txHash: string, confirmations: number): Promise<void> {
+    await apiClient.post(`${BASE_URL}/process-confirmation?txHash=${txHash}&confirmations=${confirmations}`);
+  }
+
+  // ===== WALLET CRUD OPERATIONS =====
+
+  /**
+   * Create a crypto wallet
+   */
+  static async createCryptoWallet(walletData: CreateWalletRequest,userId:number): Promise<UserWallet> {
+    const response = await apiClient.post(`${BASE_URL}/wallets/${userId}`, walletData);
     return response.data;
   }
 
   /**
-   * Process withdrawal confirmation (admin/webhook)
+   * Get user's wallets
    */
-  static async processWithdrawalConfirmation(txHash: string, confirmations: number): Promise<void> {
-    await apiClient.post(`${BASE_URL}/process-withdrawal-confirmation?txHash=${txHash}&confirmations=${confirmations}`);
-  }
-
-  /**
-   * CRUD: Create a crypto wallet
-   */
-  static async createCryptoWallet(walletData: CreateWalletRequest): Promise<UserWallet> {
-    const response = await apiClient.post(`${BASE_URL}/wallets`, walletData);
+  static async getUserWallets(): Promise<UserWallet[]> {
+    const response = await apiClient.get(`${BASE_URL}/wallets`);
     return response.data;
   }
 
   /**
-   * CRUD: Get wallet by ID
+   * Get wallet by ID
    */
   static async getCryptoWalletById(walletId: number): Promise<UserWallet> {
     const response = await apiClient.get(`${BASE_URL}/wallets/${walletId}`);
@@ -85,25 +129,64 @@ export class CryptoService {
   }
 
   /**
-   * CRUD: Get wallets by user ID
+   * Update wallet
    */
-  static async getCryptoWalletsByUserId(userId: number): Promise<UserWallet[]> {
-    const response = await apiClient.get(`${BASE_URL}/wallets?userId=${userId}`);
+  static async updateCryptoWallet(walletId: number,userId:number, request: Partial<CreateWalletRequest>): Promise<UserWallet> {
+    const response = await apiClient.put(`${BASE_URL}/wallets/${walletId}/${userId}`, request);
     return response.data;
   }
 
   /**
-   * CRUD: Update wallet
-   */
-  static async updateCryptoWallet(walletId: number, request: Partial<UserWallet>): Promise<UserWallet> {
-    const response = await apiClient.put(`${BASE_URL}/wallets/${walletId}`, request);
-    return response.data;
-  }
-
-  /**
-   * CRUD: Delete wallet
+   * Delete wallet
    */
   static async deleteCryptoWallet(walletId: number): Promise<void> {
     await apiClient.delete(`${BASE_URL}/wallets/${walletId}`);
   }
+
+  // ===== ADMIN OPERATIONS =====
+
+  /**
+   * Get pending manual transactions (admin only)
+   */
+  static async getPendingManualTransactions(): Promise<CryptoTransaction[]> {
+    const response = await apiClient.get(`${BASE_URL}/admin/pending-transactions`);
+    return response.data;
+  }
+
+  /**
+   * Approve or reject manual transaction (admin only)
+   */
+  static async approveManualTransaction(request: CryptoAdminApprovalRequest): Promise<CryptoTransaction> {
+    const response = await apiClient.post(`${BASE_URL}/admin/approve-transaction`, request);
+    return response.data;
+  }
+
+  /**
+   * Get all wallets (admin only)
+   */
+  static async getAllWallets(): Promise<UserWallet[]> {
+    const response = await apiClient.get(`${BASE_URL}/admin/wallets`);
+    return response.data;
+  }
+
+  // ===== DEPRECATED METHODS (for backward compatibility) =====
+
+  /**
+   * @deprecated Use createAutomaticWithdrawal or createManualWithdrawalRequest instead
+   */
+  static async createCryptoWithdrawal(request: CryptoWithdrawalRequest): Promise<CryptoTransaction> {
+    return this.createAutomaticWithdrawal({
+      cryptoType: request.cryptoType,
+      amount: request.amount,
+      toAddress: request.toAddress
+    });
+  }
+
+  /**
+   * @deprecated Use processConfirmation instead
+   */
+  static async processWithdrawalConfirmation(txHash: string, confirmations: number): Promise<void> {
+    return this.processConfirmation(txHash, confirmations);
+  }
+
 }

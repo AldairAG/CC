@@ -6,7 +6,6 @@ import type {
     EstadisticasEventosType,
     EventoDisponibleQuinielaType,
     EstadoEvento,
-    EventosResponse
 } from "../../types/EventoDeportivoTypes";
 
 /**
@@ -365,32 +364,7 @@ const eventoSlice = createSlice({
         /**
          * Resetear todo el estado
          */
-        resetEstado: () => initialState,
-        
-        // ===== ACTIONS PARA RESPUESTAS PAGINADAS =====
-        
-        /**
-         * Establecer respuesta paginada de eventos
-         */
-        setEventosResponse: (state, action: PayloadAction<EventosResponse>) => {
-            const response = action.payload;
-            // Convertir EventoDeportivoResumenType a EventoDeportivoType con campos faltantes
-            state.eventos = response.content.map(evento => ({
-                ...evento,
-                eventoIdExterno: evento.id.toString(),
-                fechaCreacion: new Date().toISOString(),
-                fechaActualizacion: new Date().toISOString(),
-                temporada: undefined,
-                descripcion: undefined
-            }));
-            state.currentPage = response.pageable.pageNumber;
-            state.totalPages = response.totalPages;
-            state.totalElements = response.totalElements;
-            state.pageSize = response.pageable.pageSize;
-            state.eventosLoading = false;
-            state.eventosError = null;
-            state.lastUpdated = new Date().toISOString();
-        },
+        resetEstado: () => initialState,  
         
         // ===== ACTIONS PARA ACTUALIZAR EVENTO ESPECÍFICO =====
         
@@ -483,9 +457,6 @@ export const {
     setAutoRefresh,
     resetEstado,
     
-    // Respuestas paginadas
-    setEventosResponse,
-    
     // Actualización de eventos
     updateEvento,
     removeEvento
@@ -519,7 +490,7 @@ const selectEventosHoy = createSelector(
  */
 const selectEventosPorDeporte = createSelector(
     [(state: { evento: EventoState }) => state.evento.eventos, (_: unknown, deporte: string) => deporte],
-    (eventos, deporte) => eventos.filter(evento => evento.deporte === deporte)
+    (eventos, deporte) => eventos.filter(evento => evento.deporte.nombre === deporte)
 );
 
 /**

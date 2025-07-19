@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     MagnifyingGlassIcon,
     FunnelIcon,
@@ -8,79 +8,27 @@ import {
     CurrencyDollarIcon,
     CalendarDaysIcon
 } from "@heroicons/react/24/outline";
-
-interface Bet {
-    id: number;
-    usuario: string;
-    evento: string;
-    tipo: string;
-    monto: number;
-    cuota: number;
-    posibleGanancia: number;
-    estado: 'PENDIENTE' | 'GANADA' | 'PERDIDA' | 'CANCELADA';
-    fechaApuesta: string;
-    fechaEvento: string;
-}
+import { useAdmin } from '../../hooks/useAdmin';
 
 const AdminBets = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('TODOS');
     const [dateFilter, setDateFilter] = useState('HOY');
-    
-    const [bets] = useState<Bet[]>([
-        {
-            id: 1,
-            usuario: 'carlos_garcia',
-            evento: 'Real Madrid vs Barcelona',
-            tipo: 'Ganador del partido',
-            monto: 150.00,
-            cuota: 2.5,
-            posibleGanancia: 375.00,
-            estado: 'PENDIENTE',
-            fechaApuesta: '2024-07-02 09:30',
-            fechaEvento: '2024-07-02 20:00'
-        },
-        {
-            id: 2,
-            usuario: 'maria_lopez',
-            evento: 'Lakers vs Warriors',
-            tipo: 'Más de 220.5 puntos',
-            monto: 75.00,
-            cuota: 1.8,
-            posibleGanancia: 135.00,
-            estado: 'GANADA',
-            fechaApuesta: '2024-07-01 15:45',
-            fechaEvento: '2024-07-01 21:30'
-        },
-        {
-            id: 3,
-            usuario: 'juan_perez',
-            evento: 'Argentina vs Brasil',
-            tipo: 'Empate',
-            monto: 200.00,
-            cuota: 3.2,
-            posibleGanancia: 640.00,
-            estado: 'PERDIDA',
-            fechaApuesta: '2024-07-01 12:20',
-            fechaEvento: '2024-07-01 19:00'
-        },
-        {
-            id: 4,
-            usuario: 'ana_silva',
-            evento: 'Chelsea vs Arsenal',
-            tipo: 'Menos de 2.5 goles',
-            monto: 100.00,
-            cuota: 1.9,
-            posibleGanancia: 190.00,
-            estado: 'PENDIENTE',
-            fechaApuesta: '2024-07-02 10:15',
-            fechaEvento: '2024-07-03 16:00'
-        }
-    ]);
+    const [loading,setLoading]=useState(true);
+    const {bets}=useAdmin();
+
+    useEffect(()=>{
+        if(bets)
+            setLoading(false)
+    },[bets])
+
+    if(loading)(
+        <span>Cargando datos...</span>
+    )
 
     const filteredBets = bets.filter(bet => {
-        const matchesSearch = bet.usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            bet.evento.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = bet.usuarioUsername.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            bet.eventoNombre.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === 'TODOS' || bet.estado === filterStatus;
         // Para simplicidad, asumimos que HOY muestra todas las apuestas
         return matchesSearch && matchesStatus;
@@ -107,7 +55,7 @@ const AdminBets = () => {
     };
 
     const totalBets = bets.length;
-    const totalAmount = bets.reduce((sum, bet) => sum + bet.monto, 0);
+    const totalAmount = bets.reduce((sum, bet) => sum + bet.montoApostado, 0);
     const pendingBets = bets.filter(bet => bet.estado === 'PENDIENTE').length;
     const wonBets = bets.filter(bet => bet.estado === 'GANADA').length;
 
@@ -118,11 +66,6 @@ const AdminBets = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Gestión de Apuestas</h1>
                     <p className="text-gray-600 mt-2">Administra y monitorea todas las apuestas del casino</p>
-                </div>
-                <div className="flex items-center space-x-3">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Exportar Datos
-                    </button>
                 </div>
             </div>
 
@@ -252,36 +195,36 @@ const AdminBets = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredBets.map((bet) => (
-                                <tr key={bet.id} className="hover:bg-gray-50">
+                                <tr key={bet.idApuesta} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div>
                                             <div className="text-sm font-medium text-gray-900">
-                                                #{bet.id}
+                                                #{bet.idApuesta}
                                             </div>
                                             <div className="text-sm text-gray-500">
-                                                {bet.usuario}
+                                                {bet.usuarioUsername}
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="text-sm text-gray-900 max-w-xs">
-                                            {bet.evento}
+                                            {bet.eventoNombre}
                                         </div>
                                         <div className="text-xs text-gray-500">
                                             {bet.fechaEvento}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {bet.tipo}
+                                        {bet.tipoApuesta}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        ${bet.monto.toLocaleString()}
+                                        ${bet.montoApostado.toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {bet.cuota}
+                                        {bet.cuotaApostada}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                        ${bet.posibleGanancia.toLocaleString()}
+                                        ${(bet.gananciasPotenciales||0).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(bet.estado)}`}>
@@ -290,7 +233,7 @@ const AdminBets = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {bet.fechaApuesta}
+                                        {bet.fechaCreacion}
                                     </td>
                                 </tr>
                             ))}

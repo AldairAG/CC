@@ -6,7 +6,7 @@ import ExchangeRates from '../../../components/crypto/ExchangeRates';
 import TransactionStatus from '../../../components/crypto/TransactionStatus';
 
 const CryptoDashboard = () => {
-    const { transactions, loading, error } = useCrypto();
+    const { transactions, isLoading, error } = useCrypto();
 
     // Get recent transactions (last 5)
     const recentTransactions = transactions
@@ -76,7 +76,7 @@ const CryptoDashboard = () => {
                             </Link>
                         </div>
 
-                        {loading ? (
+                        {isLoading ? (
                             <div className="text-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto mb-2"></div>
                                 <div className="text-gray-400">Cargando transacciones...</div>

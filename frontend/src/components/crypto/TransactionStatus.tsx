@@ -73,7 +73,7 @@ const TransactionStatus: React.FC<TransactionStatusProps> = ({ transaction }) =>
     };
 
     const statusConfig = getStatusConfig(transaction.status);
-    const typeConfig = getTypeConfig(transaction.transactionType);
+    const typeConfig = getTypeConfig(transaction.type);
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-4">

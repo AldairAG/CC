@@ -9,7 +9,6 @@ const ApuestasDeportivas = () => {
     estadisticasApuestas,
     apuestasRecientes,
     loadEstadisticasApuestas,
-    loadApuestasRecientes,
     isLoadingMisApuestas,
     errorMisApuestas
   } = useApuestasDeportivas();
@@ -21,9 +20,8 @@ const ApuestasDeportivas = () => {
 
   useEffect(() => {
     loadEstadisticasApuestas();
-    loadApuestasRecientes(5);
     cargarEventosProximos();
-  }, [loadEstadisticasApuestas, loadApuestasRecientes, cargarEventosProximos]);
+  }, [loadEstadisticasApuestas]);
 
   const handleCrearApuesta = (eventoId?: number) => {
     setEventoSeleccionado(eventoId);
@@ -31,7 +29,6 @@ const ApuestasDeportivas = () => {
   };
 
   const handleApuestaCreada = () => {
-    loadApuestasRecientes(5);
     loadEstadisticasApuestas();
     setMostrarCrearApuesta(false);
     setEventoSeleccionado(undefined);
@@ -180,7 +177,7 @@ const ApuestasDeportivas = () => {
                           {evento.equipoLocal} vs {evento.equipoVisitante}
                         </h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {evento.deporte} • {evento.liga}
+                          {evento.deporte.nombre} • {evento.liga.nombre}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {new Date(evento.fechaEvento).toLocaleString()}

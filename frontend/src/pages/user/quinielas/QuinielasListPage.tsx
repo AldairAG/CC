@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import { QuinielasList } from '../../features/quinielas';
-import { USER_ROUTES } from '../../constants/ROUTERS';
+import { QuinielasList } from '../../../features/quinielas';
+import { USER_ROUTES } from '../../../constants/ROUTERS';
 
 const QuinielasListPage: React.FC = () => {
   const history = useHistory();

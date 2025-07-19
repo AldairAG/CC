@@ -13,7 +13,8 @@ const DepositAddress: React.FC<DepositAddressProps> = ({ cryptoType }) => {
     const addresses = {
         BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
         ETH: '0x742d35Cc6634C0532925a3b8D4e5f4534e0b2bAA',
-        SOL: '9WKrQ9eDmgT5KQGwCdqJZEWpTFvG4hJhNhvwZhgZtg7A'
+        SOL: '9WKrQ9eDmgT5KQGwCdqJZEWpTFvG4hJhNhvwZhgZtg7A',
+        TRC20:''
     };
 
     const copyToClipboard = async () => {

@@ -34,7 +34,7 @@ const UserParticipationsList: React.FC<UserParticipationsListProps> = ({
     const [currentPage] = useState(0);
     const [selectedParticipacion, setSelectedParticipacion] = useState<QuinielaParticipacionType | null>(null);
     const [showCancelModal, setShowCancelModal] = useState(false);
-    const [useWithRelations, setUseWithRelations] = useState(true); // 🆕 Alternar entre métodos
+    const [useWithRelations] = useState(true); // 🆕 Alternar entre métodos
 
     const targetUserId = userId || user?.idUsuario;
 

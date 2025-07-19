@@ -177,7 +177,7 @@ const CrearApuestaForm = ({ isOpen, onClose, eventoId, onApuestaCreada }: CrearA
                   <option value={0}>Selecciona un evento</option>
                   {eventos.map(evento => (
                     <option key={evento.id} value={evento.id}>
-                      {evento.equipoLocal} vs {evento.equipoVisitante} - {evento.deporte}
+                      {evento.equipoLocal} vs {evento.equipoVisitante} - {evento.deporte.nombre}
                     </option>
                   ))}
                 </select>
@@ -191,7 +191,7 @@ const CrearApuestaForm = ({ isOpen, onClose, eventoId, onApuestaCreada }: CrearA
                   {eventoSeleccionado.equipoLocal} vs {eventoSeleccionado.equipoVisitante}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {eventoSeleccionado.deporte} • {eventoSeleccionado.liga}
+                  {eventoSeleccionado.deporte.nombre} • {eventoSeleccionado.liga.nombre}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {new Date(eventoSeleccionado.fechaEvento).toLocaleString()}

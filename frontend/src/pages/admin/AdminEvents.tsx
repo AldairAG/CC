@@ -11,85 +11,12 @@ import {
     ClockIcon,
     XCircleIcon
 } from "@heroicons/react/24/outline";
-
-interface Event {
-    id: number;
-    nombre: string;
-    deporte: string;
-    liga: string;
-    equipoLocal: string;
-    equipoVisitante: string;
-    fechaEvento: string;
-    estado: 'PROGRAMADO' | 'EN_VIVO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENDIDO';
-    cuotas: {
-        local: number;
-        empate?: number;
-        visitante: number;
-    };
-    totalApuestas: number;
-    montoTotal: number;
-    resultado?: string;
-}
+import { useAdmin } from '../../hooks/useAdmin';
 
 const AdminEvents = () => {
     const [filterStatus, setFilterStatus] = useState('TODOS');
     const [filterSport, setFilterSport] = useState('TODOS');
-    
-    const [events] = useState<Event[]>([
-        {
-            id: 1,
-            nombre: 'Real Madrid vs Barcelona',
-            deporte: 'Fútbol',
-            liga: 'La Liga',
-            equipoLocal: 'Real Madrid',
-            equipoVisitante: 'Barcelona',
-            fechaEvento: '2024-07-02 20:00',
-            estado: 'PROGRAMADO',
-            cuotas: { local: 2.1, empate: 3.2, visitante: 3.8 },
-            totalApuestas: 156,
-            montoTotal: 12400.00
-        },
-        {
-            id: 2,
-            nombre: 'Lakers vs Warriors',
-            deporte: 'Basketball',
-            liga: 'NBA',
-            equipoLocal: 'Los Angeles Lakers',
-            equipoVisitante: 'Golden State Warriors',
-            fechaEvento: '2024-07-02 21:30',
-            estado: 'EN_VIVO',
-            cuotas: { local: 1.8, visitante: 2.0 },
-            totalApuestas: 89,
-            montoTotal: 8950.00
-        },
-        {
-            id: 3,
-            nombre: 'Argentina vs Brasil',
-            deporte: 'Fútbol',
-            liga: 'Copa América',
-            equipoLocal: 'Argentina',
-            equipoVisitante: 'Brasil',
-            fechaEvento: '2024-07-01 19:00',
-            estado: 'FINALIZADO',
-            cuotas: { local: 2.5, empate: 3.0, visitante: 2.8 },
-            totalApuestas: 234,
-            montoTotal: 18750.00,
-            resultado: '2-1'
-        },
-        {
-            id: 4,
-            nombre: 'Chelsea vs Arsenal',
-            deporte: 'Fútbol',
-            liga: 'Premier League',
-            equipoLocal: 'Chelsea',
-            equipoVisitante: 'Arsenal',
-            fechaEvento: '2024-07-03 16:00',
-            estado: 'PROGRAMADO',
-            cuotas: { local: 2.3, empate: 3.1, visitante: 3.2 },
-            totalApuestas: 67,
-            montoTotal: 5340.00
-        }
-    ]);
+    const { events } = useAdmin();
 
     const filteredEvents = events.filter(event => {
         const matchesStatus = filterStatus === 'TODOS' || event.estado === filterStatus;
@@ -109,7 +36,7 @@ const AdminEvents = () => {
     };
 
     const getStatusIcon = (estado: string) => {
-        switch(estado) {
+        switch (estado) {
             case 'PROGRAMADO': return <ClockIcon className="h-4 w-4" />;
             case 'EN_VIVO': return <PlayIcon className="h-4 w-4" />;
             case 'FINALIZADO': return <CheckCircleIcon className="h-4 w-4" />;
@@ -120,7 +47,7 @@ const AdminEvents = () => {
     };
 
     const getSportIcon = (deporte: string) => {
-        switch(deporte) {
+        switch (deporte) {
             case 'Fútbol': return '⚽';
             case 'Basketball': return '🏀';
             case 'Tennis': return '🎾';
@@ -132,7 +59,7 @@ const AdminEvents = () => {
     const totalEvents = events.length;
     const liveEvents = events.filter(e => e.estado === 'EN_VIVO').length;
     const scheduledEvents = events.filter(e => e.estado === 'PROGRAMADO').length;
-    const totalBetsAmount = events.reduce((sum, e) => sum + e.montoTotal, 0);
+    const totalBetsAmount = events.reduce((sum, e) => sum + e.montoTotalApostado, 0);
 
     const sports = [...new Set(events.map(e => e.deporte))];
 
@@ -265,14 +192,14 @@ const AdminEvents = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {filteredEvents.map((event) => (
-                                <tr key={event.id} className="hover:bg-gray-50">
+                                <tr key={event.idEvento} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div>
                                             <div className="text-sm font-medium text-gray-900">
                                                 {event.equipoLocal} vs {event.equipoVisitante}
                                             </div>
                                             <div className="text-sm text-gray-500">
-                                                ID: #{event.id}
+                                                ID: #{event.idEvento}
                                             </div>
                                             {event.resultado && (
                                                 <div className="text-sm font-medium text-green-600">
@@ -305,16 +232,16 @@ const AdminEvents = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         <div className="space-y-1">
-                                            <div>Local: {event.cuotas.local}</div>
-                                            {event.cuotas.empate && <div>Empate: {event.cuotas.empate}</div>}
-                                            <div>Visitante: {event.cuotas.visitante}</div>
+                                            <div>Local: {event.cuotaVisitante}</div>
+                                            {event.cuotaEmpate && <div>Empate: {event.cuotaEmpate}</div>}
+                                            <div>Visitante: {event.cuotaVisitante}</div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {event.totalApuestas}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                        ${event.montoTotal.toLocaleString()}
+                                        ${(event.montoTotalApostado||0).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">

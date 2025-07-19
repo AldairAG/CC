@@ -21,6 +21,8 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idUsuario;
 
+    private String estado;
+
     @Column(nullable = false)
     private String password; // Hash de la contraseña
     @Column(nullable = false,columnDefinition = "VARCHAR(255) DEFAULT 'True'")

@@ -4,7 +4,7 @@ import type { RootState } from '../store';
 // Base selector
 const selectCrypto = (state: RootState) => state.crypto;
 
-// Selectors específicos
+// ===== DATA SELECTORS =====
 export const selectCryptoBalances = createSelector(
   [selectCrypto],
   (crypto) => crypto.balances
@@ -20,74 +20,156 @@ export const selectCryptoTransactions = createSelector(
   (crypto) => crypto.transactions
 );
 
+export const selectPendingTransactions = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.pendingTransactions
+);
+
+export const selectWalletList = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.walletList
+);
+
+// ===== LOADING SELECTORS =====
 export const selectCryptoLoading = createSelector(
   [selectCrypto],
   (crypto) => crypto.loading
 );
 
+export const selectFetchingBalances = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.fetchingBalances
+);
+
+export const selectFetchingRates = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.fetchingRates
+);
+
+export const selectFetchingTransactions = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.fetchingTransactions
+);
+
+export const selectFetchingWallets = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.fetchingWallets
+);
+
+export const selectFetchingPendingTransactions = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.fetchingPendingTransactions
+);
+
+// ===== OPERATION SELECTORS =====
+export const selectCreatingWallet = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.creatingWallet
+);
+
+export const selectUpdatingWallet = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.updatingWallet
+);
+
+export const selectDeletingWallet = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.deletingWallet
+);
+
+export const selectCreatingDeposit = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.creatingDeposit
+);
+
+export const selectCreatingWithdrawal = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.creatingWithdrawal
+);
+
+export const selectApprovingTransaction = createSelector(
+  [selectCrypto],
+  (crypto) => crypto.approvingTransaction
+);
+
+// ===== ERROR SELECTORS =====
 export const selectCryptoError = createSelector(
   [selectCrypto],
   (crypto) => crypto.error
 );
 
-// Selector para obtener balance específico de una crypto
+// ===== COMPUTED SELECTORS =====
 export const selectCryptoBalanceByType = createSelector(
   [selectCryptoBalances, (_state: RootState, cryptoType: string) => cryptoType],
   (balances, cryptoType) => balances.find(balance => balance.cryptoType === cryptoType)
 );
 
-// Selector para obtener tasa de cambio específica
 export const selectExchangeRateByType = createSelector(
   [selectCryptoExchangeRates, (_state: RootState, cryptoType: string) => cryptoType],
   (exchangeRates, cryptoType) => exchangeRates.find(rate => rate.currency === cryptoType)
 );
 
-// Selector para obtener valor total en USD de todos los balances
 export const selectTotalPortfolioValue = createSelector(
   [selectCryptoBalances, selectCryptoExchangeRates],
   (balances, exchangeRates) => {
     return balances.reduce((total, balance) => {
       const rate = exchangeRates.find(r => r.currency === balance.cryptoType);
-      return total + (rate ? balance.balance * rate.usdPrice : 0);
+      return total + (balance.balance * (rate?.usdPrice || 0));
     }, 0);
   }
 );
 
-// Selector para obtener transacciones por tipo
-export const selectTransactionsByType = createSelector(
-  [selectCryptoTransactions, (_state: RootState, transactionType: string) => transactionType],
-  (transactions, transactionType) => 
-    transactions.filter(transaction => transaction.transactionType === transactionType)
-);
-
-// Selector para obtener transacciones recientes (últimas 10)
 export const selectRecentTransactions = createSelector(
   [selectCryptoTransactions],
-  (transactions) => 
-    [...transactions]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10)
+  (transactions) => transactions.slice(0, 5)
 );
 
-// Selector para obtener estadísticas del portafolio
 export const selectPortfolioStats = createSelector(
-  [selectCryptoBalances, selectCryptoExchangeRates, selectCryptoTransactions],
-  (balances, exchangeRates, transactions) => {
+  [selectCryptoBalances, selectCryptoExchangeRates],
+  (balances, exchangeRates) => {
     const totalValue = balances.reduce((total, balance) => {
       const rate = exchangeRates.find(r => r.currency === balance.cryptoType);
-      return total + (rate ? balance.balance * rate.usdPrice : 0);
+      return total + (balance.balance * (rate?.usdPrice || 0));
     }, 0);
-
-    const totalTransactions = transactions.length;
-    const completedTransactions = transactions.filter(t => t.status === 'COMPLETED').length;
-    const pendingTransactions = transactions.filter(t => t.status === 'PENDING').length;
-
+    
+    const totalPendingDeposits = balances.reduce((total, balance) => {
+      return total + (balance.pendingDeposits || 0);
+    }, 0);
+    
+    const totalPendingWithdrawals = balances.reduce((total, balance) => {
+      return total + (balance.pendingWithdrawals || 0);
+    }, 0);
+    
     return {
       totalValue,
-      totalTransactions,
-      completedTransactions,
-      pendingTransactions,
+      totalPendingDeposits,
+      totalPendingWithdrawals,
       cryptoCount: balances.length,
     };
   }
+);
+
+export const selectWalletsByType = createSelector(
+  [selectWalletList, (_state: RootState, cryptoType: string) => cryptoType],
+  (wallets, cryptoType) => wallets.filter(wallet => wallet.cryptoType === cryptoType)
+);
+
+export const selectActiveWallets = createSelector(
+  [selectWalletList],
+  (wallets) => wallets.filter(wallet => wallet.isActive)
+);
+
+export const selectTransactionsByType = createSelector(
+  [selectCryptoTransactions, (_state: RootState, cryptoType: string) => cryptoType],
+  (transactions, cryptoType) => transactions.filter(tx => tx.cryptoType === cryptoType)
+);
+
+export const selectTransactionsByStatus = createSelector(
+  [selectCryptoTransactions, (_state: RootState, status: string) => status],
+  (transactions, status) => transactions.filter(tx => tx.status === status)
+);
+
+export const selectPendingTransactionsByType = createSelector(
+  [selectPendingTransactions, (_state: RootState, type: string) => type],
+  (transactions, type) => transactions.filter(tx => tx.type === type)
 );

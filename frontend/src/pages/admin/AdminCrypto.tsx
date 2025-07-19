@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     BanknotesIcon,
     ArrowUpIcon,
@@ -6,22 +6,11 @@ import {
     ClockIcon,
     CheckCircleIcon,
     XCircleIcon,
-    EyeIcon,
-    FunnelIcon
+    FunnelIcon,
+    CheckIcon,
+    TrashIcon
 } from "@heroicons/react/24/outline";
-
-interface CryptoTransaction {
-    id: number;
-    usuario: string;
-    tipo: 'DEPOSIT' | 'WITHDRAWAL' | 'CONVERSION';
-    cryptoType: 'BTC' | 'ETH' | 'SOL';
-    amount: number;
-    usdValue: number;
-    status: 'PENDING' | 'COMPLETED' | 'FAILED';
-    fecha: string;
-    txHash?: string;
-    address?: string;
-}
+import { useAdmin } from '../../hooks/useAdmin';
 
 interface CryptoBalance {
     tipo: string;
@@ -35,7 +24,9 @@ interface CryptoBalance {
 const AdminCrypto = () => {
     const [filterType, setFilterType] = useState('TODOS');
     const [filterStatus, setFilterStatus] = useState('TODOS');
-    
+    const { cryptoTransactions,handleApproveCryptoTransaction,handleRejectCryptoTransaction } = useAdmin();
+    const [loading, setLoading] = useState(true);
+
     const [cryptoBalances] = useState<CryptoBalance[]>([
         {
             tipo: 'Bitcoin',
@@ -63,44 +54,19 @@ const AdminCrypto = () => {
         }
     ]);
 
-    const [transactions] = useState<CryptoTransaction[]>([
-        {
-            id: 1,
-            usuario: 'carlos_garcia',
-            tipo: 'DEPOSIT',
-            cryptoType: 'BTC',
-            amount: 0.05,
-            usdValue: 2250.00,
-            status: 'COMPLETED',
-            fecha: '2024-07-02 10:30',
-            txHash: '1a2b3c4d5e6f...',
-            address: '1BvBMSE...xyz'
-        },
-        {
-            id: 2,
-            usuario: 'maria_lopez',
-            tipo: 'CONVERSION',
-            cryptoType: 'ETH',
-            amount: 0.5,
-            usdValue: 1500.00,
-            status: 'COMPLETED',
-            fecha: '2024-07-02 09:15'
-        },
-        {
-            id: 3,
-            usuario: 'juan_perez',
-            tipo: 'WITHDRAWAL',
-            cryptoType: 'SOL',
-            amount: 50.0,
-            usdValue: 5000.00,
-            status: 'PENDING',
-            fecha: '2024-07-02 08:45',
-            address: 'SoL123...abc'
-        }
-    ]);
+    useEffect(() => {
+        if (cryptoTransactions)
+            setLoading(false);
+    }, [])
 
-    const filteredTransactions = transactions.filter(tx => {
-        const matchesType = filterType === 'TODOS' || tx.tipo === filterType;
+
+    if (loading) (
+        <span>Cargando datos...</span>
+    )
+
+
+    const filteredTransactions = cryptoTransactions.filter(tx => {
+        const matchesType = filterType === 'TODOS' || tx.cryptoType === filterType;
         const matchesStatus = filterStatus === 'TODOS' || tx.status === filterStatus;
         return matchesType && matchesStatus;
     });
@@ -115,7 +81,7 @@ const AdminCrypto = () => {
     };
 
     const getStatusIcon = (status: string) => {
-        switch(status) {
+        switch (status) {
             case 'PENDING': return <ClockIcon className="h-4 w-4" />;
             case 'COMPLETED': return <CheckCircleIcon className="h-4 w-4" />;
             case 'FAILED': return <XCircleIcon className="h-4 w-4" />;
@@ -124,7 +90,7 @@ const AdminCrypto = () => {
     };
 
     const getTypeIcon = (tipo: string) => {
-        switch(tipo) {
+        switch (tipo) {
             case 'DEPOSIT': return <ArrowDownIcon className="h-4 w-4 text-green-600" />;
             case 'WITHDRAWAL': return <ArrowUpIcon className="h-4 w-4 text-red-600" />;
             case 'CONVERSION': return <BanknotesIcon className="h-4 w-4 text-blue-600" />;
@@ -142,8 +108,8 @@ const AdminCrypto = () => {
     };
 
     const totalUsdValue = cryptoBalances.reduce((sum, balance) => sum + balance.usdValue, 0);
-    const pendingTransactions = transactions.filter(tx => tx.status === 'PENDING').length;
-    const completedToday = transactions.filter(tx => tx.status === 'COMPLETED' && tx.fecha.includes('2024-07-02')).length;
+    const pendingTransactions = cryptoTransactions.filter(tx => tx.status === 'PENDING').length;
+    //const completedToday = cryptoTransactions.filter(tx => tx.status === 'COMPLETED' && tx.fecha.includes('2024-07-02')).length;
 
     return (
         <div className="space-y-6">
@@ -188,7 +154,7 @@ const AdminCrypto = () => {
                         <CheckCircleIcon className="h-8 w-8 text-blue-600" />
                         <div className="ml-4">
                             <h3 className="text-sm font-medium text-gray-500">Completadas Hoy</h3>
-                            <p className="text-2xl font-bold text-blue-600">{completedToday}</p>
+                            {/* <p className="text-2xl font-bold text-blue-600">{completedToday}</p> */}
                         </div>
                     </div>
                 </div>
@@ -197,7 +163,7 @@ const AdminCrypto = () => {
                         <ArrowUpIcon className="h-8 w-8 text-purple-600" />
                         <div className="ml-4">
                             <h3 className="text-sm font-medium text-gray-500">Total Transacciones</h3>
-                            <p className="text-2xl font-bold text-purple-600">{transactions.length}</p>
+                            {/* <p className="text-2xl font-bold text-purple-600">{transactions.length}</p> */}
                         </div>
                     </div>
                 </div>
@@ -314,7 +280,7 @@ const AdminCrypto = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredTransactions.map((tx) => (
+                            {filteredTransactions.reverse().map((tx) => (
                                 <tr key={tx.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div>
@@ -322,15 +288,15 @@ const AdminCrypto = () => {
                                                 #{tx.id}
                                             </div>
                                             <div className="text-sm text-gray-500">
-                                                {tx.usuario}
+                                                {tx.usuarioNombre}
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            {getTypeIcon(tx.tipo)}
+                                            {getTypeIcon(tx.type)}
                                             <span className="ml-2 text-sm font-medium text-gray-900">
-                                                {tx.tipo}
+                                                {tx.type}
                                             </span>
                                         </div>
                                     </td>
@@ -344,7 +310,7 @@ const AdminCrypto = () => {
                                         {tx.amount} {tx.cryptoType}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                        ${tx.usdValue.toLocaleString()}
+                                        ${(tx.usdAmount||0).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(tx.status)}`}>
@@ -353,11 +319,14 @@ const AdminCrypto = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {tx.fecha}
+                                        {/* {tx.fecha} */}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <button className="text-blue-600 hover:text-blue-900">
-                                            <EyeIcon className="h-4 w-4" />
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                                        <button onClick={() => handleApproveCryptoTransaction(tx.id)} className="text-blue-600 hover:text-blue-900">
+                                            <CheckIcon className="text-green-700 h-4 w-4" />
+                                        </button>
+                                        <button onClick={() => handleRejectCryptoTransaction(tx.id)} className="text-blue-600 hover:text-blue-900">
+                                            <TrashIcon className="text-red-700 h-4 w-4" />
                                         </button>
                                     </td>
                                 </tr>

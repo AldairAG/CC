@@ -233,7 +233,7 @@ const SportFilter = ({ eventos, onFilterChange }: SportFilterProps) => {
                   <div className="ml-8 mt-2 space-y-1">
                     {sportGroup.leagues.map((league) => {
                       const leagueCount = eventosActivos.filter(e => 
-                        e.deporte === sportGroup.sport && e.liga === league
+                        e.deporte.nombre === sportGroup.sport && e.liga.nombre === league
                       ).length;
                       
                       return (
@@ -270,13 +270,13 @@ const SportFilter = ({ eventos, onFilterChange }: SportFilterProps) => {
           {selectedSport && selectedLeague && (
             <p>
               Mostrando {eventosActivos.filter(e => 
-                e.deporte === selectedSport && e.liga === selectedLeague
+                e.deporte.nombre === selectedSport && e.liga.nombre === selectedLeague
               ).length} eventos de {selectedLeague}
             </p>
           )}
           {selectedSport && !selectedLeague && (
             <p>
-              Mostrando {eventosActivos.filter(e => e.deporte === selectedSport).length} eventos de {selectedSport}
+              Mostrando {eventosActivos.filter(e => e.deporte.nombre === selectedSport).length} eventos de {selectedSport}
             </p>
           )}
           {!selectedSport && !selectedLeague && (

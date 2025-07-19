@@ -22,15 +22,6 @@ public class QuinielaAdminController {
     private final QuinielaAdminService quinielaAdminService;
 
     /**
-     * Obtener todas las quinielas para administración
-     */
-    @GetMapping
-    public ResponseEntity<Page<Quiniela>> obtenerTodasLasQuinielas(Pageable pageable) {
-        Page<Quiniela> quinielas = quinielaAdminService.obtenerTodasLasQuinielas(pageable);
-        return ResponseEntity.ok(quinielas);
-    }
-
-    /**
      * Obtener estadísticas generales
      */
     @GetMapping("/estadisticas")

@@ -9,7 +9,7 @@ import LigasMexicanas from "../components/navigation/LigasMexicanas";
 import DeportesDisponibles from "../components/navigation/DeportesDisponibles";
 import CarritoApuestasSidebar from "../components/navigation/CarritoApuestasSidebar";
 import CarritoFlotante from "../components/navigation/CarritoFlotante";
-import BotonesFlotantes from "../components/navigation/BotonesFlotantes";
+//import BotonesFlotantes from "../components/navigation/BotonesFlotantes";
 import ApuestasLayout from "./ApuestasLayout";
 import CryptoLayout from "./CryptoLayout";
 import QuinielasLayout from "./QuinielaLayout";

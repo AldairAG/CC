@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useCrypto } from '../../../hooks/useCrypto';
-import { CryptoService } from '../../../service/crypto/cryptoService';
-import type { CryptoToFiatConversionRequest } from '../../../types/CryptoTypes';
+import type { CryptoManualWithdrawalRequest } from '../../../types/CryptoTypes';
 
 const RetirarPage = () => {
-    const { balances, convertToUSD } = useCrypto();
-    const [formData, setFormData] = useState<CryptoToFiatConversionRequest>({
+    const { 
+        balances, 
+        exchangeRates,
+        createManualWithdrawalRequest,
+        isCreatingWithdrawal
+    } = useCrypto();
+    const [formData, setFormData] = useState<CryptoManualWithdrawalRequest>({
         cryptoType: 'BTC',
         amount: 0,
+        toAddress: '',
         notes: ''
     });
     const [loading, setLoading] = useState(false);
@@ -18,11 +23,21 @@ const RetirarPage = () => {
         return balance ? balance.balance : 0;
     };
 
+    const convertToUSD = (amount: number, cryptoType: string) => {
+        const rate = exchangeRates.find(r => r.currency === cryptoType);
+        return rate ? amount * rate.usdPrice : 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (formData.amount <= 0) {
             setMessage({ type: 'error', text: 'El monto debe ser mayor a 0' });
+            return;
+        }
+
+        if (!formData.toAddress) {
+            setMessage({ type: 'error', text: 'La dirección de destino es requerida' });
             return;
         }
 
@@ -36,22 +51,24 @@ const RetirarPage = () => {
         setMessage(null);
 
         try {
-            const response = await CryptoService.convertToFiat(formData);
-            setMessage({ 
-                type: 'success', 
-                text: `Conversión exitosa. Se agregaron $${response.fiatAmountAdded.toFixed(2)} a tu cuenta.` 
-            });
-            
-            // Reset form
-            setFormData({
-                cryptoType: 'BTC',
-                amount: 0,
-                notes: ''
-            });
-            
+            const response = await createManualWithdrawalRequest(formData);
+            if (response) {
+                setMessage({ 
+                    type: 'success', 
+                    text: 'Solicitud de retiro enviada exitosamente. Será procesada por un administrador.' 
+                });
+                
+                // Reset form
+                setFormData({
+                    cryptoType: 'BTC',
+                    amount: 0,
+                    toAddress: '',
+                    notes: ''
+                });
+            }
         } catch (error) {
-            console.error('Error converting crypto:', error);
-            setMessage({ type: 'error', text: 'Error al procesar la conversión. Intenta nuevamente.' });
+            console.error('Error creating withdrawal request:', error);
+            setMessage({ type: 'error', text: 'Error al procesar la solicitud de retiro. Intenta nuevamente.' });
         } finally {
             setLoading(false);
         }
@@ -63,10 +80,6 @@ const RetirarPage = () => {
             ...prev,
             [name]: name === 'amount' ? parseFloat(value) || 0 : value
         }));
-    };
-
-    const getEstimatedUSD = () => {
-        return convertToUSD(formData.amount, formData.cryptoType);
     };
 
     const setMaxAmount = () => {
@@ -101,10 +114,11 @@ const RetirarPage = () => {
                 <div className="bg-yellow-500/20 border border-yellow-500/30 rounded-xl p-4 mb-6 backdrop-blur-sm">
                     <h3 className="font-semibold text-yellow-300 mb-2">⚠️ Información Importante</h3>
                     <ul className="text-sm text-gray-300 space-y-1">
-                        <li>• La conversión se realizará al tipo de cambio actual</li>
-                        <li>• Los fondos se agregarán a tu balance en USD</li>
+                        <li>• La solicitud de retiro será revisada por un administrador</li>
+                        <li>• Los fondos se enviarán a la dirección especificada</li>
                         <li>• Esta operación no se puede deshacer</li>
-                        <li>• Las transacciones pueden tardar unos minutos en procesarse</li>
+                        <li>• Las transacciones pueden tardar tiempo en procesarse</li>
+                        <li>• Asegúrate de que la dirección de destino sea correcta</li>
                     </ul>
                 </div>
 
@@ -126,6 +140,21 @@ const RetirarPage = () => {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Dirección de Destino
+                        </label>
+                        <input
+                            type="text"
+                            name="toAddress"
+                            value={formData.toAddress}
+                            onChange={handleInputChange}
+                            className="w-full p-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 backdrop-blur-sm font-mono text-sm"
+                            placeholder="Ingresa la dirección de destino"
+                            required
+                        />
                     </div>
 
                     <div>
@@ -155,7 +184,7 @@ const RetirarPage = () => {
                         <div className="flex justify-between text-sm text-gray-400 mt-1">
                             <span>Disponible: {getAvailableBalance(formData.cryptoType).toFixed(8)} {formData.cryptoType}</span>
                             {formData.amount > 0 && (
-                                <span className="text-amber-300">≈ ${getEstimatedUSD().toFixed(2)} USD</span>
+                                <span className="text-amber-300">≈ ${convertToUSD(formData.amount, formData.cryptoType).toFixed(2)} USD</span>
                             )}
                         </div>
                     </div>
@@ -174,10 +203,10 @@ const RetirarPage = () => {
                         />
                     </div>
 
-                    {/* Conversion Summary */}
-                    {formData.amount > 0 && (
+                    {/* Withdrawal Summary */}
+                    {formData.amount > 0 && formData.toAddress && (
                         <div className="bg-amber-500/20 border border-amber-500/30 rounded-xl p-4 backdrop-blur-sm">
-                            <h3 className="font-semibold text-amber-300 mb-2">Resumen de Conversión</h3>
+                            <h3 className="font-semibold text-amber-300 mb-2">Resumen de Retiro</h3>
                             <div className="space-y-1 text-sm">
                                 <div className="flex justify-between text-gray-300">
                                     <span>Cantidad a retirar:</span>
@@ -185,11 +214,15 @@ const RetirarPage = () => {
                                 </div>
                                 <div className="flex justify-between text-gray-300">
                                     <span>Valor estimado:</span>
-                                    <span className="text-white">${getEstimatedUSD().toFixed(2)} USD</span>
+                                    <span className="text-white">${convertToUSD(formData.amount, formData.cryptoType).toFixed(2)} USD</span>
+                                </div>
+                                <div className="flex justify-between text-gray-300">
+                                    <span>Dirección de destino:</span>
+                                    <span className="text-white font-mono text-xs">{formData.toAddress.substring(0, 20)}...</span>
                                 </div>
                                 <div className="flex justify-between font-semibold text-amber-300 pt-2 border-t border-amber-500/20">
-                                    <span>Recibirás:</span>
-                                    <span>~${getEstimatedUSD().toFixed(2)} USD</span>
+                                    <span>Total a retirar:</span>
+                                    <span>{formData.amount.toFixed(8)} {formData.cryptoType}</span>
                                 </div>
                             </div>
                         </div>
@@ -207,10 +240,10 @@ const RetirarPage = () => {
 
                     <button
                         type="submit"
-                        disabled={loading || formData.amount <= 0}
+                        disabled={loading || isCreatingWithdrawal || formData.amount <= 0 || !formData.toAddress}
                         className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4 rounded-xl hover:from-red-600 hover:to-red-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed transition-all duration-300 font-medium shadow-lg"
                     >
-                        {loading ? 'Procesando...' : 'Confirmar Retiro'}
+                        {(loading || isCreatingWithdrawal) ? 'Procesando...' : 'Solicitar Retiro'}
                     </button>
                 </form>
             </div>

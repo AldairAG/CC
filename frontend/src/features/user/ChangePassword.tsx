@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import type { PasswordChange } from '../../types/UserProfileTypes';
+import type { CambiarPasswordRequest } from '../../types/PerfilTypes';
 
 const ChangePassword = () => {
     const { changePassword, loading } = useUserProfile();
-    const [formData, setFormData] = useState<PasswordChange>({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+    const [formData, setFormData] = useState<CambiarPasswordRequest>({
+        passwordActual: '',
+        nuevaPassword: '',
+        confirmarPassword: ''
     });
     const [showPasswords, setShowPasswords] = useState({
         current: false,
@@ -32,13 +32,13 @@ const ChangePassword = () => {
     };
 
     const validatePasswords = () => {
-        if (formData.newPassword.length < 8) {
+        if (formData.nuevaPassword.length < 8) {
             return 'La nueva contraseña debe tener al menos 8 caracteres';
         }
-        if (formData.newPassword !== formData.confirmPassword) {
+        if (formData.nuevaPassword !== formData.confirmarPassword) {
             return 'Las contraseñas no coinciden';
         }
-        if (formData.currentPassword === formData.newPassword) {
+        if (formData.confirmarPassword === formData.nuevaPassword) {
             return 'La nueva contraseña debe ser diferente a la actual';
         }
         return null;
@@ -59,9 +59,9 @@ const ChangePassword = () => {
         if (result.success) {
             setMessage({ type: 'success', text: result.message });
             setFormData({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
+                passwordActual: '',
+                nuevaPassword: '',
+                confirmarPassword: ''
             });
         } else {
             setMessage({ type: 'error', text: result.message });
@@ -102,7 +102,7 @@ const ChangePassword = () => {
         }
     };
 
-    const passwordStrength = getPasswordStrength(formData.newPassword);
+    const passwordStrength = getPasswordStrength(formData.nuevaPassword);
 
     return (
         <div className="max-w-2xl">
@@ -123,15 +123,15 @@ const ChangePassword = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="passwordActual" className="block text-sm font-medium text-gray-700 mb-2">
                         Contraseña Actual
                     </label>
                     <div className="relative">
                         <input
                             type={showPasswords.current ? 'text' : 'password'}
-                            id="currentPassword"
-                            name="currentPassword"
-                            value={formData.currentPassword}
+                            id="passwordActual"
+                            name="passwordActual"
+                            value={formData.passwordActual}
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
@@ -147,15 +147,15 @@ const ChangePassword = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="nuevaPassword" className="block text-sm font-medium text-gray-700 mb-2">
                         Nueva Contraseña
                     </label>
                     <div className="relative">
                         <input
                             type={showPasswords.new ? 'text' : 'password'}
-                            id="newPassword"
-                            name="newPassword"
-                            value={formData.newPassword}
+                            id="nuevaPassword"
+                            name="nuevaPassword"
+                            value={formData.nuevaPassword}
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
@@ -169,7 +169,7 @@ const ChangePassword = () => {
                         </button>
                     </div>
                     
-                    {formData.newPassword && (
+                    {formData.nuevaPassword && (
                         <div className="mt-2">
                             <div className="flex items-center space-x-2">
                                 <div className="flex-1 bg-gray-200 rounded-full h-2">
@@ -185,19 +185,19 @@ const ChangePassword = () => {
                             <div className="mt-2 text-xs text-gray-500">
                                 <p>La contraseña debe contener:</p>
                                 <ul className="list-disc list-inside mt-1 space-y-1">
-                                    <li className={formData.newPassword.length >= 8 ? 'text-green-600' : 'text-gray-500'}>
+                                    <li className={formData.nuevaPassword.length >= 8 ? 'text-green-600' : 'text-gray-500'}>
                                         Al menos 8 caracteres
                                     </li>
-                                    <li className={/[a-z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-500'}>
+                                    <li className={/[a-z]/.test(formData.nuevaPassword) ? 'text-green-600' : 'text-gray-500'}>
                                         Letras minúsculas
                                     </li>
-                                    <li className={/[A-Z]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-500'}>
+                                    <li className={/[A-Z]/.test(formData.nuevaPassword) ? 'text-green-600' : 'text-gray-500'}>
                                         Letras mayúsculas
                                     </li>
-                                    <li className={/[0-9]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-500'}>
+                                    <li className={/[0-9]/.test(formData.nuevaPassword) ? 'text-green-600' : 'text-gray-500'}>
                                         Números
                                     </li>
-                                    <li className={/[^A-Za-z0-9]/.test(formData.newPassword) ? 'text-green-600' : 'text-gray-500'}>
+                                    <li className={/[^A-Za-z0-9]/.test(formData.nuevaPassword) ? 'text-green-600' : 'text-gray-500'}>
                                         Caracteres especiales
                                     </li>
                                 </ul>
@@ -207,15 +207,15 @@ const ChangePassword = () => {
                 </div>
 
                 <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="confirmarPassword" className="block text-sm font-medium text-gray-700 mb-2">
                         Confirmar Nueva Contraseña
                     </label>
                     <div className="relative">
                         <input
                             type={showPasswords.confirm ? 'text' : 'password'}
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={formData.confirmPassword}
+                            id="confirmarPassword"
+                            name="confirmarPassword"
+                            value={formData.confirmarPassword}
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             required
@@ -228,7 +228,7 @@ const ChangePassword = () => {
                             {showPasswords.confirm ? '🙈' : '👁️'}
                         </button>
                     </div>
-                    {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
+                    {formData.confirmarPassword && formData.nuevaPassword !== formData.confirmarPassword && (
                         <p className="mt-1 text-sm text-red-600">Las contraseñas no coinciden</p>
                     )}
                 </div>

@@ -4,7 +4,7 @@ import {
   AdvancedQuinielaSearch, 
   CreateQuinielaForm,
   QuinielasDashboard 
-} from '../../features/quinielas';
+} from '../../../features/quinielas';
 
 const QuinielasPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'search' | 'create'>('dashboard');

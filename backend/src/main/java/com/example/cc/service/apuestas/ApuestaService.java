@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -284,5 +285,214 @@ public class ApuestaService {
         estadisticas.setRentabilidad(rentabilidad);
 
         return estadisticas;
+    }
+
+    /**
+     * Obtener apuestas activas del usuario
+     */
+    public Page<Apuesta> getApuestasActivas(Long usuarioId, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        return apuestaRepository.findApuestasActivas(usuario, pageable);
+    }
+
+    /**
+     * Obtener historial de apuestas del usuario
+     */
+    public Page<Apuesta> getHistorialApuestas(Long usuarioId, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        return apuestaRepository.findApuestasHistorial(usuario, pageable);
+    }
+
+    /**
+     * Obtener apuestas recientes del usuario
+     */
+    public List<Apuesta> getApuestasRecientes(Long usuarioId, int limite) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        LocalDateTime desde = LocalDateTime.now().minusDays(30); // Últimos 30 días
+        List<Apuesta> apuestas = apuestaRepository.findByUsuarioAndFechaCreacionAfterOrderByFechaCreacionDesc(usuario, desde);
+        
+        return apuestas.stream().limit(limite).toList();
+    }
+
+    /**
+     * Obtener apuestas recientes del usuario como DTO
+     */
+    public List<com.example.cc.dto.apuesta.ResumenApuestaDTO> getApuestasRecientesDTO(Long usuarioId, int limite) {
+        List<Apuesta> apuestas = getApuestasRecientes(usuarioId, limite);
+        
+        return apuestas.stream().map(this::convertirAResumenDTO).toList();
+    }
+
+    /**
+     * Convertir Apuesta a ResumenApuestaDTO
+     */
+    private com.example.cc.dto.apuesta.ResumenApuestaDTO convertirAResumenDTO(Apuesta apuesta) {
+        return new com.example.cc.dto.apuesta.ResumenApuestaDTO(
+            apuesta.getId(),
+            apuesta.getEventoDeportivo().getNombreEvento(),
+            apuesta.getPrediccion(),
+            apuesta.getMontoApostado(),
+            apuesta.getEstado().toString(),
+            apuesta.getFechaCreacion(),
+            apuesta.getValorCuotaMomento(),
+            apuesta.getEsGanadora(),
+            apuesta.getMontoGanancia()
+        );
+    }
+
+    /**
+     * Convertir Page<Apuesta> a ApuestasPageResponseDTO
+     */
+    public com.example.cc.dto.apuesta.ApuestasPageResponseDTO convertirAPageResponseDTO(Page<Apuesta> page) {
+        List<com.example.cc.dto.apuesta.ApuestaResponseDTO> content = page.getContent().stream()
+            .map(apuesta -> {
+                return com.example.cc.dto.apuesta.ApuestaResponseDTO.builder()
+                    .id(apuesta.getId())
+                    .usuarioId(apuesta.getUsuario().getIdUsuario())
+                    .eventoId(apuesta.getEventoDeportivo().getId())
+                    .eventoNombre(apuesta.getEventoDeportivo().getNombreEvento())
+                    .equipoLocal(apuesta.getEventoDeportivo().getEquipoLocal())
+                    .equipoVisitante(apuesta.getEventoDeportivo().getEquipoVisitante())
+                    .cuotaId(apuesta.getCuotaEvento().getId())
+                    .tipoApuesta(apuesta.getCuotaEvento().getTipoResultado().toString())
+                    .prediccion(apuesta.getPrediccion())
+                    .montoApostado(apuesta.getMontoApostado())
+                    .valorCuotaMomento(apuesta.getValorCuotaMomento())
+                    .montoPotencialGanancia(apuesta.getMontoPotencialGanancia())
+                    .montoGanancia(apuesta.getMontoGanancia())
+                    .estado(apuesta.getEstado().toString())
+                    .esGanadora(apuesta.getEsGanadora())
+                    .fechaCreacion(apuesta.getFechaCreacion())
+                    .fechaResolucion(apuesta.getFechaResolucion())
+                    .fechaActualizacion(apuesta.getFechaActualizacion())
+                    .descripcion(apuesta.getDescripcion())
+                    .build();
+            })
+            .toList();
+
+        return new com.example.cc.dto.apuesta.ApuestasPageResponseDTO(
+            content,
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages(),
+            page.isFirst(),
+            page.isLast(),
+            page.isEmpty()
+        );
+    }
+
+    /**
+     * Obtener apuestas por estado
+     */
+    public Page<Apuesta> getApuestasPorEstado(Long usuarioId, String estado, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        Apuesta.EstadoApuesta estadoApuesta;
+        try {
+            estadoApuesta = Apuesta.EstadoApuesta.valueOf(estado.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Estado de apuesta inválido: " + estado);
+        }
+        
+        return apuestaRepository.findByUsuarioAndEstadoOrderByFechaCreacionDesc(usuario, estadoApuesta, pageable);
+    }
+
+    /**
+     * Obtener apuestas por evento
+     */
+    public Page<Apuesta> getApuestasPorEvento(Long usuarioId, Long eventoId, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        EventoDeportivo evento = eventoRepository.findById(eventoId)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado con ID: " + eventoId));
+        
+        return apuestaRepository.findByUsuarioAndEventoDeportivoOrderByFechaCreacionDesc(usuario, evento, pageable);
+    }
+
+    /**
+     * Verificar si una apuesta es válida
+     */
+    public boolean verificarApuestaValida(Long usuarioId, Long eventoId, Long cuotaId, BigDecimal monto) {
+        try {
+            // Validar usuario
+            Usuario usuario = usuarioRepository.findById(usuarioId)
+                    .orElse(null);
+            if (usuario == null) return false;
+
+            // Validar evento
+            EventoDeportivo evento = eventoRepository.findById(eventoId)
+                    .orElse(null);
+            if (evento == null || (!"programado".equals(evento.getEstado()) && !"en_vivo".equals(evento.getEstado()))) {
+                return false;
+            }
+
+            // Validar cuota
+            CuotaEvento cuota = cuotaRepository.findById(cuotaId)
+                    .orElse(null);
+            if (cuota == null || !"ACTIVA".equals(cuota.getEstado())) {
+                return false;
+            }
+
+            // Validar monto
+            if (monto.compareTo(BigDecimal.valueOf(10)) < 0 || monto.compareTo(BigDecimal.valueOf(10000)) > 0) {
+                return false;
+            }
+
+            // Validar saldo
+            if (usuario.getSaldoUsuario().compareTo(monto) < 0) {
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.error("Error al verificar apuesta válida: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Obtener límites de apuesta del usuario
+     */
+    public Map<String, Object> getLimitesApuesta(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+
+        return Map.of(
+            "minimo", 10.00,
+            "maximo", 10000.00,
+            "disponible", usuario.getSaldoUsuario()
+        );
+    }
+
+    /**
+     * Buscar apuestas del usuario
+     */
+    public Page<Apuesta> buscarApuestas(Long usuarioId, String query, Pageable pageable) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        return apuestaRepository.buscarApuestasPorUsuario(usuario, query, pageable);
+    }
+
+    /**
+     * Obtener apuestas filtradas del usuario
+     */
+    public Page<Apuesta> getApuestasFiltradas(
+            Long usuarioId, String estado, String tipoApuesta, String fechaInicio, String fechaFin,
+            BigDecimal montoMin, BigDecimal montoMax, Long eventoId, String busqueda, Pageable pageable) {
+        
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuarioId));
+        
+        return apuestaRepository.findApuestasFiltradas(
+            usuario, estado, tipoApuesta, fechaInicio, fechaFin,
+            montoMin, montoMax, eventoId, busqueda, pageable);
     }
 }

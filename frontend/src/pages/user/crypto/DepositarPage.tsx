@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useCrypto } from '../../../hooks/useCrypto';
-import { CryptoService } from '../../../service/crypto/cryptoService';
 import DepositAddress from '../../../components/crypto/DepositAddress';
-import type { CryptoDepositRequest, CryptoType } from '../../../types/CryptoTypes';
+import type { CryptoType } from '../../../types/CryptoTypes';
 
 const DepositarPage = () => {
-    const { convertToUSD } = useCrypto();
+    const { 
+        createDeposit,
+        createManualDepositRequest,
+        isCreatingDeposit,
+        exchangeRates
+    } = useCrypto();
+    
     const [depositMethod, setDepositMethod] = useState<'address' | 'wallet'>('address');
-    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    const convertToUSD = (amount: number, cryptoType: string) => {
+        const rate = exchangeRates.find(r => r.currency === cryptoType);
+        return rate ? amount * rate.usdPrice : 0;
+    };
 
     const cryptoOptions: CryptoType[] = ['BTC', 'ETH', 'SOL'];
 
@@ -40,35 +49,49 @@ const DepositarPage = () => {
     };
 
     const handleSubmit = async (values: typeof initialValues, { resetForm }: any) => {
-        setLoading(true);
         setMessage(null);
 
         try {
-            const depositData: CryptoDepositRequest = {
-                cryptoType: values.cryptoType,
-                amount: values.amount,
-                transactionHash: depositMethod === 'address' ? values.transactionHash : undefined,
-                notes: depositMethod === 'wallet' 
-                    ? `Depósito desde wallet: ${values.walletAddress}`
-                    : undefined
-            };
+            if (depositMethod !== 'address') {
+                // Depósito desde dirección externa
+                const depositData = {
+                    cryptoType: values.cryptoType,
+                    amount: values.amount,
+                    userWalletAddress: 'pending', // Se genera automáticamente
+                    txHash: values.transactionHash || undefined,
+                    notes: 'Depósito desde dirección externa'
+                };
 
-            await CryptoService.createCryptoDeposit(depositData);
-            setMessage({ 
-                type: 'success', 
-                text: depositMethod === 'wallet' 
-                    ? 'Depósito desde wallet creado exitosamente. Será procesado automáticamente.' 
-                    : 'Depósito creado exitosamente. Será procesado en breve.' 
-            });
-            
-            // Reset form
-            resetForm();
-            
+                const result = await createDeposit(depositData);
+                if (result) {
+                    setMessage({ 
+                        type: 'success', 
+                        text: 'Depósito creado exitosamente. Será procesado automáticamente.'
+                    });
+                    resetForm();
+                }
+            } else {
+                // Depósito desde wallet
+                const depositData = {
+                    cryptoType: values.cryptoType,
+                    amount: values.amount,
+                    fromAddress: values.walletAddress,
+                    txHash: values.transactionHash || undefined,
+                    notes: `Depósito desde wallet: ${values.walletAddress}`
+                };
+
+                const result = await createManualDepositRequest(depositData);
+                if (result) {
+                    setMessage({ 
+                        type: 'success', 
+                        text: 'Solicitud de depósito enviada exitosamente. Será revisada por un administrador.'
+                    });
+                    resetForm();
+                }
+            }
         } catch (error) {
             console.error('Error creating deposit:', error);
             setMessage({ type: 'error', text: 'Error al crear el depósito. Intenta nuevamente.' });
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -126,7 +149,7 @@ const DepositarPage = () => {
                         validationSchema={validationSchema}
                         onSubmit={handleSubmit}
                     >
-                        {({ values, setFieldValue }) => (
+                        {({ values }) => (
                             <>
                                 {/* Deposit Address */}
                                 <div className="mb-6">
@@ -209,10 +232,10 @@ const DepositarPage = () => {
 
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={isCreatingDeposit}
                                         className="w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
                                     >
-                                        {loading ? 'Procesando...' : 'Confirmar Depósito'}
+                                        {isCreatingDeposit ? 'Procesando...' : 'Confirmar Depósito'}
                                     </button>
                                 </Form>
                             </>
@@ -305,10 +328,10 @@ const DepositarPage = () => {
 
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={isCreatingDeposit}
                                         className="w-full py-3 px-4 rounded-xl text-white font-medium transition-all duration-300 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg"
                                     >
-                                        {loading ? 'Procesando...' : 'Depositar desde Wallet'}
+                                        {isCreatingDeposit ? 'Procesando...' : 'Depositar desde Wallet'}
                                     </button>
                                 </Form>
                             </>

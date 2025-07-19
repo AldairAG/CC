@@ -3,7 +3,8 @@ import type {
   DocumentUploadRequest, 
   UserDocument, 
   SupportTicket, 
-  TSVData 
+  TSVData, 
+  GameHistory
 } from '../../types/UserProfileTypes';
 import type { 
   PerfilUsuarioCompleto,
@@ -237,6 +238,14 @@ export const profileService = {
    */
   async getUserStatistics(userId: number): Promise<UserStatistics> {
     const response = await apiClient.get(`/perfil/${userId}/estadisticas`);
+    return response.data;
+  },
+
+  /**
+   * Obtener estadísticas del usuario
+   */
+  async getUserGameHistory(userId: number): Promise<GameHistory[]> {
+    const response = await apiClient.get(`/perfil/${userId}/gameHistory`);
     return response.data;
   },
 

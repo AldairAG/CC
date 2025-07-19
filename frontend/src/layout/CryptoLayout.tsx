@@ -1,7 +1,7 @@
 import { Link, Route, Switch, useLocation } from "react-router-dom";
 import { USER_ROUTES } from "../constants/ROUTERS";
 import CryptoDashboard from "../pages/user/crypto/CryptoDashboard";
-import DepositarPage from "../pages/user/crypto/DepoitarPage";
+import DepositarPage from "../pages/user/crypto/DepositarPage";
 import RetirarPage from "../pages/user/crypto/RetirarPage";
 import WalletManagementPage from "../pages/user/crypto/WalletManagementPage";
 import TransactionHistoryPage from "../pages/user/crypto/TransactionHistoryPage";

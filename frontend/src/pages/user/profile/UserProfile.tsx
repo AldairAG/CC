@@ -7,11 +7,10 @@ import TwoFactorAuth from '../../../features/user/TwoFactorAuth';
 import DocumentUploadComponent from '../../../features/user/DocumentUpload';
 import GameHistory from '../../../features/user/GameHistory';
 import TechnicalSupport from '../../../features/user/TechnicalSupport';
-import CryptoToFiatConverter from '../../../components/crypto/CryptoToFiatConverter';
 
 const tabs = [
     { id: 'profile', label: 'Editar Perfil', icon: '👤' },
-    { id: 'wallet', label: 'Billetera', icon: '💰' },
+    /* { id: 'wallet', label: 'Billetera', icon: '💰' }, */
     { id: 'password', label: 'Cambiar Contraseña', icon: '🔒' },
     { id: 'tsv', label: 'Autenticación 2FA', icon: '🔐' },
     { id: 'documents', label: 'Documentos', icon: '📄' },
@@ -23,7 +22,7 @@ const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const {
         user,
-        loading,
+        fetchingProfile:loading,
         error,
         documents,
         supportTickets,
@@ -318,29 +317,6 @@ const UserProfile = () => {
                                                 <div className="absolute -inset-1 bg-gradient-to-r from-slate-600 to-slate-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-300"></div>
                                                 <div className="relative bg-gradient-to-br from-slate-700/60 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-600/40 p-8">
                                                     <EditProfile />
-                                                </div>
-                                            </div>
-                                        </TabsContent>
-
-                                        <TabsContent value="wallet" className="mt-0">
-                                            <div className="space-y-8">
-                                                <div className="relative group">
-                                                    <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl blur opacity-15 group-hover:opacity-25 transition duration-300"></div>
-                                                    <div className="relative bg-gradient-to-br from-slate-700/60 to-slate-800/60 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-600/40 p-8 overflow-hidden">
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-50"></div>
-                                                        <div className="relative z-10">
-                                                            <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-400 mb-4 flex items-center gap-3">
-                                                                <span className="text-4xl">💰</span>
-                                                                Gestión de Billetera
-                                                            </h3>
-                                                            <p className="text-slate-300 font-semibold text-lg mb-8">
-                                                                Convierte tus criptomonedas a saldo del casino para empezar a jugar.
-                                                            </p>
-                                                            <div className="bg-gradient-to-r from-slate-700/50 to-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-600/30">
-                                                                <CryptoToFiatConverter />
-                                                            </div>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </TabsContent>

@@ -3,7 +3,7 @@ import { useUserProfile } from '../../hooks/useUserProfile';
 import type { GameHistory as GameHistoryType } from '../../types/UserProfileTypes';
 
 const GameHistory = () => {
-    const { gameHistory, fetchGameHistory, loading } = useUserProfile();
+    const { gameHistory, fetchGameHistory, fetchingGameHisotry:loading } = useUserProfile();
     
     const [activeTab, setActiveTab] = useState<'all' | 'apuestas' | 'casino' | 'quinielas'>('all');
     const [dateFilter, setDateFilter] = useState('all');

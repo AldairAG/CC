@@ -2,9 +2,9 @@ import React from 'react';
 import { useCrypto } from '../../hooks/useCrypto';
 
 const PortfolioSummary: React.FC = () => {
-    const { balances, convertToUSD, loading, error } = useCrypto();
+    const { balances, convertToUSD, isLoading, error } = useCrypto();
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-700/50">
                 <div className="animate-pulse">

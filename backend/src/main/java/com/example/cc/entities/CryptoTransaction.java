@@ -46,6 +46,10 @@ public class CryptoTransaction {
     
     @Column(name = "tx_hash", length = 255, unique = true)
     private String txHash;
+
+    private LocalDateTime fechaCreacion;
+
+    private String usuarioNombre;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -81,7 +85,9 @@ public class CryptoTransaction {
         DEPOSIT("Depósito"),
         WITHDRAWAL("Retiro"),
         CONVERSION_TO_FIAT("Conversión a Fiat"),
-        CONVERSION_FROM_FIAT("Conversión desde Fiat");
+        CONVERSION_FROM_FIAT("Conversión desde Fiat"),
+        MANUAL_DEPOSIT_REQUEST("Solicitud de Depósito Manual"),
+        MANUAL_WITHDRAWAL_REQUEST("Solicitud de Retiro Manual");
         
         private final String description;
         
@@ -97,7 +103,8 @@ public class CryptoTransaction {
     public enum CryptoType {
         BTC("Bitcoin"),
         ETH("Ethereum"),
-        SOL("Solana");
+        SOL("Solana"),
+        TRC20("TRC-20");
         
         private final String name;
         
@@ -115,7 +122,10 @@ public class CryptoTransaction {
         CONFIRMED("Confirmada"),
         COMPLETED("Completada"),
         FAILED("Fallida"),
-        CANCELLED("Cancelada");
+        CANCELLED("Cancelada"),
+        PENDING_ADMIN_APPROVAL("Pendiente de Aprobación"),
+        APPROVED("Aprobada"),
+        REJECTED("Rechazada");
         
         private final String description;
         

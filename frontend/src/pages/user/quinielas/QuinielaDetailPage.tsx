@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import { QuinielaDetail } from '../../features/quinielas';
-import { USER_ROUTES } from '../../constants/ROUTERS';
+import { QuinielaDetail } from '../../../features/quinielas';
+import { USER_ROUTES } from '../../../constants/ROUTERS';
 
 const QuinielaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

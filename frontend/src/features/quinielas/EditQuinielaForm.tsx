@@ -514,7 +514,7 @@ const EditQuinielaForm: React.FC<EditQuinielaFormProps> = ({
                                                 <div key={evento.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded">
                                                     <div>
                                                         <span className="text-sm font-medium">{evento.equipoLocal} vs {evento.equipoVisitante}</span>
-                                                        <span className="text-xs text-gray-500 ml-2">{evento.deporte}</span>
+                                                        <span className="text-xs text-gray-500 ml-2">{evento.deporte.nombre}</span>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -578,7 +578,7 @@ const EditQuinielaForm: React.FC<EditQuinielaFormProps> = ({
                                                                     ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                                                                     : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                                                             }`}
-                                                            onClick={() => toggleEvento(evento as EventoDeportivoType)}
+                                                            onClick={() => toggleEvento(evento as unknown  as EventoDeportivoType)}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex-1">

@@ -25,6 +25,8 @@ public interface CryptoTransactionRepository extends JpaRepository<CryptoTransac
     
     List<CryptoTransaction> findByUserIdAndStatusOrderByCreatedAtDesc(Long userId, CryptoTransaction.TransactionStatus status);
     
+    List<CryptoTransaction> findByStatusOrderByCreatedAtDesc(CryptoTransaction.TransactionStatus status);
+    
     Optional<CryptoTransaction> findByTxHash(String txHash);
     
     @Query("SELECT ct FROM CryptoTransaction ct WHERE ct.userId = :userId AND ct.createdAt BETWEEN :start AND :end ORDER BY ct.createdAt DESC")
