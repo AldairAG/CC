@@ -3,7 +3,7 @@ import axios from 'axios';
 import { store } from '../../store/store'; // Adjust the path to your Redux store
 import { toast } from 'react-toastify';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/cc';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/cc';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
