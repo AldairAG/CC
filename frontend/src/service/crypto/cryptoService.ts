@@ -1,23 +1,25 @@
-import type { 
-  CryptoBalance, 
-  ExchangeRate, 
-  CryptoToFiatConversionRequest, 
-  CryptoToFiatConversionResponse, 
-  CryptoTransaction, 
-  CryptoDepositRequest, 
+import axios from 'axios';
+import type {
+  CryptoBalance,
+  ExchangeRate,
+  CryptoToFiatConversionRequest,
+  CryptoToFiatConversionResponse,
+  CryptoTransaction,
+  CryptoDepositRequest,
   CryptoManualDepositRequest,
   CryptoWithdrawalRequest,
   CryptoManualWithdrawalRequest,
   CryptoAdminApprovalRequest,
-  UserWallet, 
-  CreateWalletRequest 
+  UserWallet,
+  CreateWalletRequest,
+  CryptoPrice
 } from '../../types/CryptoTypes';
 import { apiClient } from '../casino/ApiCliente';
 
 const BASE_URL = '/crypto';
 
 export class CryptoService {
-  
+
   /**
    * Get user's crypto balances
    */
@@ -29,14 +31,11 @@ export class CryptoService {
   /**
    * Get current exchange rates
    */
-  static async getExchangeRates(): Promise<ExchangeRate[]> {
+  static async getExchangeRates(): Promise<CryptoPrice> {
     // For now, return mock data. In production, this would fetch from a real API
-    return [
-      { currency: 'BTC', usdPrice: 45000, timestamp: new Date() },
-      { currency: 'ETH', usdPrice: 3000, timestamp: new Date() },
-      { currency: 'SOL', usdPrice: 100, timestamp: new Date() },
-      { currency: 'TRC20', usdPrice: 0.1, timestamp: new Date() },
-    ];
+    const COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids=solana%2Cethereum%2Cbitcoin&vs_currencies=usd";
+    const response = await axios.get<CryptoPrice>(COINGECKO_URL);
+    return response.data;
   }
 
   /**
@@ -50,7 +49,7 @@ export class CryptoService {
   /**
    * Create a crypto deposit (basic)
    */
-  static async createCryptoDeposit(request: CryptoDepositRequest,userId:number): Promise<CryptoTransaction> {
+  static async createCryptoDeposit(request: CryptoDepositRequest, userId: number): Promise<CryptoTransaction> {
     const response = await apiClient.post(`${BASE_URL}/deposit/${userId}`, request);
     return response.data;
   }
@@ -66,7 +65,7 @@ export class CryptoService {
   /**
    * Create manual deposit request
    */
-  static async createManualDepositRequest(request: CryptoManualDepositRequest,userId:number): Promise<CryptoTransaction> {
+  static async createManualDepositRequest(request: CryptoManualDepositRequest, userId: number): Promise<CryptoTransaction> {
     const response = await apiClient.post(`${BASE_URL}/deposit/manual/${userId}`, request);
     return response.data;
   }
@@ -107,7 +106,7 @@ export class CryptoService {
   /**
    * Create a crypto wallet
    */
-  static async createCryptoWallet(walletData: CreateWalletRequest,userId:number): Promise<UserWallet> {
+  static async createCryptoWallet(walletData: CreateWalletRequest, userId: number): Promise<UserWallet> {
     const response = await apiClient.post(`${BASE_URL}/wallets/${userId}`, walletData);
     return response.data;
   }
@@ -131,7 +130,7 @@ export class CryptoService {
   /**
    * Update wallet
    */
-  static async updateCryptoWallet(walletId: number,userId:number, request: Partial<CreateWalletRequest>): Promise<UserWallet> {
+  static async updateCryptoWallet(walletId: number, userId: number, request: Partial<CreateWalletRequest>): Promise<UserWallet> {
     const response = await apiClient.put(`${BASE_URL}/wallets/${walletId}/${userId}`, request);
     return response.data;
   }
@@ -187,6 +186,13 @@ export class CryptoService {
    */
   static async processWithdrawalConfirmation(txHash: string, confirmations: number): Promise<void> {
     return this.processConfirmation(txHash, confirmations);
+  }
+
+  static async getCryptoBalancesWithExchangeRates(ids: string): Promise<ExchangeRate[]> {
+    const COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=usd";
+    const url = COINGECKO_URL.replace("{ids}", ids);
+    const response = await axios.get(url);
+    return response.data;
   }
 
 }

@@ -104,49 +104,9 @@ export const selectCryptoBalanceByType = createSelector(
   (balances, cryptoType) => balances.find(balance => balance.cryptoType === cryptoType)
 );
 
-export const selectExchangeRateByType = createSelector(
-  [selectCryptoExchangeRates, (_state: RootState, cryptoType: string) => cryptoType],
-  (exchangeRates, cryptoType) => exchangeRates.find(rate => rate.currency === cryptoType)
-);
-
-export const selectTotalPortfolioValue = createSelector(
-  [selectCryptoBalances, selectCryptoExchangeRates],
-  (balances, exchangeRates) => {
-    return balances.reduce((total, balance) => {
-      const rate = exchangeRates.find(r => r.currency === balance.cryptoType);
-      return total + (balance.balance * (rate?.usdPrice || 0));
-    }, 0);
-  }
-);
-
 export const selectRecentTransactions = createSelector(
   [selectCryptoTransactions],
   (transactions) => transactions.slice(0, 5)
-);
-
-export const selectPortfolioStats = createSelector(
-  [selectCryptoBalances, selectCryptoExchangeRates],
-  (balances, exchangeRates) => {
-    const totalValue = balances.reduce((total, balance) => {
-      const rate = exchangeRates.find(r => r.currency === balance.cryptoType);
-      return total + (balance.balance * (rate?.usdPrice || 0));
-    }, 0);
-    
-    const totalPendingDeposits = balances.reduce((total, balance) => {
-      return total + (balance.pendingDeposits || 0);
-    }, 0);
-    
-    const totalPendingWithdrawals = balances.reduce((total, balance) => {
-      return total + (balance.pendingWithdrawals || 0);
-    }, 0);
-    
-    return {
-      totalValue,
-      totalPendingDeposits,
-      totalPendingWithdrawals,
-      cryptoCount: balances.length,
-    };
-  }
 );
 
 export const selectWalletsByType = createSelector(

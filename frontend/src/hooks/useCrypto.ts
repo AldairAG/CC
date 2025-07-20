@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useDispatch, useSelector } from 'react-redux';
 import { useCallback } from 'react';
 import {
@@ -32,6 +33,7 @@ import {
   setError,
   clearError,
   addTransaction,
+  setExchangeRates,
 } from '../store/slices/cryptoSlice';
 import { CryptoService } from '../service/crypto/cryptoService';
 import type {
@@ -60,7 +62,7 @@ import useUser from './useUser';
  */
 export const useCrypto = () => {
   const dispatch = useDispatch();
-  const {user}=useUser();
+  const { user } = useUser();
 
   // Selectores de estado
   const wallets = useSelector(selectWalletList);
@@ -68,7 +70,7 @@ export const useCrypto = () => {
   const pendingTransactions = useSelector(selectPendingTransactions);
   const balances = useSelector(selectCryptoBalances);
   const exchangeRates = useSelector(selectCryptoExchangeRates);
-  
+
   // Estados de carga
   const isLoading = useSelector(selectCryptoLoading);
   const isFetchingTransactions = useSelector(selectFetchingTransactions);
@@ -94,12 +96,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingWallet(true));
       dispatch(clearError());
-      
-      const newWallet = await CryptoService.createCryptoWallet(walletData,user?.idUsuario||0);
-      
+
+      const newWallet = await CryptoService.createCryptoWallet(walletData, user?.idUsuario || 0);
+
       // Actualizar lista de wallets
       dispatch(setWalletList([...wallets, newWallet]));
-      
+
       return newWallet;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear wallet';
@@ -117,11 +119,11 @@ export const useCrypto = () => {
     try {
       dispatch(setFetchingWallets(true));
       dispatch(clearError());
-      
+
       const userWallets = await CryptoService.getUserWallets();
-      
+
       dispatch(setWalletList(userWallets));
-      
+
       return userWallets;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al obtener wallets del usuario';
@@ -139,9 +141,9 @@ export const useCrypto = () => {
     try {
       dispatch(setFetchingWallets(true));
       dispatch(clearError());
-      
+
       const walletData = await CryptoService.getCryptoWalletById(walletId);
-      
+
       return walletData;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al obtener wallet';
@@ -159,15 +161,15 @@ export const useCrypto = () => {
     try {
       dispatch(setUpdatingWallet(true));
       dispatch(clearError());
-      
-      const updatedWallet = await CryptoService.updateCryptoWallet(walletId,user?.idUsuario||0, walletData);
-      
+
+      const updatedWallet = await CryptoService.updateCryptoWallet(walletId, user?.idUsuario || 0, walletData);
+
       // Actualizar en la lista de wallets
-      const updatedWallets = wallets.map(w => 
+      const updatedWallets = wallets.map(w =>
         w.id === walletId ? updatedWallet : w
       );
       dispatch(setWalletList(updatedWallets));
-      
+
       return updatedWallet;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al actualizar wallet';
@@ -185,13 +187,13 @@ export const useCrypto = () => {
     try {
       dispatch(setDeletingWallet(true));
       dispatch(clearError());
-      
+
       await CryptoService.deleteCryptoWallet(walletId);
-      
+
       // Remover de la lista de wallets
       const updatedWallets = wallets.filter(w => w.id !== walletId);
       dispatch(setWalletList(updatedWallets));
-      
+
       return true;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al eliminar wallet';
@@ -213,11 +215,11 @@ export const useCrypto = () => {
     try {
       dispatch(setFetchingTransactions(true));
       dispatch(clearError());
-      
+
       const transactions = await CryptoService.getCryptoTransactions();
-      
+
       dispatch(setTransactions(transactions));
-      
+
       return transactions;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al obtener transacciones de crypto';
@@ -228,6 +230,39 @@ export const useCrypto = () => {
     }
   }, [dispatch]);
 
+  /**
+   * Obtiene las tasas de cambio de criptomonedas
+   */
+  const getExchangeRates = useCallback(async (): Promise<any> => {
+    try {
+      dispatch(clearError());
+      const exchangeRates = await CryptoService.getExchangeRates();
+      dispatch(setExchangeRates(exchangeRates));
+      return exchangeRates;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Error al obtener tasas de cambio';
+      dispatch(setError(errorMessage));
+      return null;
+    }
+  }, [dispatch]);
+
+  /**
+   * Convierte una cantidad de criptomoneda a USD
+   */
+  const convertToUSD = useCallback(async (amount: number, cryptoType: string): Promise<number> => {
+    try {
+      const exchangeRate = await getExchangeRates();
+      if (!exchangeRate) return 0;
+      const rate = exchangeRate[cryptoType as keyof typeof exchangeRate];
+      if (!rate) return 0;
+      return amount * rate.usd;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Error al convertir a USD';
+      dispatch(setError(errorMessage));
+      return 0;
+    }
+  }, [getExchangeRates, dispatch]);
+  
   // =============================================================================
   // OPERACIONES DE DEPÓSITO
   // =============================================================================
@@ -239,12 +274,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingDeposit(true));
       dispatch(clearError());
-      
-      const transaction = await CryptoService.createCryptoDeposit(depositRequest,user?.idUsuario||0);
-      
+
+      const transaction = await CryptoService.createCryptoDeposit(depositRequest, user?.idUsuario || 0);
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear depósito';
@@ -262,12 +297,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingDeposit(true));
       dispatch(clearError());
-      
+
       const transaction = await CryptoService.createAutomaticDeposit(depositRequest);
-      
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear depósito automático';
@@ -285,12 +320,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingDeposit(true));
       dispatch(clearError());
-      
-      const transaction = await CryptoService.createManualDepositRequest(depositRequest,user?.idUsuario||0);
-      
+
+      const transaction = await CryptoService.createManualDepositRequest(depositRequest, user?.idUsuario || 0);
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al solicitar depósito manual';
@@ -312,12 +347,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingWithdrawal(true));
       dispatch(clearError());
-      
+
       const transaction = await CryptoService.createAutomaticWithdrawal(withdrawalRequest);
-      
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear retiro automático';
@@ -335,12 +370,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingWithdrawal(true));
       dispatch(clearError());
-      
+
       const transaction = await CryptoService.createManualWithdrawalRequest(withdrawalRequest);
-      
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al solicitar retiro manual';
@@ -358,12 +393,12 @@ export const useCrypto = () => {
     try {
       dispatch(setCreatingWithdrawal(true));
       dispatch(clearError());
-      
+
       const transaction = await CryptoService.createCryptoWithdrawal(withdrawalRequest);
-      
+
       // Agregar la transacción a la lista
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear retiro de crypto';
@@ -385,11 +420,11 @@ export const useCrypto = () => {
     try {
       dispatch(setFetchingWallets(true));
       dispatch(clearError());
-      
+
       const allWallets = await CryptoService.getAllWallets();
-      
+
       dispatch(setWalletList(allWallets));
-      
+
       return allWallets;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al obtener todas las wallets';
@@ -407,11 +442,11 @@ export const useCrypto = () => {
     try {
       dispatch(setFetchingTransactions(true));
       dispatch(clearError());
-      
+
       const pendingTransactions = await CryptoService.getPendingManualTransactions();
-      
+
       dispatch(setPendingTransactions(pendingTransactions));
-      
+
       return pendingTransactions;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al obtener transacciones pendientes';
@@ -429,12 +464,12 @@ export const useCrypto = () => {
     try {
       dispatch(setApprovingTransaction(true));
       dispatch(clearError());
-      
+
       const transaction = await CryptoService.approveManualTransaction(approvalRequest);
-      
+
       // Actualizar la transacción en el estado
       dispatch(addTransaction(transaction));
-      
+
       return transaction;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al aprobar transacción manual';
@@ -475,7 +510,7 @@ export const useCrypto = () => {
     pendingTransactions,
     balances,
     exchangeRates,
-    
+
     // Estados de carga
     isLoading,
     isFetchingTransactions,
@@ -499,6 +534,8 @@ export const useCrypto = () => {
 
     // Operaciones de transacciones
     getCryptoTransactions,
+    convertToUSD,
+    getExchangeRates,
 
     // Operaciones de depósito
     createDeposit,

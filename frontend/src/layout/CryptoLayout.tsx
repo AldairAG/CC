@@ -7,10 +7,25 @@ import WalletManagementPage from "../pages/user/crypto/WalletManagementPage";
 import TransactionHistoryPage from "../pages/user/crypto/TransactionHistoryPage";
 import PortfolioSummary from "../components/crypto/PortfolioSummary";
 import ExchangeRates from "../components/crypto/ExchangeRates";
+import useCrypto from "../hooks/useCrypto";
+import { useEffect } from "react";
 
 const CryptoLayout = () => {
+    const { getExchangeRates } = useCrypto();
     const location = useLocation();
-    
+
+    // Fetch exchange rates on mount
+    useEffect(() => {
+        const fetchExchangeRates = async () => {
+            try {
+                await getExchangeRates();
+            } catch (error) {
+                console.error("Error fetching exchange rates:", error);
+            }
+        };
+        fetchExchangeRates();
+    }, [getExchangeRates]);
+
     const tabs = [
         {
             id: 'dashboard',
@@ -51,7 +66,7 @@ const CryptoLayout = () => {
 
     const getTabStyles = (tab: typeof tabs[0], isActive: boolean) => {
         const baseStyles = "flex items-center space-x-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 border backdrop-blur-sm";
-        
+
         if (isActive) {
             switch (tab.color) {
                 case 'blue':
@@ -64,7 +79,7 @@ const CryptoLayout = () => {
                     return `${baseStyles} bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/40 shadow-lg`;
             }
         }
-        
+
         return `${baseStyles} text-gray-400 hover:text-white hover:bg-amber-500/10 border-slate-600/20 hover:border-amber-500/30 hover:scale-105 active:scale-95`;
     };
 
@@ -76,7 +91,7 @@ const CryptoLayout = () => {
                     <PortfolioSummary />
                     <ExchangeRates />
                 </div>
-                
+
                 {/* Navigation Tabs */}
                 <div className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-slate-700/50">
                     <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-6 flex items-center gap-3">
@@ -98,7 +113,7 @@ const CryptoLayout = () => {
                         })}
                     </nav>
                 </div>
-                
+
                 {/* Main Content */}
                 <main className="bg-gradient-to-br from-slate-800/60 via-slate-800/80 to-slate-900/60 backdrop-blur-xl rounded-2xl shadow-2xl p-6 min-h-screen border border-slate-700/50">
                     <Switch>

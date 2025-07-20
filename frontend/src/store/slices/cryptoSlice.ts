@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { CryptoBalance, ExchangeRate, CryptoTransaction, UserWallet } from "../../types/CryptoTypes";
+import type { CryptoBalance, CryptoTransaction, UserWallet, CryptoPrice } from "../../types/CryptoTypes";
 import { createSelector } from 'reselect';
 
 interface CryptoState {
   // Data
   walletList: UserWallet[];
   balances: CryptoBalance[];
-  exchangeRates: ExchangeRate[];
+  exchangeRates: CryptoPrice | null;
   transactions: CryptoTransaction[];
   pendingTransactions: CryptoTransaction[];
   
@@ -34,7 +34,7 @@ const initialState: CryptoState = {
   // Data
   walletList: [],
   balances: [],
-  exchangeRates: [],
+  exchangeRates: null,
   transactions: [],
   pendingTransactions: [],
   
@@ -66,7 +66,7 @@ const cryptoSlice = createSlice({
     setBalances: (state, action: PayloadAction<CryptoBalance[]>) => {
       state.balances = action.payload;
     },
-    setExchangeRates: (state, action: PayloadAction<ExchangeRate[]>) => {
+    setExchangeRates: (state, action: PayloadAction<CryptoPrice>) => {
       state.exchangeRates = action.payload;
     },
     setTransactions: (state, action: PayloadAction<CryptoTransaction[]>) => {
@@ -323,49 +323,9 @@ export const selectCryptoBalanceByType = createSelector(
   (balances, cryptoType) => balances.find(balance => balance.cryptoType === cryptoType)
 );
 
-export const selectExchangeRateByType = createSelector(
-  [selectCryptoExchangeRates, (_, cryptoType: string) => cryptoType],
-  (rates, cryptoType) => rates.find(rate => rate.currency === cryptoType)
-);
-
-export const selectTotalPortfolioValue = createSelector(
-  [selectCryptoBalances, selectCryptoExchangeRates],
-  (balances, rates) => {
-    return balances.reduce((total, balance) => {
-      const rate = rates.find(r => r.currency === balance.cryptoType);
-      return total + (balance.balance * (rate?.usdPrice || 0));
-    }, 0);
-  }
-);
-
 export const selectRecentTransactions = createSelector(
   [selectCryptoTransactions],
   (transactions) => transactions.slice(0, 5)
-);
-
-export const selectPortfolioStats = createSelector(
-  [selectCryptoBalances, selectCryptoExchangeRates],
-  (balances, rates) => {
-    const totalValue = balances.reduce((total, balance) => {
-      const rate = rates.find(r => r.currency === balance.cryptoType);
-      return total + (balance.balance * (rate?.usdPrice || 0));
-    }, 0);
-    
-    const totalPendingDeposits = balances.reduce((total, balance) => {
-      return total + (balance.pendingDeposits || 0);
-    }, 0);
-    
-    const totalPendingWithdrawals = balances.reduce((total, balance) => {
-      return total + (balance.pendingWithdrawals || 0);
-    }, 0);
-    
-    return {
-      totalValue,
-      totalPendingDeposits,
-      totalPendingWithdrawals,
-      cryptoCount: balances.length,
-    };
-  }
 );
 
 export const selectWalletsByType = createSelector(
