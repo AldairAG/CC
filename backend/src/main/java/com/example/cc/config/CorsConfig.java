@@ -21,8 +21,8 @@ public class CorsConfig implements WebMvcConfigurer {
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173", 
             "http://vps-4813471-x.dattaweb.com",
-            "http://24bet.com",
-            "https://24bet.com"
+            "http://24bet.mx",
+            "https://24bet.mx"
         )); 
         
         // Métodos HTTP permitidos
