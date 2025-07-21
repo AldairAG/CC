@@ -1,14 +1,7 @@
-import axios from 'axios';
 import type { EventoDeportivoType } from '../../types/EventoDeportivoTypes';
 import type { DeporteType, LigaType, FiltrosEventoDeportivo, EstadisticasEventos } from '../../types/DeporteLigaTypes';
+import { apiClient } from '../casino';
 
-// Cliente base para nuestro backend
-const backendClient = axios.create({
-  baseURL: 'http://localhost:8080/cc/eventos-deportivos',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
 
 export const eventoDeportivoService = {
   // Obtener eventos con filtros
@@ -21,61 +14,61 @@ export const eventoDeportivoService = {
     if (filtros?.ligaNombre) params.append('ligaNombre', filtros.ligaNombre);
     
     const url = params.toString() ? `?${params.toString()}` : '';
-    const response = await backendClient.get<EventoDeportivoType[]>(`/${url}`);
+    const response = await apiClient.get<EventoDeportivoType[]>(`/${url}`);
     return response.data;
   },
 
   // Obtener eventos próximos (siguientes 7 días)
   getEventosProximos: async (): Promise<EventoDeportivoType[]> => {
-    const response = await backendClient.get<EventoDeportivoType[]>('/proximos');
+    const response = await apiClient.get<EventoDeportivoType[]>('/proximos');
     return response.data;
   },
 
   // Obtener eventos por deporte (usando nombre del deporte)
   getEventosPorDeporte: async (deporteNombre: string): Promise<EventoDeportivoType[]> => {
-    const response = await backendClient.get<EventoDeportivoType[]>(`/deporte/${encodeURIComponent(deporteNombre)}`);
+    const response = await apiClient.get<EventoDeportivoType[]>(`/deporte/${encodeURIComponent(deporteNombre)}`);
     return response.data;
   },
 
   // Obtener eventos por liga (usando nombre de la liga)
   getEventosPorLiga: async (ligaNombre: string): Promise<EventoDeportivoType[]> => {
-    const response = await backendClient.get<EventoDeportivoType[]>(`/liga/${encodeURIComponent(ligaNombre)}`);
+    const response = await apiClient.get<EventoDeportivoType[]>(`/liga/${encodeURIComponent(ligaNombre)}`);
     return response.data;
   },
 
   // Obtener todos los deportes disponibles
   getDeportes: async (): Promise<DeporteType[]> => {
-    const response = await backendClient.get<DeporteType[]>('/deportes');
+    const response = await apiClient.get<DeporteType[]>('/deportes');
     return response.data;
   },
 
   // Obtener todas las ligas disponibles
   getLigas: async (): Promise<LigaType[]> => {
-    const response = await backendClient.get<LigaType[]>('/ligas');
+    const response = await apiClient.get<LigaType[]>('/ligas');
     return response.data;
   },
 
   // Obtener ligas por deporte
   getLigasPorDeporte: async (deporteNombre: string): Promise<LigaType[]> => {
-    const response = await backendClient.get<LigaType[]>(`/deportes/${encodeURIComponent(deporteNombre)}/ligas`);
+    const response = await apiClient.get<LigaType[]>(`/deportes/${encodeURIComponent(deporteNombre)}/ligas`);
     return response.data;
   },
 
   // Obtener estadísticas de eventos
   getEstadisticas: async (): Promise<EstadisticasEventos> => {
-    const response = await backendClient.get<EstadisticasEventos>('/estadisticas');
+    const response = await apiClient.get<EstadisticasEventos>('/estadisticas');
     return response.data;
   },
 
   // Forzar sincronización manual
   forzarSincronizacion: async (): Promise<{ status: string; message: string }> => {
-    const response = await backendClient.post<{ status: string; message: string }>('/sincronizar');
+    const response = await apiClient.post<{ status: string; message: string }>('/sincronizar');
     return response.data;
   },
 
   // Limpiar eventos antiguos
   limpiarEventosAntiguos: async (): Promise<{ status: string; message: string }> => {
-    const response = await backendClient.delete<{ status: string; message: string }>('/limpiar-antiguos');
+    const response = await apiClient.delete<{ status: string; message: string }>('/limpiar-antiguos');
     return response.data;
   }
 };
@@ -106,7 +99,7 @@ export const eventoUtils = {
 
   // Filtrar eventos por deporte y filtrar eventos programados o en vivo
   filtrarPorLigaEventos: async (idDeporte: number): Promise<LigaType[]> => {
-    const response = await backendClient.get<LigaType[]>(`/deportes/${idDeporte}/true`);
+    const response = await apiClient.get<LigaType[]>(`/deportes/${idDeporte}/true`);
     return response.data;
   },
 
