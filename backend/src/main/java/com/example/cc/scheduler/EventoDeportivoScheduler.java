@@ -16,24 +16,25 @@ public class EventoDeportivoScheduler {
     private final ITheSportsDbService theSportsDbService;
 
     /**
-     * Ejecutar sincronización de eventos deportivos todos los días a las 12:00 AM (medianoche)
+     * Ejecutar sincronización de eventos deportivos todos los días a las 12:00 AM
+     * (medianoche)
      */
     @Scheduled(cron = "0 0 0 * * *", zone = "America/Mexico_City")
-    //@Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
+    // @Scheduled(cron = "0 * * * * *", zone = "America/Mexico_City")
     public void sincronizarEventosDeportivos() {
         log.info("=== INICIANDO SINCRONIZACIÓN PROGRAMADA DE EVENTOS DEPORTIVOS ===");
-        
+
         try {
             long startTime = System.currentTimeMillis();
-            
+
             // Ejecutar sincronización
             eventoDeportivoService.sincronizarEventosDeportivos();
-            
+
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
-            
+
             log.info("=== SINCRONIZACIÓN COMPLETADA EN {} ms ===", duration);
-            
+
         } catch (Exception e) {
             log.error("=== ERROR EN SINCRONIZACIÓN PROGRAMADA: {} ===", e.getMessage(), e);
         }
@@ -42,25 +43,26 @@ public class EventoDeportivoScheduler {
     /**
      * Actualizar livescores de eventos del día actual cada 2 minutos
      */
-    //@Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
+    @Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
     public void actualizarLivescoresEventosHoy() {
         log.info("🔴 === INICIANDO ACTUALIZACIÓN DE LIVESCORES (cada 2 min) ===");
-        
+
         try {
             long startTime = System.currentTimeMillis();
-            
+
             // Obtener y actualizar livescores actuales del día
             int eventosActualizados = theSportsDbService.obtenerYGuardarLivescoresActuales().size();
-            
+
             // También actualizar específicamente los eventos en vivo
-            //int eventosEnVivo = theSportsDbService.obtenerLivescoresEventosEnVivo().size();
-            
+            // int eventosEnVivo =
+            // theSportsDbService.obtenerLivescoresEventosEnVivo().size();
+
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
-            log.info("✅ === LIVESCORES ACTUALIZADOS: {} eventos del día ({}ms) ===", 
+            log.info("✅ === LIVESCORES ACTUALIZADOS: {} eventos del día ({}ms) ===",
                     eventosActualizados, duration);
-            
+
         } catch (Exception e) {
             log.error("❌ === ERROR AL ACTUALIZAR LIVESCORES: {} ===", e.getMessage(), e);
         }
@@ -73,14 +75,14 @@ public class EventoDeportivoScheduler {
     @Scheduled(cron = "0 */2 * * * *", zone = "America/Mexico_City")
     public void verificarCuotasEventosProgramados() {
         log.info("🎯 === INICIANDO VERIFICACIÓN DE CUOTAS (cada 2 min) ===");
-        
+
         try {
             long startTime = System.currentTimeMillis();
-            
+
             // Verificar cuotas para eventos programados y en vivo (ambos necesitan cuotas)
             var resumen = theSportsDbService.verificarCuotasEventosPorEstados(
                     java.util.List.of("programado", "en_vivo"));
-            
+
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
@@ -89,18 +91,18 @@ public class EventoDeportivoScheduler {
             log.info("💰 Eventos con cuotas completas: {}", resumen.getEventosCompletos());
             log.info("🔧 Eventos con cuotas creadas: {}", resumen.getEventosConCuotasCreadas());
             log.info("❌ Eventos con errores: {}", resumen.getEventosConErrores());
-            
+
             // Log adicional si se crearon cuotas
             if (resumen.getEventosConCuotasCreadas() > 0) {
-                log.info("🎉 IMPORTANTE: Se crearon cuotas para {} eventos (programados/en_vivo)", 
+                log.info("🎉 IMPORTANTE: Se crearon cuotas para {} eventos (programados/en_vivo)",
                         resumen.getEventosConCuotasCreadas());
             }
-            
+
             // Log si todos los eventos ya tienen cuotas
             if (resumen.getTotalEventos() > 0 && resumen.getEventosConCuotasCreadas() == 0) {
                 log.info("✨ Todos los eventos activos ya tienen cuotas completas");
             }
-            
+
         } catch (Exception e) {
             log.error("❌ === ERROR AL VERIFICAR CUOTAS: {} ===", e.getMessage(), e);
         }
@@ -108,18 +110,19 @@ public class EventoDeportivoScheduler {
 
     /**
      * Verificar cuotas para eventos próximos cada 30 minutos
-     * Esto asegura que eventos que vienen en los próximos días tengan cuotas preparadas
+     * Esto asegura que eventos que vienen en los próximos días tengan cuotas
+     * preparadas
      */
     @Scheduled(cron = "0 */30 * * * *", zone = "America/Mexico_City")
     public void verificarCuotasEventosProximos() {
         log.info("📅 === INICIANDO VERIFICACIÓN DE CUOTAS EVENTOS PRÓXIMOS (cada 30 min) ===");
-        
+
         try {
             long startTime = System.currentTimeMillis();
-            
+
             // Verificar cuotas para eventos de los próximos 3 días
             var resumen = theSportsDbService.verificarCuotasEventosProximos(3);
-            
+
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
@@ -128,13 +131,13 @@ public class EventoDeportivoScheduler {
             log.info("💰 Eventos con cuotas completas: {}", resumen.getEventosCompletos());
             log.info("🔧 Eventos con cuotas creadas: {}", resumen.getEventosConCuotasCreadas());
             log.info("❌ Eventos con errores: {}", resumen.getEventosConErrores());
-            
+
             // Log especial para eventos próximos
             if (resumen.getEventosConCuotasCreadas() > 0) {
-                log.info("🚀 Se prepararon cuotas para {} eventos próximos", 
+                log.info("🚀 Se prepararon cuotas para {} eventos próximos",
                         resumen.getEventosConCuotasCreadas());
             }
-            
+
         } catch (Exception e) {
             log.error("❌ === ERROR AL VERIFICAR CUOTAS EVENTOS PRÓXIMOS: {} ===", e.getMessage(), e);
         }
@@ -146,11 +149,11 @@ public class EventoDeportivoScheduler {
     @Scheduled(cron = "0 0 2 * * SUN", zone = "America/Mexico_City")
     public void limpiarEventosAntiguos() {
         log.info("=== INICIANDO LIMPIEZA DE EVENTOS ANTIGUOS ===");
-        
+
         try {
             eventoDeportivoService.limpiarEventosAntiguos();
             log.info("=== LIMPIEZA DE EVENTOS COMPLETADA ===");
-            
+
         } catch (Exception e) {
             log.error("=== ERROR EN LIMPIEZA DE EVENTOS: {} ===", e.getMessage(), e);
         }
@@ -162,19 +165,19 @@ public class EventoDeportivoScheduler {
     @Scheduled(cron = "0 0 * * * *", zone = "America/Mexico_City")
     public void cerrarEventosVencidos() {
         log.info("🔒 === INICIANDO CIERRE DE EVENTOS VENCIDOS ===");
-        
+
         try {
             long startTime = System.currentTimeMillis();
-            
+
             // Cerrar eventos cuya fecha sea menor a la actual
             int eventosCerrados = eventoDeportivoService.cerrarEventosVencidos();
-            
+
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
-            log.info("✅ === EVENTOS CERRADOS: {} eventos vencidos ({}ms) ===", 
+            log.info("✅ === EVENTOS CERRADOS: {} eventos vencidos ({}ms) ===",
                     eventosCerrados, duration);
-            
+
         } catch (Exception e) {
             log.error("❌ === ERROR AL CERRAR EVENTOS VENCIDOS: {} ===", e.getMessage(), e);
         }
@@ -183,7 +186,7 @@ public class EventoDeportivoScheduler {
     /**
      * Tarea de prueba para verificar que el scheduler funciona (cada 30 minutos)
      */
-    //@Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
+    // @Scheduled(fixedRate = 1800000) // 30 minutos = 30 * 60 * 1000 ms
     public void tareaVerificacion() {
         log.debug("Scheduler funcionando correctamente - {}", java.time.LocalDateTime.now());
     }
